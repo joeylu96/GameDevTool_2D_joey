@@ -60,8 +60,9 @@ func _ready() -> void:
 	box.add_child(row)
 	_auto = _check("Auto time", true, func(on): main.tod.running = on)
 	row.add_child(_auto)
-	row.add_child(_check("Pixel", true, func(on): main.display.pixel_mode = on))
-	row.add_child(_check("Tilt-shift", true, func(on): main.post.tilt_shift = on))
+	row.add_child(_check("Walk", true, func(on): main.walk_mode = on))
+	row.add_child(_check("Pixel", false, func(on): main.display.pixel_mode = on))
+	row.add_child(_check("Tilt-shift", false, func(on): main.post.tilt_shift = on))
 
 	var speed_row := HBoxContainer.new()
 	box.add_child(speed_row)
@@ -88,9 +89,10 @@ func _process(_delta: float) -> void:
 	_syncing = false
 	_auto.set_pressed_no_signal(main.tod.running)
 	_clock.text = "Time  %s   (%s)" % [main.tod.get_clock_text(), main.weather.weather.capitalize()]
-	_info.text = "snow %.2f  wet %.2f  night %.2f  render %dx%d\nWASD pan  Q/E rotate  wheel zoom  drag pan" % [
+	var keys := "WASD walk  Q/E rotate  wheel zoom" if main.walk_mode else "WASD pan  Q/E rotate  wheel zoom  drag pan"
+	_info.text = "snow %.2f  wet %.2f  night %.2f  render %dx%d\n%s" % [
 		main.weather.snow_amount, main.weather.wetness, main.tod.night_factor,
-		main.display.viewport.size.x, main.display.viewport.size.y]
+		main.display.viewport.size.x, main.display.viewport.size.y, keys]
 
 
 func _label(t: String) -> Label:

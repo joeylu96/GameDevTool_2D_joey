@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "texel_density": 16,
-  "pixel_height": 360,
+  "texel_density": 32,
+  "pixel_height": 540,
   "camera": { "fov": 30, "pitch_deg": 40, "distance": 42 },
   "palette": {
     "ink": "#1d2030",

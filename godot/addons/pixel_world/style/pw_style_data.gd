@@ -2,8 +2,8 @@
 @tool
 extends RefCounted
 
-const TEXEL_DENSITY := 16.0
-const PIXEL_HEIGHT := 360
+const TEXEL_DENSITY := 32.0
+const PIXEL_HEIGHT := 540
 const CAMERA_FOV := 30.0
 const CAMERA_PITCH_DEG := 40.0
 const CAMERA_DISTANCE := 42.0

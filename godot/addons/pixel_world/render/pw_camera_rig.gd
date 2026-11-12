@@ -27,6 +27,8 @@ const Style := preload("res://addons/pixel_world/style/pw_style_data.gd")
 @export var pan_speed := 16.0
 ## 注视点活动范围（XZ）
 @export var bounds := Rect2(-60, -60, 120, 120)
+## WASD / 方向键平移镜头。镜头跟随角色时关闭，把这些键让给角色
+@export var keyboard_pan := true
 
 var camera: Camera3D
 
@@ -63,7 +65,7 @@ func _process(delta: float) -> void:
 		mv.y -= 1
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
 		mv.y += 1
-	if mv != Vector2.ZERO:
+	if mv != Vector2.ZERO and keyboard_pan:
 		move_local(mv.normalized() * pan_speed * delta * (distance / Style.CAMERA_DISTANCE))
 	if Input.is_physical_key_pressed(KEY_Q):
 		yaw_deg += 60.0 * delta

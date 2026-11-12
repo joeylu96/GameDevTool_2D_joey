@@ -58,9 +58,12 @@ func _ready() -> void:
 	sun = DirectionalLight3D.new()
 	sun.name = "Sun"
 	sun.shadow_enabled = shadows
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	sun.directional_shadow_max_distance = 90.0
-	sun.shadow_blur = 1.2
+	# 两级级联：近处阴影更清晰，远处覆盖整个画面
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_max_distance = 80.0
+	sun.directional_shadow_split_1 = 0.35
+	sun.directional_shadow_blend_splits = true
+	sun.shadow_blur = 1.0
 	add_child(sun)
 
 	environment = Environment.new()
@@ -151,6 +154,7 @@ func _apply() -> void:
 	var ll := sun.light_color * sun.light_energy * 0.5 + environment.ambient_light_color * environment.ambient_light_energy
 	light_level = Color(minf(ll.r, 1.0), minf(ll.g, 1.0), minf(ll.b, 1.0))
 	Globals.set_param(&"pw_light_color", light_level)
+	Globals.set_param(&"pw_sky_color", bg)
 
 	if absf(night_factor - _last_night) > 0.01:
 		_last_night = night_factor

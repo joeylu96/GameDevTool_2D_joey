@@ -1,10 +1,13 @@
 @tool
 extends RefCounted
-## 程序化像素贴图。全部只用调色板颜色，按 16 texel/米 设计（32px 贴图 = 2 米一循环）。
-## 用于占位资产；Blender 资产到位后可替换，但风格规则相同：
-##   1. 大面积用「成片色块」（可平铺的值噪声），不用逐像素随机杂点——缩到屏幕像素后会显得脏。
-##   2. 细节用成簇的小笔触（草丛、针叶、石子），每个笔触都有「亮面 + 下方阴影」。
-##   3. 地面类贴图（顶面）生成后 flip_y：俯视镜头里贴图 +v 指向远处，翻转后「阴影在下」方向才正确。
+## 程序化贴图，32 texel/米（64px 贴图 = 2 米一循环）。只用调色板颜色及其之间的混合色。
+## 规则：
+##   1. 大面积用成片色块（可平铺值噪声）和多级明暗过渡，不用逐像素随机杂点；
+##   2. 细节用成簇的小笔触（草叶、针叶、石子、木纹），每个笔触有亮面和阴影；
+##   3. 结构线（木板缝、瓦缝、石缝）1 像素宽，旁边 1 像素高光，体积感更细腻；
+##   4. 地面类贴图（顶面）生成后 flip_y：俯视镜头里贴图 +v 指向远处，翻转后「阴影在下」才正确；
+##   5. 生成 mipmap：远处平滑不闪烁，近处最近邻保持清晰。
+## 键名 "flat_<调色板色名>" 返回纯色贴图（人物五官等小部件用）。
 
 const Pal := preload("res://addons/pixel_world/core/pw_palette.gd")
 
@@ -14,83 +17,129 @@ static var _cache := {}
 static func get_tex(key: String) -> Texture2D:
 	if _cache.has(key):
 		return _cache[key]
-	var img: Image
-	match key:
-		"wall_red":
-			img = planks(["red_0", "red_1", "red_2", "red_3"], 101)
-		"wall_ochre":
-			img = planks(["ochre_0", "ochre_1", "ochre_2", "ochre_3"], 102)
-		"wall_teal":
-			img = planks(["teal_0", "teal_1", "teal_2", "teal_3"], 103)
-		"wall_wood":
-			img = planks(["wood_0", "wood_1", "wood_2", "wood_3"], 104)
-		"roof_grey":
-			img = shingles(["stone_0", "roof_0", "roof_1", "roof_2"], 201)
-		"roof_red":
-			img = shingles(["red_0", "red_1", "red_2", "red_3"], 202)
-		"trim":
-			img = speckle(["frame_0", "frame_1"], 16, 301, 0.04, 0.0)
-		"stone":
-			img = bricks(["stone_0", "stone_1", "stone_2", "stone_3"], 401, 8)
-		"brick":
-			img = bricks(["red_1", "red_2", "red_2", "red_3"], 402, 6)
-		"curb":
-			img = bricks(["snow_3", "stone_0", "stone_0", "stone_2"], 403, 16)
-		"pine":
-			img = needles(["pine_1", "pine_0", "pine_2"], 501, false)
-		"pine_skirt":
-			img = needles(["pine_2", "pine_1", "pine_3"], 502, true)
-		"leaf":
-			img = leaves(["grass_1", "grass_0", "grass_2"], 503)
-		"leaf_dark":
-			img = leaves(["grass_2", "grass_1", "pine_1"], 504)
-		"trunk":
-			img = planks(["wood_1", "wood_2", "wood_2", "wood_3"], 505, 16, 3)
-		"rock":
-			img = blotches(["stone_1", "stone_0", "stone_2"], 32, 506)
-		"roof_cap":
-			img = speckle(["roof_2", "roof_1"], 16, 203, 0.12, 0.0)
-		"flowers":
-			img = flowers(507)
-		"crate":
-			img = planks(["ochre_1", "ochre_2", "ochre_3", "wood_3"], 1001, 16, 4)
-			img.rotate_90(CLOCKWISE)
-		"boards":
-			img = planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1002, 16, 3)
-			img.rotate_90(CLOCKWISE)
-		"barrel":
-			img = planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1003, 16, 3)
-		"plaster_white":
-			img = speckle(["frame_0", "frame_1"], 16, 1101, 0.06, 0.0)
-		"plaster_red":
-			img = speckle(["red_0", "red_1"], 16, 1102, 0.08, 0.0)
-		"shore":
-			img = dirt(704, 64, 24)
-		"metal":
-			img = speckle(["stone_3", "stone_2", "ink"], 16, 601, 0.15, 0.1)
-		"lamp_glass":
-			img = speckle(["light_0", "light_1", "frame_0"], 16, 602, 0.2, 0.0)
-		"grass":
-			img = grass(701)
-		"dirt":
-			img = dirt(702)
-		"earth":
-			img = bricks(["dirt_1", "dirt_2", "stone_2", "dirt_2"], 703, 10)
-		"cobble":
-			img = cobbles(801)
-		"window":
-			img = window(false)
-		"window_emit":
-			img = window(true)
-		"door":
-			img = door()
-		_:
-			img = Image.create(1, 1, false, Image.FORMAT_RGBA8)
-			img.fill(Color.MAGENTA)
+	var img := _make(key)
+	img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache[key] = tex
 	return tex
 
+
+static func _make(key: String) -> Image:
+	if key.begins_with("flat_"):
+		var flat := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+		flat.fill(Pal.c(key.substr(5)))
+		return flat
+	match key:
+		# 墙面 / 木作
+		"wall_red":
+			return planks(["red_0", "red_1", "red_2", "red_3"], 101)
+		"wall_ochre":
+			return planks(["ochre_0", "ochre_1", "ochre_2", "ochre_3"], 102)
+		"wall_teal":
+			return planks(["teal_0", "teal_1", "teal_2", "teal_3"], 103)
+		"wall_wood":
+			return planks(["wood_0", "wood_1", "wood_2", "wood_3"], 104)
+		"door_wood":
+			return planks(["wood_0", "wood_1", "wood_2", "wood_3"], 111, 64, 6)
+		"door_red":
+			return planks(["red_0", "red_1", "red_2", "red_3"], 112, 64, 6)
+		"door_teal":
+			return planks(["teal_0", "teal_1", "teal_2", "teal_3"], 113, 64, 6)
+		"door_green":
+			return planks_c([Pal.mix("cloth_green", "grass_0", 0.35), Pal.c("cloth_green"),
+				Pal.mix("cloth_green", "pine_2", 0.5), Pal.c("pine_3")], 114, 64, 6)
+		"trim":
+			return mottle(["frame_0", "frame_1"], 32, 301, 0.6)
+		"trunk":
+			return bark(505)
+		"crate":
+			return _rot(planks(["ochre_1", "ochre_2", "ochre_3", "wood_3"], 1001, 32, 8))
+		"boards":
+			return _rot(planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1002, 32, 6))
+		"barrel":
+			return planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1003, 32, 6)
+		# 屋顶
+		"roof_grey":
+			return shingles(["stone_0", "roof_0", "roof_1", "roof_2"], 201)
+		"roof_red":
+			return shingles(["red_0", "red_1", "red_2", "red_3"], 202)
+		"roof_cap":
+			return mottle(["roof_2", "roof_1"], 32, 203, 0.55)
+		# 石作
+		"stone":
+			return bricks(["stone_0", "stone_1", "stone_2", "stone_3"], 401, 16)
+		"brick":
+			return bricks(["red_1", "red_2", "red_2", "red_3"], 402, 12)
+		"curb":
+			return bricks(["snow_3", "stone_0", "stone_0", "stone_2"], 403, 32)
+		"earth":
+			return bricks(["dirt_1", "dirt_2", "stone_2", "dirt_2"], 703, 20)
+		"rock":
+			return blotches(["stone_1", "stone_0", "stone_2"], 64, 506)
+		"plaster_white":
+			return mottle(["frame_0", "frame_1"], 32, 1101, 0.62)
+		"plaster_red":
+			return mottle(["red_0", "red_1"], 32, 1102, 0.6)
+		# 金属 / 玻璃
+		"metal":
+			return mottle(["stone_3", "ink"], 32, 601, 0.6)
+		"brass":
+			return mottle(["light_1", "light_2"], 16, 602, 0.6)
+		"lamp_glass":
+			return mottle(["light_0", "light_1"], 16, 603, 0.55)
+		"glass":
+			return glass(604)
+		# 植物
+		"pine":
+			return needles(["pine_1", "pine_0", "pine_2"], 501, false)
+		"pine_skirt":
+			return needles(["pine_2", "pine_1", "pine_3"], 502, true)
+		"leaf":
+			return leaves(["grass_1", "grass_0", "grass_2"], 503)
+		"leaf_dark":
+			return leaves(["grass_2", "grass_1", "pine_1"], 504)
+		"flowers":
+			return flowers(507)
+		"weed":
+			return weed(508)
+		# 地面
+		"grass":
+			return grass(701)
+		"dirt":
+			return dirt(702)
+		"shore":
+			return dirt(704, 96, 30)
+		"cobble":
+			return cobbles(801)
+		"sand":
+			return sand(705)
+		"lakebed":
+			return lakebed(706)
+		# 生物 / 人物
+		"fish_orange":
+			return fish(["light_2", "ochre_0", "red_1"], 901)
+		"fish_silver":
+			return fish(["stone_2", "snow_3", "stone_3"], 902)
+		"cloth_red":
+			return knit(["red_0", "red_1"], 1201, false)
+		"cloth_blue":
+			return knit([Pal.c("cloth_blue"), Pal.mix("cloth_blue", "window_0", 0.4)], 1202, false)
+		"cloth_dark":
+			return knit(["stone_2", "stone_3"], 1203, false)
+		"knit":
+			return knit(["cloth_yellow", "ochre_1"], 1204, true)
+		"skin":
+			return mottle(["skin_0", "skin_1"], 16, 1205, 0.7)
+		"hair":
+			return _rot(planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1206, 16, 2))
+		"boots":
+			return mottle(["wood_3", "ink"], 16, 1207, 0.6)
+	var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	img.fill(Color.MAGENTA)
+	return img
+
+
+# ---------------------------------------------------------------- 工具
 
 static func _rng(seed_value: int) -> RandomNumberGenerator:
 	var rng := RandomNumberGenerator.new()
@@ -98,9 +147,36 @@ static func _rng(seed_value: int) -> RandomNumberGenerator:
 	return rng
 
 
+static func _cols(names: Array) -> Array[Color]:
+	var out: Array[Color] = []
+	for n in names:
+		out.append(n if n is Color else Pal.c(n))
+	return out
+
+
+static func _rot(img: Image) -> Image:
+	img.rotate_90(CLOCKWISE)
+	return img
+
+
 ## 环绕写像素（保证贴图无缝平铺）
 static func _px(img: Image, x: int, y: int, col: Color) -> void:
 	img.set_pixel(posmod(x, img.get_width()), posmod(y, img.get_height()), col)
+
+
+## 环绕读像素
+static func _pix(img: Image, x: int, y: int) -> Color:
+	return img.get_pixel(posmod(x, img.get_width()), posmod(y, img.get_height()))
+
+
+## 1D 平滑值噪声（木纹等）
+static func _n1(x: float, s: float) -> float:
+	var i := floorf(x)
+	var f := x - i
+	f = f * f * (3.0 - 2.0 * f)
+	var a := fposmod(sin(i * 12.9898 + s * 78.233) * 43758.5453, 1.0)
+	var b := fposmod(sin((i + 1.0) * 12.9898 + s * 78.233) * 43758.5453, 1.0)
+	return lerpf(a, b, f)
 
 
 ## 可平铺的值噪声：周期 = size，cells = 每个周期的格子数。返回 size*size 个 0..1 的值。
@@ -141,323 +217,517 @@ static func fbm(size: int, cells: int, rng: RandomNumberGenerator) -> PackedFloa
 	return a
 
 
-## 竖向木板墙：cols = [亮, 主色, 缝, 最暗]。每块板左侧一列高光，偶有横向接缝和木纹。
-static func planks(cols: Array, seed_value: int, size := 32, plank_w := 4) -> Image:
+# ---------------------------------------------------------------- 木作
+
+static func planks(names: Array, seed_value: int, size := 64, plank_w := 8) -> Image:
+	return planks_c(_cols(names), seed_value, size, plank_w)
+
+
+## 竖向木板：cols = [亮, 主色, 暗, 缝]。每块板色调略有不同；左侧 1 像素高光、右侧 1 像素暗边；
+## 沿板长方向的细木纹、偶尔的横向接缝（带两颗钉子）和木节。
+static func planks_c(cols: Array, seed_value: int, size := 64, plank_w := 8) -> Image:
 	var rng := _rng(seed_value)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var hi := Pal.c(cols[0])
-	var seam_c := Pal.c(cols[2])
+	var mot := tile_noise(size, 4, rng)
 	for px in range(0, size, plank_w):
-		var shade := Pal.c(cols[0] if rng.randf() < 0.25 else cols[1])
-		var joint := rng.randi_range(0, size - 1)
-		for x in range(px, min(px + plank_w, size)):
+		var shade: Color = (cols[0] as Color).lerp(cols[1], rng.randf_range(0.35, 1.0))
+		var joint := rng.randi_range(0, size - 1) if rng.randf() < 0.65 else -100
+		for x in range(px, mini(px + plank_w, size)):
+			var lx := x - px
+			var gs := rng.randf() * 100.0
 			for y in size:
-				var col := shade
-				if x == px:
-					col = seam_c
-				elif y == joint:
-					col = seam_c
-				elif x == px + 1:
-					col = hi
+				var col := shade.lerp(cols[2], (mot[y * size + x] - 0.5) * 0.35)
+				var g := _n1(y * 0.11, gs)
+				if g > 0.74:
+					col = col.lerp(cols[2], 0.4)
+				elif g < 0.1:
+					col = col.lerp(cols[0], 0.3)
+				if lx == 0:
+					col = cols[3]
+				elif lx == 1:
+					col = col.lerp(cols[0], 0.5)
+				elif lx == plank_w - 1:
+					col = col.lerp(cols[2], 0.4)
+				var dy := posmod(y - joint, size)
+				if dy == 0 and lx > 0:
+					col = cols[3]
+				elif dy == 1 and lx > 0:
+					col = col.lerp(cols[0], 0.4)
+				elif (dy == 3 or dy == size - 2) and (lx == 2 or lx == plank_w - 2) and joint >= 0:
+					col = cols[3].lerp(cols[2], 0.3)  # 钉子
 				img.set_pixel(x, y, col)
-		# 木纹：板中间 2~3 像素的竖向短线
-		for i in 2:
-			var gx := px + rng.randi_range(2, plank_w - 1)
-			var gy := rng.randi_range(0, size - 1)
-			for k in rng.randi_range(2, 3):
-				_px(img, gx, gy + k, Pal.c(cols[3]) if k == 0 else seam_c)
+		# 木节
+		if rng.randf() < 0.3 and plank_w >= 6:
+			var kx := px + rng.randi_range(2, plank_w - 3)
+			var ky := rng.randi_range(0, size - 1)
+			for oy in range(-2, 3):
+				for ox in range(-1, 2):
+					var ring := absi(oy) == 2 or absi(ox) == 1
+					var cur := _pix(img, kx + ox, ky + oy)
+					_px(img, kx + ox, ky + oy, cur.lerp(cols[2], 0.45) if ring else (cols[3] as Color).lerp(cols[2], 0.5))
 	return img
 
 
-## 瓦片屋顶（贴图 +v = 顺坡向下）：cols = [保留, 主色A, 主色B, 缝/阴影]（cols[0] 暂未使用）。
-## 每排：顶部一行是上一排投下的阴影；竖缝错开，不画到最后一行。
-static func shingles(cols: Array, seed_value: int, size := 32) -> Image:
+## 树皮：竖向深沟 + 亮脊
+static func bark(seed_value: int, size := 32) -> Image:
 	var rng := _rng(seed_value)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var row_h := 4
-	var sw := 8
-	for row in range(size / row_h):
-		var offset := (row % 2) * (sw / 2) + rng.randi_range(0, 1)
-		var shades := []
-		for i in range(size / sw + 1):
-			shades.append(Pal.c(cols[1] if rng.randf() < 0.88 else cols[2]))  # 以浅瓦为主，偶尔夹一片深瓦
-		for y in range(row * row_h, row * row_h + row_h):
-			var ly := y - row * row_h
-			for x in size:
-				var xi := x + offset
-				var col: Color = shades[(xi / sw) % shades.size()]
-				if ly == 0:
-					col = Pal.c(cols[3])
-				elif xi % sw == 0 and ly < row_h - 1:
-					col = Pal.c(cols[3])  # 竖缝不画到最后一行，瓦片之间连成一片，不像砖墙
-				img.set_pixel(x, y, col)
-	return img
-
-
-## 砖/石块：cols = [亮, 次亮, 暗, 灰缝]。每块顶行比本色亮一级。
-static func bricks(cols: Array, seed_value: int, brick_w := 8, size := 32) -> Image:
-	var rng := _rng(seed_value)
-	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var row_h := 4
-	for row in range(size / row_h):
-		var offset := (row % 2) * (brick_w / 2)
-		var shades: Array[int] = []
-		for i in range(size / brick_w + 1):
-			shades.append(rng.randi_range(0, 2))
-		for y in range(row * row_h, row * row_h + row_h):
-			var ly := y - row * row_h
-			for x in size:
-				var xi := x + offset
-				var si: int = shades[(xi / brick_w) % shades.size()]
-				var col := Pal.c(cols[si])
-				if ly == 0 or xi % brick_w == 0:
-					col = Pal.c(cols[3])
-				elif ly == 1:
-					col = Pal.c(cols[maxi(si - 1, 0)])
-				img.set_pixel(x, y, col)
-	return img
-
-
-## 底色 + 随机杂点：cols = [底, 点1, 点2]（只用于小物件：金属、灯罩、封檐板）
-static func speckle(cols: Array, size: int, seed_value: int, p1: float, p2: float) -> Image:
-	var rng := _rng(seed_value)
-	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	for y in size:
-		for x in size:
-			var r := rng.randf()
-			var col := Pal.c(cols[0])
-			if r < p1:
-				col = Pal.c(cols[1])
-			elif r < p1 + p2:
-				col = Pal.c(cols[2])
+	var cols := _cols(["wood_1", "wood_2", "wood_3"])
+	for x in size:
+		var s := rng.randf() * 50.0
+		for y in size:
+			var v := _n1(y * 0.18, s) * 0.6 + _n1(x * 0.7, 3.0) * 0.4
+			var col := cols[1]
+			if v > 0.62:
+				col = cols[0]
+			elif v < 0.32:
+				col = cols[2]
 			img.set_pixel(x, y, col)
 	return img
 
 
-## 三色成片斑块：cols = [底, 亮斑, 暗斑]（石头等）
-static func blotches(cols: Array, size: int, seed_value: int) -> Image:
+# ---------------------------------------------------------------- 屋顶 / 石作
+
+## 瓦片屋顶（贴图 +v = 顺坡向下）：cols = [瓦唇高光, 主色A(亮), 主色B(暗), 缝]。
+## 每排 8 像素：顶部是上一排投下的阴影，往下渐亮，底边一道瓦唇高光，下沿两角圆润。
+static func shingles(names: Array, seed_value: int, size := 64) -> Image:
+	var cols := _cols(names)
 	var rng := _rng(seed_value)
-	var n := fbm(size, 4, rng)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var mot := tile_noise(size, 4, rng)
+	var row_h := 8
+	var sw := 16
+	for row in range(size / row_h):
+		var offset := (row % 2) * (sw / 2) + rng.randi_range(-2, 2)
+		var tiles: Array[Color] = []
+		for i in range(size / sw + 1):
+			var t := rng.randf() * 0.45 if rng.randf() < 0.88 else rng.randf_range(0.75, 1.0)
+			tiles.append(cols[1].lerp(cols[2], t))
+		for ly in row_h:
+			var y := row * row_h + ly
+			for x in size:
+				var xi := posmod(x + offset, size)
+				var lx := xi % sw
+				var base: Color = tiles[(xi / sw) % tiles.size()]
+				base = base.lerp(cols[3], (mot[y * size + x] - 0.5) * 0.25)
+				var col := base
+				if ly == 0:
+					col = cols[3]
+				elif ly == 1:
+					col = base.lerp(cols[3], 0.4)
+				elif ly == row_h - 1:
+					col = base.lerp(cols[0], 0.45)
+				else:
+					col = base.lerp(cols[0], float(ly - 2) / row_h * 0.25)
+				if lx == 0 and ly < row_h - 1:
+					col = cols[3]
+				elif lx == 1 and ly > 0 and ly < row_h - 1:
+					col = col.lerp(cols[0], 0.2)
+				if ly == row_h - 1 and (lx == 0 or lx == sw - 1):
+					col = cols[3]
+				img.set_pixel(x, y, col)
+	return img
+
+
+## 砖 / 石块：cols = [亮, 主色, 暗, 灰缝]。每块色调连续变化；顶行和左列高光、底行和右列暗边；少量缺口。
+static func bricks(names: Array, seed_value: int, brick_w := 16, size := 64, row_h := 8) -> Image:
+	var cols := _cols(names)
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var mot := tile_noise(size, 8, rng)
+	for row in range(size / row_h):
+		var offset := (row % 2) * (brick_w / 2)
+		var shades: Array[Color] = []
+		for i in range(size / brick_w + 1):
+			shades.append(cols[0].lerp(cols[2], rng.randf_range(0.2, 0.9)))
+		for ly in row_h:
+			var y := row * row_h + ly
+			for x in size:
+				var xi := x + offset
+				var lx := xi % brick_w
+				var base: Color = shades[(xi / brick_w) % shades.size()]
+				base = base.lerp(cols[2], (mot[y * size + x] - 0.5) * 0.3)
+				var col := base
+				if ly == 0 or lx == 0:
+					col = cols[3]
+				elif ly == 1:
+					col = base.lerp(cols[0], 0.45)
+				elif lx == 1:
+					col = base.lerp(cols[0], 0.25)
+				elif ly == row_h - 1:
+					col = base.lerp(cols[3], 0.35)
+				elif lx == brick_w - 1:
+					col = base.lerp(cols[3], 0.25)
+				img.set_pixel(x, y, col)
+	for i in size * size / 90:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		_px(img, x, y, _pix(img, x, y).lerp(cols[3], 0.45))
+	return img
+
+
+## 低频斑驳：cols = [底色, 斑色]，amount 控制斑块多少（阈值）。用于封檐板、灰泥、金属、皮肤等。
+static func mottle(names: Array, size: int, seed_value: int, threshold := 0.6) -> Image:
+	var cols := _cols(names)
+	var rng := _rng(seed_value)
+	var n := fbm(size, maxi(2, size / 8), rng)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
 	for y in size:
 		for x in size:
 			var v := n[y * size + x]
-			var col := Pal.c(cols[0])
-			if v > 0.6:
-				col = Pal.c(cols[1])
-			elif v < 0.34:
-				col = Pal.c(cols[2])
+			var col := cols[0]
+			if v > threshold + 0.06:
+				col = cols[1]
+			elif v > threshold:
+				col = cols[0].lerp(cols[1], 0.5)
 			img.set_pixel(x, y, col)
 	return img
 
 
-## 草地 96px（6 米一循环）：成片的明暗色块 + 小草丛 + 零星小花。
-static func grass(seed_value: int, size := 96) -> Image:
+## 石头：三色成片斑块 + 中间过渡色
+static func blotches(names: Array, size: int, seed_value: int) -> Image:
+	var cols := _cols(names)
 	var rng := _rng(seed_value)
 	var n := fbm(size, 6, rng)
-	# 明度阶梯：暗 → 亮。色块用中间三级，草丛用相邻一级做高光/阴影
-	var ramp := [Pal.c("pine_1"), Pal.c("grass_2"), Pal.c("grass_1"), Pal.c("grass_0"), Pal.c("grass_0")]
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var v := n[y * size + x]
+			var col := cols[0]
+			if v > 0.64:
+				col = cols[1]
+			elif v > 0.58:
+				col = cols[0].lerp(cols[1], 0.5)
+			elif v < 0.32:
+				col = cols[2]
+			elif v < 0.38:
+				col = cols[0].lerp(cols[2], 0.5)
+			img.set_pixel(x, y, col)
+	return img
+
+
+## 窗玻璃：上亮下暗的渐变 + 两道斜向反光
+static func glass(seed_value: int, size := 32) -> Image:
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var c0 := Pal.c("window_0")
+	var c1 := Pal.c("window_1")
+	var hl := Pal.mix("window_1", "snow_2", 0.45)
+	for y in size:
+		for x in size:
+			var col := c1.lerp(c0, clampf(float(y) / size * 1.4, 0.0, 1.0))
+			var d := posmod(x + y, size)
+			if d >= 6 and d < 9:
+				col = hl
+			elif d == 11:
+				col = col.lerp(hl, 0.6)
+			img.set_pixel(x, y, col)
+	return img
+
+
+# ---------------------------------------------------------------- 地面
+
+## 草地 128px（4 米一循环）：五级明暗的成片色块 + 大量细草叶（尖端亮、根部暗）+ 零星小花。
+static func grass(seed_value: int, size := 128) -> Image:
+	var rng := _rng(seed_value)
+	var n := fbm(size, 8, rng)
+	var ramp: Array[Color] = [Pal.c("pine_1"), Pal.mix("pine_1", "grass_2", 0.5), Pal.c("grass_2"),
+		Pal.mix("grass_2", "grass_1", 0.5), Pal.c("grass_1"), Pal.mix("grass_1", "grass_0", 0.5), Pal.c("grass_0")]
 	var level := PackedInt32Array()
 	level.resize(size * size)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
 	for y in size:
 		for x in size:
-			var v := n[y * size + x]
-			var l := 3 if v > 0.6 else (1 if v < 0.3 else 2)
+			var l := clampi(int((n[y * size + x] - 0.22) / 0.56 * 4.0) + 1, 1, 5)
 			level[y * size + x] = l
 			img.set_pixel(x, y, ramp[l])
-	# 草丛：「亮 · 亮」上排 + 中间一点阴影
-	for i in size * size / 26:
-		var x := rng.randi_range(0, size - 1)
-		var y := rng.randi_range(0, size - 1)
-		var l := level[y * size + x]
-		if l < 3:
-			_px(img, x, y, ramp[l + 1])
-			_px(img, x + 1, y - 1, ramp[l + 1])
-		_px(img, x, y + 1, ramp[l - 1])
-		_px(img, x + 1, y, ramp[l - 1])
-	# 小花：白 / 淡黄 / 红，下方一点阴影
-	var flowers := [Pal.c("frame_0"), Pal.c("light_0"), Pal.c("red_0"), Pal.c("frame_0")]
-	for i in size * size / 640:
-		var x := rng.randi_range(0, size - 1)
-		var y := rng.randi_range(0, size - 1)
-		_px(img, x, y, flowers[rng.randi_range(0, flowers.size() - 1)])
-		_px(img, x, y + 1, ramp[1])
-	img.flip_y()
-	return img
-
-
-## 花箱里的花：深绿叶底 + 密集的红 / 黄 / 白小花，每朵下方一点阴影。
-static func flowers(seed_value: int, size := 16) -> Image:
-	var rng := _rng(seed_value)
-	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	img.fill(Pal.c("pine_1"))
-	var cols := [Pal.c("red_0"), Pal.c("light_0"), Pal.c("frame_0"), Pal.c("red_0"), Pal.c("cloth_yellow")]
-	for i in size * size / 10:
-		var x := rng.randi_range(0, size - 1)
-		var y := rng.randi_range(0, size - 1)
-		_px(img, x, y + 1, Pal.c("grass_1"))
+	# 草叶：2~3 像素高的竖线，尖端亮一级、根部暗一级，偶尔向一侧倾斜
 	for i in size * size / 7:
 		var x := rng.randi_range(0, size - 1)
 		var y := rng.randi_range(0, size - 1)
-		_px(img, x, y, cols[rng.randi_range(0, cols.size() - 1)])
-		_px(img, x, y + 1, Pal.c("pine_2"))
-	return img
-
-
-## 土路 64px：成片的深浅土色 + 带阴影的小石子。pebble_div 越小石子越多（岸边碎石带用 24）。
-static func dirt(seed_value: int, size := 64, pebble_div := 110) -> Image:
-	var rng := _rng(seed_value)
-	var n := fbm(size, 8, rng)
-	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	for y in size:
-		for x in size:
-			var v := n[y * size + x]
-			var col := Pal.c("dirt_1")
-			if v > 0.66:
-				col = Pal.c("dirt_0")
-			elif v < 0.3:
-				col = Pal.c("dirt_2")
-			img.set_pixel(x, y, col)
-	for i in size * size / pebble_div:
+		var l := level[y * size + x]
+		var lean := rng.randi_range(-1, 1) if rng.randf() < 0.3 else 0
+		_px(img, x, y, ramp[l - 1])
+		_px(img, x, y - 1, ramp[mini(l + 1, 6)])
+		if rng.randf() < 0.5:
+			_px(img, x + lean, y - 2, ramp[mini(l + 1, 6)])
+	# 小花：十字形花瓣 + 花心，下方一点阴影
+	var petals := [Pal.c("frame_0"), Pal.c("light_0"), Pal.c("red_0"), Pal.c("cloth_yellow"), Pal.c("snow_1")]
+	for i in size * size / 520:
 		var x := rng.randi_range(0, size - 1)
 		var y := rng.randi_range(0, size - 1)
-		var big := rng.randf() < 0.4
-		_px(img, x, y, Pal.c("stone_0"))
-		if big:
-			_px(img, x + 1, y, Pal.c("stone_1"))
-		_px(img, x, y + 1, Pal.c("dirt_2"))
-		if big:
-			_px(img, x + 1, y + 1, Pal.c("dirt_2"))
+		var pc: Color = petals[rng.randi_range(0, petals.size() - 1)]
+		_px(img, x, y, Pal.c("light_1"))
+		_px(img, x - 1, y, pc)
+		_px(img, x + 1, y, pc)
+		_px(img, x, y - 1, pc)
+		_px(img, x, y + 1, pc.lerp(ramp[1], 0.5))
+		_px(img, x, y + 2, ramp[1])
 	img.flip_y()
 	return img
 
 
-## 石板路 48px（3 米一循环）：成排的圆角石块（5 像素高），顶行高光、底行阴影，
-## 少量偏蓝的石头增加变化。不用暖色石块——在灰色路面上会变成扎眼的橙点。
-static func cobbles(seed_value: int, size := 48) -> Image:
+## 土路：成片的五级土色 + 带高光和阴影的小石子 + 零星草芽。pebble_div 越小石子越多。
+static func dirt(seed_value: int, size := 128, pebble_div := 140) -> Image:
+	var rng := _rng(seed_value)
+	var n := fbm(size, 8, rng)
+	var ramp: Array[Color] = [Pal.c("dirt_2"), Pal.mix("dirt_2", "dirt_1", 0.5), Pal.c("dirt_1"),
+		Pal.mix("dirt_1", "dirt_0", 0.5), Pal.c("dirt_0")]
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			img.set_pixel(x, y, ramp[clampi(int((n[y * size + x] - 0.2) / 0.6 * 5.0), 0, 4)])
+	for i in size * size / pebble_div:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		var w := rng.randi_range(2, 3)
+		var hl := Pal.mix("stone_0", "frame_1", rng.randf() * 0.5)
+		for dx in w:
+			_px(img, x + dx, y, hl if dx == 0 else Pal.c("stone_0"))
+			_px(img, x + dx, y + 1, Pal.c("stone_1"))
+			_px(img, x + dx, y + 2, ramp[0])
+	for i in size * size / 900:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		_px(img, x, y, Pal.c("grass_1"))
+		_px(img, x + 1, y - 1, Pal.c("grass_0"))
+		_px(img, x, y + 1, Pal.c("grass_2"))
+	img.flip_y()
+	return img
+
+
+## 石板路 96px（3 米一循环）：成排的圆角石块（9 像素高），从上到下由亮到暗，左亮右暗，
+## 每块色调和斑驳都不同；少量偏蓝 / 偏暖的石头增加变化。
+static func cobbles(seed_value: int, size := 96) -> Image:
 	var rng := _rng(seed_value)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	img.fill(Pal.c("stone_2"))  # 石缝
-	# 每种石头 = [高光, 本色, 阴影]
+	var mortar := Pal.mix("stone_2", "stone_3", 0.5)
+	img.fill(mortar)
+	var mot := tile_noise(size, 12, rng)
 	var tones := [
 		[Pal.c("snow_3"), Pal.c("stone_0"), Pal.c("stone_1")],
-		[Pal.c("stone_0"), Pal.c("stone_1"), Pal.c("stone_1")],
+		[Pal.c("stone_0"), Pal.c("stone_1"), Pal.c("stone_2")],
 		[Pal.c("stone_0"), Pal.c("roof_0"), Pal.c("roof_1")],
+		[Pal.c("frame_1"), Pal.mix("stone_0", "dirt_0", 0.45), Pal.c("stone_1")],
 	]
-	var row_h := 6
-	for row in range(size / row_h):
-		var x := rng.randi_range(0, 9)
+	var row_h := 10
+	for row in range(size / row_h + 1):
+		if row * row_h >= size:
+			break
+		var x := rng.randi_range(0, 15)
 		var remaining := size
 		while remaining > 0:
-			var w := rng.randi_range(6, 10)
-			if remaining - w < 6:
+			var w := rng.randi_range(12, 18)
+			if remaining - w < 12:
 				w = remaining
 			remaining -= w
 			var r := rng.randf()
-			var t: Array = tones[0 if r < 0.5 else (1 if r < 0.88 else 2)]
-			for ly in row_h - 1:
+			var t: Array = tones[0 if r < 0.45 else (1 if r < 0.86 else (2 if r < 0.95 else 3))]
+			var sh := rng.randf_range(-0.15, 0.15)
+			var ih := row_h - 1
+			for ly in ih:
 				for lx in w - 1:
-					var corner := (lx == 0 or lx == w - 2) and (ly == 0 or ly == row_h - 2)
-					if corner:
-						continue
-					var col: Color = t[1]
-					if ly == 0 and lx > 0 and lx < w - 3:
-						col = t[0]
-					elif ly == row_h - 2:
-						col = t[2]
-					_px(img, x + lx, row * row_h + ly, col)
+					var cx := mini(lx, w - 2 - lx)
+					var cy := mini(ly, ih - 1 - ly)
+					if cx + cy < 2:
+						continue  # 圆角
+					var v := float(ly) / (ih - 1) + sh
+					var col: Color
+					if v < 0.25:
+						col = (t[0] as Color).lerp(t[1], v / 0.25)
+					else:
+						col = (t[1] as Color).lerp(t[2], clampf((v - 0.25) / 0.75, 0.0, 1.0) * 0.85)
+					if lx == 0 or (lx == 1 and cy < 2):
+						col = col.lerp(t[0], 0.4)
+					elif lx == w - 2:
+						col = col.lerp(t[2], 0.5)
+					var yy := row * row_h + ly
+					col = col.lerp(t[2], (mot[posmod(yy, size) * size + posmod(x + lx, size)] - 0.5) * 0.35)
+					_px(img, x + lx, yy, col)
 			x += w
 	img.flip_y()
 	return img
 
 
+## 湖边浅滩的沙：浅暖色 + 平行的沙纹 + 小石子和贝壳
+static func sand(seed_value: int, size := 96) -> Image:
+	var rng := _rng(seed_value)
+	var n := fbm(size, 6, rng)
+	var c0 := Pal.mix("dirt_0", "frame_1", 0.5)
+	var c1 := Pal.c("dirt_0")
+	var c2 := Pal.mix("dirt_0", "dirt_1", 0.6)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var v := n[y * size + x]
+			var col := c1
+			if v > 0.6:
+				col = c0
+			# 沙纹：被噪声扭曲的弯曲条纹，低对比
+			var ripple := sin((y * 0.9 + x * 0.3 + v * 22.0) * TAU / 10.0)
+			if ripple > 0.9:
+				col = col.lerp(c2, 0.35)
+			elif ripple < -0.94:
+				col = col.lerp(c0, 0.25)
+			img.set_pixel(x, y, col)
+	for i in size * size / 160:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		var pc := Pal.c("stone_0") if rng.randf() < 0.75 else Pal.c("snow_1")
+		_px(img, x, y, pc)
+		_px(img, x + 1, y, pc.lerp(Pal.c("stone_1"), 0.5))
+		_px(img, x, y + 1, c2)
+	img.flip_y()
+	return img
+
+
+## 深一些的湖底：泥色 + 卵石 + 深色水草斑块
+static func lakebed(seed_value: int, size := 96) -> Image:
+	var rng := _rng(seed_value)
+	var n := fbm(size, 6, rng)
+	var c0 := Pal.mix("dirt_1", "teal_2", 0.35)
+	var c1 := Pal.mix("dirt_2", "teal_3", 0.4)
+	var c2 := Pal.mix("pine_2", "teal_3", 0.5)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var v := n[y * size + x]
+			var col := c1
+			if v > 0.6:
+				col = c0
+			elif v < 0.3:
+				col = c2
+			img.set_pixel(x, y, col)
+	for i in size * size / 120:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		_px(img, x, y, Pal.c("stone_1"))
+		_px(img, x + 1, y, Pal.c("stone_2"))
+		_px(img, x, y + 1, Pal.c("stone_3"))
+	img.flip_y()
+	return img
+
+
+# ---------------------------------------------------------------- 植物
+
 ## 针叶：cols = [底, 亮, 暗]。droop=false：顶盖上的「^」形针叶簇；droop=true：裙边上下垂的针叶。
-static func needles(cols: Array, seed_value: int, droop: bool, size := 32) -> Image:
+static func needles(names: Array, seed_value: int, droop: bool, size := 64) -> Image:
+	var cols := _cols(names)
 	var rng := _rng(seed_value)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	img.fill(Pal.c(cols[0]))
-	var hi := Pal.c(cols[1])
-	var sh := Pal.c(cols[2])
-	for gy in range(0, size, 4):
-		for gx in range(0, size, 5):
-			var x := gx + (gy / 4 % 2) * 2 + rng.randi_range(-1, 1)
+	var n := tile_noise(size, 6, rng)
+	for y in size:
+		for x in size:
+			img.set_pixel(x, y, cols[2].lerp(cols[0], 0.5) if n[y * size + x] < 0.3 else cols[0])
+	var hi := cols[1]
+	var mid := cols[0].lerp(cols[1], 0.5)
+	var sh := cols[2]
+	for gy in range(0, size, 5):
+		for gx in range(0, size, 6):
+			var x := gx + (gy / 5 % 2) * 3 + rng.randi_range(-1, 1)
 			var y := gy + rng.randi_range(0, 1)
 			if droop:
 				_px(img, x, y, hi)
 				_px(img, x, y + 1, hi)
-				_px(img, x + 1, y + 2, sh)
-				_px(img, x, y + 2, sh)
+				_px(img, x, y + 2, mid)
+				_px(img, x, y + 3, sh)
+				_px(img, x + 1, y + 1, mid)
+				_px(img, x + 1, y + 3, sh)
 			else:
 				_px(img, x, y, hi)
 				_px(img, x - 1, y + 1, hi)
 				_px(img, x + 1, y + 1, hi)
+				_px(img, x - 2, y + 2, mid)
+				_px(img, x + 2, y + 2, mid)
 				_px(img, x, y + 2, sh)
+				_px(img, x, y + 3, sh)
 	return img
 
 
-## 阔叶：cols = [底, 亮, 暗]。成片暗部 + 一簇簇亮叶，每簇下方一点阴影。
-static func leaves(cols: Array, seed_value: int, size := 32) -> Image:
+## 阔叶：cols = [底, 亮, 暗]。成片暗部 + 一簇簇圆形叶团（左上亮、右下暗，顶端一点反光）。
+static func leaves(names: Array, seed_value: int, size := 64) -> Image:
+	var cols := _cols(names)
 	var rng := _rng(seed_value)
-	var n := tile_noise(size, 4, rng)
+	var n := tile_noise(size, 6, rng)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var base := Pal.c(cols[0])
-	var hi := Pal.c(cols[1])
-	var sh := Pal.c(cols[2])
 	for y in size:
 		for x in size:
-			img.set_pixel(x, y, sh if n[y * size + x] < 0.32 else base)
-	for i in size * size / 18:
+			img.set_pixel(x, y, cols[2] if n[y * size + x] < 0.32 else cols[0])
+	var shine := cols[1].lerp(Pal.c("light_0"), 0.25)
+	for i in size * size / 22:
 		var x := rng.randi_range(0, size - 1)
 		var y := rng.randi_range(0, size - 1)
-		_px(img, x, y, hi)
-		_px(img, x + 1, y, hi)
-		_px(img, x, y - 1, hi)
-		_px(img, x, y + 1, sh)
-		_px(img, x + 1, y + 1, sh)
+		_px(img, x, y - 1, cols[1])
+		_px(img, x + 1, y - 1, cols[1])
+		_px(img, x - 1, y, cols[1])
+		_px(img, x, y, shine if rng.randf() < 0.3 else cols[1])
+		_px(img, x + 1, y, cols[0].lerp(cols[1], 0.5))
+		_px(img, x + 2, y, cols[0])
+		_px(img, x - 1, y + 1, cols[0])
+		_px(img, x, y + 1, cols[0].lerp(cols[2], 0.5))
+		_px(img, x + 1, y + 1, cols[2])
 	return img
 
 
-## 窗户 16x20：白框十字窗格 + 深色玻璃。emit=true 时输出发光遮罩（玻璃=白）。
-static func window(emit: bool) -> Image:
-	var w := 16
-	var h := 20
-	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	for y in h:
-		for x in w:
-			var frame := x < 2 or x >= w - 2 or y < 2 or y >= h - 2 or x == 7 or x == 8 or y == 9 or y == 10
-			var col: Color
-			if emit:
-				col = Color.BLACK if frame else Color.WHITE
-			elif frame:
-				col = Pal.c("frame_0") if y < h - 2 else Pal.c("frame_1")
-			else:
-				# 左上角一道斜高光
-				var hl := (x + y) % 9 == 0 and x < 7 and y < 9
-				col = Pal.c("window_1") if hl else Pal.c("window_0")
+## 花箱里的花：深绿叶底 + 密集的小花（花瓣 + 花心）
+static func flowers(seed_value: int, size := 32) -> Image:
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	img.fill(Pal.c("pine_1"))
+	for i in size * size / 8:
+		_px(img, rng.randi_range(0, size - 1), rng.randi_range(0, size - 1), Pal.c("grass_1"))
+	var cols := [Pal.c("red_0"), Pal.c("light_0"), Pal.c("frame_0"), Pal.c("red_0"), Pal.c("cloth_yellow")]
+	for i in size * size / 14:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		var pc: Color = cols[rng.randi_range(0, cols.size() - 1)]
+		_px(img, x, y, pc)
+		_px(img, x + 1, y, pc)
+		_px(img, x, y + 1, pc.lerp(Pal.c("pine_2"), 0.4))
+		_px(img, x + 1, y + 1, Pal.c("light_1"))
+		_px(img, x, y + 2, Pal.c("pine_2"))
+	return img
+
+
+## 水草：竖向的深浅绿色叶片
+static func weed(seed_value: int, size := 16) -> Image:
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for x in size:
+		var col := Pal.mix("grass_2", "teal_1", rng.randf())
+		for y in size:
+			img.set_pixel(x, y, col.lerp(Pal.c("teal_3"), float(y) / size * 0.6))
+	return img
+
+
+# ---------------------------------------------------------------- 生物 / 人物
+
+## 鱼：cols = [背, 腹, 斑]。鱼鳞小弧纹
+static func fish(names: Array, seed_value: int, size := 16) -> Image:
+	var cols := _cols(names)
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var col := cols[0].lerp(cols[1], float(y) / size)
+			if (x + (y / 2) % 2 * 2) % 4 == 0 and y % 2 == 0:
+				col = col.lerp(cols[2], 0.35)
 			img.set_pixel(x, y, col)
+	for i in 4:
+		_px(img, rng.randi_range(0, size - 1), rng.randi_range(0, size / 2), cols[2])
 	return img
 
 
-## 门 20x32：白框 + 竖木板 + 门把手
-static func door() -> Image:
-	var w := 20
-	var h := 32
-	var rng := _rng(901)
-	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	var shades := []
-	for i in 6:
-		shades.append(Pal.c(["wood_1", "wood_2"][rng.randi_range(0, 1)]))
-	for y in h:
-		for x in w:
-			var col: Color
-			if x < 2 or x >= w - 2 or y < 2:
-				col = Pal.c("frame_0")
-			elif (x - 2) % 4 == 0:
-				col = Pal.c("wood_3")
-			else:
-				col = shades[(x - 2) / 4]
-			if x == 14 and y == 17:
-				col = Pal.c("light_1")
+## 针织 / 布料：cols = [主色, 暗色]。ribbed=true 时是竖向罗纹（毛线帽），否则是细密的斜纹
+static func knit(names: Array, seed_value: int, ribbed: bool, size := 16) -> Image:
+	var cols := _cols(names)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var col := cols[0]
+			if ribbed:
+				if x % 3 == 0:
+					col = cols[1]
+			elif (x + y) % 4 == 0:
+				col = cols[0].lerp(cols[1], 0.5)
 			img.set_pixel(x, y, col)
 	return img

@@ -1,10 +1,11 @@
 @tool
 extends RefCounted
-## 占位房屋：木板墙 + 双坡屋顶（带厚度、白色封檐、屋脊盖板）+ 白色转角 + 窗/门 + 烟囱。
-## 细节：窗台和窗楣、一楼花箱、两层楼的腰线、门廊雨棚、老虎窗。
+## 占位房屋：木板墙 + 双坡屋顶（带厚度、白色封檐、屋脊盖板）+ 白色转角 + 门窗部件 + 烟囱。
+## 细节：门窗是独立 3D 部件（见 pw_parts.gd），百叶窗、一楼花箱、两层楼的腰线、门廊雨棚、老虎窗。
 ## 正门朝 +Z。Blender 资产到位前用它跑通全流程。
 
 const MB := preload("res://addons/pixel_world/core/pw_mesh_builder.gd")
+const Parts := preload("res://addons/pixel_world/assets/placeholder/pw_parts.gd")
 
 const WALLS := ["wall_red", "wall_red", "wall_ochre", "wall_teal", "wall_wood"]
 const FLOOR_H := 2.8
@@ -34,7 +35,16 @@ static func footprint(p: Dictionary) -> Vector2:
 	return Vector2(p.width + OVERHANG * 2.0, p.depth + OVERHANG * 2.0)
 
 
-## 细节参数：老虎窗数量、花箱、雨棚、屋顶颜色。已显式给出的键不会被覆盖。
+## 门的颜色：避开和墙同色
+const DOOR_FOR_WALL := {
+	"wall_red": ["door_teal", "door_green", "door_wood"],
+	"wall_ochre": ["door_red", "door_teal", "door_green"],
+	"wall_teal": ["door_red", "door_wood", "door_green"],
+	"wall_wood": ["door_red", "door_teal", "door_green"],
+}
+
+
+## 细节参数：老虎窗数量、花箱、雨棚、屋顶颜色、门色、百叶窗、窗格。已显式给出的键不会被覆盖。
 static func _details(p: Dictionary) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([p.width, p.depth, p.pitch, p.wall])
@@ -44,6 +54,11 @@ static func _details(p: Dictionary) -> Dictionary:
 		"canopy": rng.randf() < 0.6,
 		"roof": "roof_red" if p.wall != "wall_red" and rng.randf() < 0.3 else "roof_grey",
 	}
+	var doors: Array = DOOR_FOR_WALL.get(p.wall, ["door_wood"])
+	d["door"] = doors[rng.randi_range(0, doors.size() - 1)]
+	d["shutters"] = d["door"] if rng.randf() < 0.35 else ""
+	d["panes_y"] = 3 if rng.randf() < 0.4 else 2
+	d["light_seed"] = rng.randi()
 	d.merge(p, true)
 	return d
 
@@ -97,7 +112,9 @@ static func build(params: Dictionary) -> ArrayMesh:
 			mb.face("trim", [a, b, b - t, a - t], Vector3(sx, 0, 0))
 	mb.box("roof_cap", Vector3(-xe - 0.03, ridge - 0.06, -0.14), Vector3(xe + 0.03, ridge + 0.1, 0.14))
 
-	# 窗户（前后墙）
+	# 窗户（前后墙）：独立部件，每扇窗夜里亮不亮各自随机
+	var lr := RandomNumberGenerator.new()
+	lr.seed = p.light_seed
 	var n_win := maxi(1, int((w - 1.0) / 2.2))
 	var spacing := w / n_win
 	for f in floors:
@@ -107,16 +124,18 @@ static func build(params: Dictionary) -> ArrayMesh:
 				var x := -hw + spacing * (i + 0.5)
 				if f == 0 and s > 0 and absf(x) < 1.3:
 					continue  # 给门让位
-				_window(mb, Vector3(x, y0, s * hd), Vector3(0, 0, s), f == 0 and s > 0 and p.flowers)
+				var shut: String = p.shutters if s > 0 else ""
+				Parts.window(mb, Vector3(x, y0, s * hd), Vector3(0, 0, s), WIN_HW, WIN_H, {
+					"panes_y": p.panes_y, "shutters": shut, "rnd": lr.randf(),
+					"flowers": f == 0 and s > 0 and p.flowers})
 	# 山墙小窗
 	for sx in [-1.0, 1.0]:
 		if ridge - h > 1.9:
-			_window(mb, Vector3(sx * hw, h + 0.15, 0), Vector3(sx, 0, 0), false)
+			Parts.window(mb, Vector3(sx * hw, h + 0.15, 0), Vector3(sx, 0, 0), 0.42, 1.0, {"rnd": lr.randf()})
 	# 门 + 台阶 + 雨棚
-	var zd := hd + 0.02
-	mb.quad01("door", Vector3(-0.625, BASE_H + 2.0, zd), Vector3(0.625, BASE_H + 2.0, zd),
-		Vector3(0.625, BASE_H, zd), Vector3(-0.625, BASE_H, zd), Vector3.BACK)
+	Parts.door(mb, Vector3(0, BASE_H, hd), Vector3.BACK, {"mat": p.door, "rnd": lr.randf()})
 	mb.box("stone", Vector3(-0.9, 0.0, hd), Vector3(0.9, 0.2, hd + 0.6))
+	mb.box("stone", Vector3(-0.75, 0.0, hd + 0.6), Vector3(0.75, 0.1, hd + 0.95))
 	if p.canopy:
 		_canopy(mb, hd, BASE_H + 2.3, roof)
 
@@ -136,27 +155,6 @@ static func build(params: Dictionary) -> ArrayMesh:
 				continue
 			_dormer(mb, xd, s, hd, ridge, pitch, wall, roof)
 	return mb.commit()
-
-
-## 窗户 + 窗台 + 窗楣，可选花箱。c = 窗户底边中点（在墙面上），n = 墙面外法线（±X 或 ±Z）
-static func _window(mb: MB, c: Vector3, n: Vector3, flowers: bool, hw := WIN_HW, wh := WIN_H) -> void:
-	var left := n.cross(Vector3.UP)  # 从墙外看过去的左方向
-	var top := Vector3(0, wh, 0)
-	var o := c + n * 0.02
-	mb.quad01("window", o + left * hw + top, o - left * hw + top, o - left * hw, o + left * hw, n)
-	_obox(mb, "trim", c, left, n, hw + 0.12, c.y - 0.1, c.y, 0.0, 0.14)            # 窗台
-	_obox(mb, "trim", c, left, n, hw + 0.1, c.y + wh, c.y + wh + 0.1, 0.0, 0.06)   # 窗楣
-	if flowers:
-		_obox(mb, "wall_wood", c, left, n, hw + 0.05, c.y - 0.42, c.y - 0.06, 0.14, 0.42)
-		_obox(mb, "flowers", c, left, n, hw, c.y - 0.06, c.y + 0.1, 0.16, 0.4)
-
-
-## 贴墙的小方块：沿墙宽 ±hw，高 y0..y1，离墙 d0..d1（沿法线方向）
-static func _obox(mb: MB, mat: String, c: Vector3, left: Vector3, n: Vector3,
-		hw: float, y0: float, y1: float, d0: float, d1: float) -> void:
-	var a := c + left * hw + n * d0
-	var b := c - left * hw + n * d1
-	mb.box(mat, Vector3(minf(a.x, b.x), y0, minf(a.z, b.z)), Vector3(maxf(a.x, b.x), y1, maxf(a.z, b.z)))
 
 
 ## 门廊雨棚：单坡小屋顶 + 白色封边 + 两个托架
@@ -206,4 +204,5 @@ static func _dormer(mb: MB, xd: float, s: float, hd: float, ridge: float, pitch:
 		mb.face(roof, [a, b, c, d], Vector3(side, 1, 0))
 		mb.face("trim", [b, c, c - t, b - t], Vector3(0, 0, s))
 	# 正面小窗
-	_window(mb, Vector3(xd, yr + 0.12, s * zf), Vector3(0, 0, s), false, 0.32, 0.7)
+	var rnd := fposmod(sin(xd * 12.9898 + s * 78.233 + ridge) * 43758.5453, 1.0)
+	Parts.window(mb, Vector3(xd, yr + 0.18, s * zf), Vector3(0, 0, s), 0.3, 0.6, {"panes_y": 1, "rnd": rnd})

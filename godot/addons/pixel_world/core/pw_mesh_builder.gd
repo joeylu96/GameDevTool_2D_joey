@@ -4,9 +4,11 @@ extends RefCounted
 ## 保证所有程序化模型的像素颗粒大小一致。
 
 const Mats := preload("res://addons/pixel_world/core/pw_materials.gd")
-const SNAP := 1.0 / 16.0
+const SNAP := 1.0 / 32.0
 
 var _surfaces := {}
+## 之后添加的顶点都带这个顶点色。shader 用 R 通道当「每个部件的随机数」（例如每扇窗夜里亮不亮）。
+var color := Color.WHITE
 
 
 static func snap(v: float) -> float:
@@ -34,6 +36,7 @@ func tri(mat: String, a: Vector3, b: Vector3, c: Vector3, n: Vector3,
 	var st := _st(mat)
 	for i in 3:
 		st.set_normal(n)
+		st.set_color(color)
 		st.set_uv([ua, ub, uc][i])
 		st.add_vertex([a, b, c][i])
 

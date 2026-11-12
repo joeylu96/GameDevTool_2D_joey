@@ -9,6 +9,11 @@ static func c(name: String) -> Color:
 	return Data.PALETTE.get(name, Color.MAGENTA)
 
 
+## 两个调色板颜色之间的混合色（用于更细腻的明暗过渡，仍然从调色板派生）
+static func mix(a: String, b: String, t: float) -> Color:
+	return c(a).lerp(c(b), t)
+
+
 static func texel_density() -> float:
 	return Data.TEXEL_DENSITY
 

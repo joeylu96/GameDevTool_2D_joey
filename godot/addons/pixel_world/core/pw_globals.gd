@@ -10,6 +10,13 @@ const PARAMS := {
 	"pw_flash": ["float", 0.0],         # 闪电闪光 0..1
 	"pw_desaturate": ["float", 0.0],    # 阴天去饱和 0..1
 	"pw_light_color": ["color", Color(1, 1, 1)],  # 当前整体光照色（给无光照特效着色）
+	"pw_rain": ["float", 0.0],          # 降雨强度 0..1（水洼 / 水面的雨滴涟漪）
+	"pw_sky_color": ["color", Color(0.74, 0.83, 0.93)],  # 天空色（水洼、水面反射）
+	# 涟漪源（脚步、物体入水）：x, z = 世界坐标，y = 已经过的秒数，w = 强度（0 = 无）
+	"pw_step0": ["vec4", Vector4(0, 0, 99, 0)],
+	"pw_step1": ["vec4", Vector4(0, 0, 99, 0)],
+	"pw_step2": ["vec4", Vector4(0, 0, 99, 0)],
+	"pw_step3": ["vec4", Vector4(0, 0, 99, 0)],
 }
 
 
@@ -17,6 +24,8 @@ static func _type_enum(t: String) -> int:
 	match t:
 		"vec2":
 			return RenderingServer.GLOBAL_VAR_TYPE_VEC2
+		"vec4":
+			return RenderingServer.GLOBAL_VAR_TYPE_VEC4
 		"color":
 			return RenderingServer.GLOBAL_VAR_TYPE_COLOR
 	return RenderingServer.GLOBAL_VAR_TYPE_FLOAT

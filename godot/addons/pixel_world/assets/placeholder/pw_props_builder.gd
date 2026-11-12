@@ -3,6 +3,7 @@ extends RefCounted
 ## 占位小摆件：白色尖头篱笆、长椅、木箱、木桶，以及地标灯塔。
 
 const MB := preload("res://addons/pixel_world/core/pw_mesh_builder.gd")
+const Parts := preload("res://addons/pixel_world/assets/placeholder/pw_parts.gd")
 
 
 ## 白色尖头篱笆：沿 +X 从 0 到 length。gaps = [[x0, x1], ...]，这些区间不放篱笆（门口）。
@@ -70,6 +71,39 @@ static func build_barrel() -> ArrayMesh:
 	return mb.commit()
 
 
+## 一丛水草：4~6 片细长的三棱叶，随风（水流）摆动
+static func build_weed(seed_value: int) -> ArrayMesh:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var mb := MB.new()
+	for i in rng.randi_range(4, 6):
+		var c := Vector3(rng.randf_range(-0.18, 0.18), 0, rng.randf_range(-0.18, 0.18))
+		var h := rng.randf_range(0.35, 0.8)
+		mb.ngon_frustum("weed", c, 0.0, h, 0.045, 0.0, 3, rng.randf() * TAU, false)
+	return mb.commit()
+
+
+## 小鱼：菱形身体 + 背鳍 + 双面尾鳍，头朝 +Z，长约 0.3 米
+static func build_fish(mat: String) -> ArrayMesh:
+	var mb := MB.new()
+	var nose := Vector3(0, 0, 0.16)
+	var tail := Vector3(0, 0, -0.12)
+	var ring := [Vector3(0, 0.05, 0.02), Vector3(0.04, 0, 0.02), Vector3(0, -0.04, 0.02), Vector3(-0.04, 0, 0.02)]
+	var center := Vector3(0, 0, 0.02)
+	for i in 4:
+		var a: Vector3 = ring[i]
+		var b: Vector3 = ring[(i + 1) % 4]
+		mb.face(mat, [nose, a, b], (nose + a + b) / 3.0 - center)
+		mb.face(mat, [tail, a, b], (tail + a + b) / 3.0 - center)
+	var fin := [Vector3(0, 0, -0.1), Vector3(0, 0.07, -0.2), Vector3(0, -0.07, -0.2)]
+	mb.face(mat, fin, Vector3.RIGHT)
+	mb.face(mat, fin, Vector3.LEFT)
+	var dorsal := [Vector3(0, 0.045, 0.05), Vector3(0, 0.085, -0.02), Vector3(0, 0.04, -0.04)]
+	mb.face(mat, dorsal, Vector3.RIGHT)
+	mb.face(mat, dorsal, Vector3.LEFT)
+	return mb.commit()
+
+
 ## 灯塔：八边形石台 + 红白相间的锥形塔身 + 门窗 + 环形走廊和栏杆 + 发光灯室 + 深色圆顶。
 ## 门朝 +Z。总高约 13.5 米。灯室用 "beacon" 材质，夜里自动发光。
 static func build_lighthouse() -> ArrayMesh:
@@ -81,7 +115,7 @@ static func build_lighthouse() -> ArrayMesh:
 	var r0 := 1.55
 	var r1 := 1.1
 	# 石台（一半伸进水里）
-	mb.ngon_frustum("stone", Vector3.ZERO, -1.6, base_y, 2.9, 2.7, 8, PI / 8.0, true)
+	mb.ngon_frustum("stone", Vector3.ZERO, -3.8, base_y, 3.0, 2.7, 8, PI / 8.0, true)
 	# 塔身：6 段红白相间
 	var bands := 6
 	for i in bands:
@@ -91,15 +125,16 @@ static func build_lighthouse() -> ArrayMesh:
 		var rb := lerpf(r0, r1, float(i + 1) / bands)
 		mb.ngon_frustum("plaster_red" if i % 2 == 0 else "plaster_white", Vector3.ZERO, ya, yb, ra, rb, n, rot, false)
 	# 门（正对 +Z 的那个面）
-	var ap0 := r0 * cos(PI / n) + 0.03
-	mb.quad01("door", Vector3(-0.36, base_y + 1.6, ap0), Vector3(0.36, base_y + 1.6, ap0),
-		Vector3(0.36, base_y, ap0), Vector3(-0.36, base_y, ap0), Vector3.BACK)
+	var ap0 := r0 * cos(PI / n) + 0.01
+	Parts.door(mb, Vector3(0, base_y, ap0), Vector3.BACK, {"w": 0.62, "h": 1.65, "mat": "door_teal", "glass_top": false})
 	mb.box("stone", Vector3(-0.6, base_y - 0.15, ap0 - 0.2), Vector3(0.6, base_y, ap0 + 0.5))
-	# 小窗：沿塔身往上错落排布
+	# 小窗：沿塔身往上错落排布（塔身微微内收，窗户贴在当前高度的面上）
+	var rnd := [0.9, 0.2, 0.7]
+	var k := 0
 	for y in [3.4, 5.9, 8.0]:
-		var ap := lerpf(r0, r1, (y - base_y) / h) * cos(PI / n) + 0.04
-		mb.quad01("window", Vector3(-0.22, y + 0.55, ap), Vector3(0.22, y + 0.55, ap),
-			Vector3(0.22, y, ap), Vector3(-0.22, y, ap), Vector3.BACK)
+		var ap := lerpf(r0, r1, (y - base_y) / h) * cos(PI / n) + 0.02
+		Parts.window(mb, Vector3(0, y, ap), Vector3.BACK, 0.2, 0.5, {"panes_x": 2, "panes_y": 2, "rnd": rnd[k]})
+		k += 1
 	var top := base_y + h
 	# 环形走廊 + 栏杆
 	mb.ngon_frustum("roof_cap", Vector3.ZERO, top, top + 0.15, 1.75, 1.75, n, rot, true, true)

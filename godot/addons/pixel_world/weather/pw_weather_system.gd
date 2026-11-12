@@ -169,6 +169,7 @@ func _process(delta: float) -> void:
 	Globals.set_param(&"pw_wind", _cur["wind"])
 	Globals.set_param(&"pw_flash", flash)
 	Globals.set_param(&"pw_desaturate", _cur["desaturate"])
+	Globals.set_param(&"pw_rain", _cur["rain"])
 	if time_of_day != null:
 		time_of_day.cloud_cover = _cur["cloud"]
 		time_of_day.fog_density = _cur["fog"]
@@ -246,7 +247,7 @@ func _make_particles() -> void:
 	rpm.gravity = Vector3.ZERO
 	_rain.process_material = rpm
 	var rq := QuadMesh.new()
-	rq.size = Vector2(0.09, 1.1)
+	rq.size = Vector2(0.025, 0.75)
 	_rain_mat = StandardMaterial3D.new()
 	_rain_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_rain_mat.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y

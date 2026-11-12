@@ -5,7 +5,8 @@ extends CanvasLayer
 
 const SHADER := preload("res://addons/pixel_world/shaders/post_fx.gdshader")
 
-@export var tilt_shift := true:
+## 移轴景深（画面上下边缘模糊，微缩模型感）。默认关闭：远处保持清晰。
+@export var tilt_shift := false:
 	set(v):
 		tilt_shift = v
 		_set_param("tilt_shift", v)

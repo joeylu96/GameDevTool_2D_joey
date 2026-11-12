@@ -1,8 +1,8 @@
 @tool
 class_name PWPixelDisplay
 extends SubViewportContainer
-## 像素渲染容器：3D 画面先以约 pixel_height 的低分辨率渲染，再整数倍、最近邻放大。
-## 贴图像素 ≈ 屏幕像素，得到「真」像素感；对 Web 也是很大的性能节省。
+## 3D 渲染容器。默认按原生分辨率渲染（4x MSAA）；开启 pixel_mode 后以约 pixel_height 的
+## 低分辨率渲染，再整数倍、最近邻放大，得到复古的「真」像素感，对低端设备 / Web 也是很大的性能节省。
 ## 3D 场景请放到 `viewport` 里（本节点的子 SubViewport）。
 
 const Style := preload("res://addons/pixel_world/style/pw_style_data.gd")
@@ -11,8 +11,9 @@ const Style := preload("res://addons/pixel_world/style/pw_style_data.gd")
 	set(v):
 		pixel_height = maxi(v, 64)
 		_update()
-## 关闭后按原生分辨率渲染（对比用）
-@export var pixel_mode := true:
+## 开启后以约 pixel_height 的低分辨率渲染再整数倍放大（复古像素感）；
+## 关闭（默认）按原生分辨率渲染并开启 4x MSAA，远近都清晰。
+@export var pixel_mode := false:
 	set(v):
 		pixel_mode = v
 		_update()
@@ -48,5 +49,6 @@ func _update() -> void:
 	var s := 1
 	if pixel_mode:
 		s = maxi(1, int(floor(size.y / float(pixel_height))))
+	viewport.msaa_3d = Viewport.MSAA_DISABLED if pixel_mode else Viewport.MSAA_4X
 	if stretch_shrink != s:
 		stretch_shrink = s
