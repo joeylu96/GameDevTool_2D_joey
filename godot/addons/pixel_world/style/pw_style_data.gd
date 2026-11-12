@@ -1,0 +1,68 @@
+# 自动生成，请勿手改。来源：shared/style/style.json（运行 tools/sync_style.py 更新）
+@tool
+extends RefCounted
+
+const TEXEL_DENSITY := 16.0
+const PIXEL_HEIGHT := 360
+const CAMERA_FOV := 30.0
+const CAMERA_PITCH_DEG := 40.0
+const CAMERA_DISTANCE := 42.0
+
+const PALETTE := {
+	"ink": Color("#1d2030"),
+	"snow_0": Color("#f4f7fb"),
+	"snow_1": Color("#e3e9f2"),
+	"snow_2": Color("#c9d3e3"),
+	"snow_3": Color("#a9b6cc"),
+	"stone_0": Color("#8a8f99"),
+	"stone_1": Color("#6b707c"),
+	"stone_2": Color("#4c505c"),
+	"stone_3": Color("#353845"),
+	"red_0": Color("#c4473a"),
+	"red_1": Color("#a3352d"),
+	"red_2": Color("#7d2826"),
+	"red_3": Color("#561c1e"),
+	"ochre_0": Color("#d6a24e"),
+	"ochre_1": Color("#b9843a"),
+	"ochre_2": Color("#8f6230"),
+	"ochre_3": Color("#63432a"),
+	"teal_0": Color("#6f9c94"),
+	"teal_1": Color("#4f7c78"),
+	"teal_2": Color("#3a5c5c"),
+	"teal_3": Color("#284041"),
+	"wood_0": Color("#9b7653"),
+	"wood_1": Color("#7a5a3e"),
+	"wood_2": Color("#5a412e"),
+	"wood_3": Color("#3d2c22"),
+	"pine_0": Color("#4f7a5a"),
+	"pine_1": Color("#3a5f48"),
+	"pine_2": Color("#2a4638"),
+	"pine_3": Color("#1d3229"),
+	"grass_0": Color("#8fb36a"),
+	"grass_1": Color("#6e9652"),
+	"grass_2": Color("#527a40"),
+	"dirt_0": Color("#b59a74"),
+	"dirt_1": Color("#94785a"),
+	"dirt_2": Color("#6f5842"),
+	"water_0": Color("#9cc3dd"),
+	"water_1": Color("#5a86ad"),
+	"water_2": Color("#3f6489"),
+	"ice_0": Color("#c7dcec"),
+	"ice_1": Color("#a6c3db"),
+	"roof_0": Color("#6a6e7e"),
+	"roof_1": Color("#4f5262"),
+	"roof_2": Color("#3a3c4a"),
+	"window_0": Color("#2c3550"),
+	"window_1": Color("#4a5a80"),
+	"frame_0": Color("#efe9dc"),
+	"frame_1": Color("#cfc6b4"),
+	"light_0": Color("#ffe7a8"),
+	"light_1": Color("#ffc965"),
+	"light_2": Color("#f29a3f"),
+	"skin_0": Color("#f1c8a5"),
+	"skin_1": Color("#d9a07e"),
+	"skin_2": Color("#a86e55"),
+	"cloth_blue": Color("#4a6fa5"),
+	"cloth_yellow": Color("#e0b84a"),
+	"cloth_green": Color("#5d8a4e"),
+}

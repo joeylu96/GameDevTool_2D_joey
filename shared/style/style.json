@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "texel_density": 16,
+  "pixel_height": 360,
+  "camera": { "fov": 30, "pitch_deg": 40, "distance": 42 },
+  "palette": {
+    "ink": "#1d2030",
+    "snow_0": "#f4f7fb", "snow_1": "#e3e9f2", "snow_2": "#c9d3e3", "snow_3": "#a9b6cc",
+    "stone_0": "#8a8f99", "stone_1": "#6b707c", "stone_2": "#4c505c", "stone_3": "#353845",
+    "red_0": "#c4473a", "red_1": "#a3352d", "red_2": "#7d2826", "red_3": "#561c1e",
+    "ochre_0": "#d6a24e", "ochre_1": "#b9843a", "ochre_2": "#8f6230", "ochre_3": "#63432a",
+    "teal_0": "#6f9c94", "teal_1": "#4f7c78", "teal_2": "#3a5c5c", "teal_3": "#284041",
+    "wood_0": "#9b7653", "wood_1": "#7a5a3e", "wood_2": "#5a412e", "wood_3": "#3d2c22",
+    "pine_0": "#4f7a5a", "pine_1": "#3a5f48", "pine_2": "#2a4638", "pine_3": "#1d3229",
+    "grass_0": "#8fb36a", "grass_1": "#6e9652", "grass_2": "#527a40",
+    "dirt_0": "#b59a74", "dirt_1": "#94785a", "dirt_2": "#6f5842",
+    "water_0": "#9cc3dd", "water_1": "#5a86ad", "water_2": "#3f6489", "ice_0": "#c7dcec", "ice_1": "#a6c3db",
+    "roof_0": "#6a6e7e", "roof_1": "#4f5262", "roof_2": "#3a3c4a",
+    "window_0": "#2c3550", "window_1": "#4a5a80",
+    "frame_0": "#efe9dc", "frame_1": "#cfc6b4",
+    "light_0": "#ffe7a8", "light_1": "#ffc965", "light_2": "#f29a3f",
+    "skin_0": "#f1c8a5", "skin_1": "#d9a07e", "skin_2": "#a86e55",
+    "cloth_blue": "#4a6fa5", "cloth_yellow": "#e0b84a", "cloth_green": "#5d8a4e"
+  }
+}

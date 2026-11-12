@@ -1,0 +1,57 @@
+; Engine configuration file.
+
+config_version=5
+
+[application]
+
+config/name="PixelWorld Demo"
+run/main_scene="res://demo/demo_main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/pixel_world/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
+
+[shader_globals]
+
+pw_snow_amount={
+"type": "float",
+"value": 0.0
+}
+pw_wetness={
+"type": "float",
+"value": 0.0
+}
+pw_night_factor={
+"type": "float",
+"value": 0.0
+}
+pw_wind={
+"type": "vec2",
+"value": Vector2(0.3, 0)
+}
+pw_flash={
+"type": "float",
+"value": 0.0
+}
+pw_desaturate={
+"type": "float",
+"value": 0.0
+}
+pw_light_color={
+"type": "color",
+"value": Color(1, 1, 1, 1)
+}

@@ -1,0 +1,60 @@
+GIMP Palette
+Name: PixelWorld
+Columns: 8
+#
+ 29  32  48	ink
+244 247 251	snow_0
+227 233 242	snow_1
+201 211 227	snow_2
+169 182 204	snow_3
+138 143 153	stone_0
+107 112 124	stone_1
+ 76  80  92	stone_2
+ 53  56  69	stone_3
+196  71  58	red_0
+163  53  45	red_1
+125  40  38	red_2
+ 86  28  30	red_3
+214 162  78	ochre_0
+185 132  58	ochre_1
+143  98  48	ochre_2
+ 99  67  42	ochre_3
+111 156 148	teal_0
+ 79 124 120	teal_1
+ 58  92  92	teal_2
+ 40  64  65	teal_3
+155 118  83	wood_0
+122  90  62	wood_1
+ 90  65  46	wood_2
+ 61  44  34	wood_3
+ 79 122  90	pine_0
+ 58  95  72	pine_1
+ 42  70  56	pine_2
+ 29  50  41	pine_3
+143 179 106	grass_0
+110 150  82	grass_1
+ 82 122  64	grass_2
+181 154 116	dirt_0
+148 120  90	dirt_1
+111  88  66	dirt_2
+156 195 221	water_0
+ 90 134 173	water_1
+ 63 100 137	water_2
+199 220 236	ice_0
+166 195 219	ice_1
+106 110 126	roof_0
+ 79  82  98	roof_1
+ 58  60  74	roof_2
+ 44  53  80	window_0
+ 74  90 128	window_1
+239 233 220	frame_0
+207 198 180	frame_1
+255 231 168	light_0
+255 201 101	light_1
+242 154  63	light_2
+241 200 165	skin_0
+217 160 126	skin_1
+168 110  85	skin_2
+ 74 111 165	cloth_blue
+224 184  74	cloth_yellow
+ 93 138  78	cloth_green
