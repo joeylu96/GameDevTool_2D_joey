@@ -74,6 +74,12 @@ func _apply_cmdline() -> void:
 	if args.has("focus"):  # --focus=x,z：镜头对准的地面位置
 		var xz: PackedStringArray = args["focus"].split(",")
 		rig.position = Vector3(float(xz[0]), 0.0, float(xz[1]))
+	if args.has("run"):  # 指定 --hour 时默认停住时间；加 --run 让时间继续走
+		tod.running = true
+	if args.has("diffshot"):
+		await _diff_shot(args["diffshot"], int(args.get("frames", "90")), int(args.get("gap", "20")))
+		get_tree().quit()
+		return
 	if args.has("screenshot"):
 		var frames := int(args.get("frames", "90"))
 		for i in frames:
@@ -86,6 +92,34 @@ func _apply_cmdline() -> void:
 		img.save_png(args["screenshot"])
 		print("screenshot saved: ", args["screenshot"])
 		get_tree().quit()
+
+
+## 画面稳定性检查：隔 gap 帧截两张图（隐藏 UI），把变化的像素标成洋红色保存，并打印变化比例。
+## 静止镜头下变化越少越好（雨雪粒子、水面波光属于正常变化）。
+func _diff_shot(path: String, frames: int, gap: int) -> void:
+	for c in get_children():
+		if c is CanvasLayer or (c is Control and c != display):
+			c.visible = false
+	for i in frames:
+		await get_tree().process_frame
+	var a := get_viewport().get_texture().get_image()
+	for i in gap:
+		await get_tree().process_frame
+	var b := get_viewport().get_texture().get_image()
+	a.convert(Image.FORMAT_RGB8)
+	b.convert(Image.FORMAT_RGB8)
+	var da := a.get_data()
+	var db := b.get_data()
+	var changed := 0
+	for i in range(0, da.size(), 3):
+		if absi(da[i] - db[i]) + absi(da[i + 1] - db[i + 1]) + absi(da[i + 2] - db[i + 2]) > 24:
+			changed += 1
+			db[i] = 255
+			db[i + 1] = 0
+			db[i + 2] = 255
+	var out := Image.create_from_data(b.get_width(), b.get_height(), false, Image.FORMAT_RGB8, db)
+	out.save_png(path)
+	print("diff saved: %s  changed=%d (%.2f%%)" % [path, changed, 100.0 * changed / (da.size() / 3)])
 
 
 func _unhandled_input(event: InputEvent) -> void:

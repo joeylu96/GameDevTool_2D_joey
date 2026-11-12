@@ -75,8 +75,8 @@ void fragment() {
 	vec3 c = mix(shallow.rgb, deep.rgb, step(0.5 + (b - 0.5) * 0.35, depth_f));
 
 	// 波光（亮短线）+ 波谷（暗短线，只画在浅水区）
-	float lit = dashes(cell, vec2(12.0, 5.0), t, 1.2, 0.0, 0.55 + pw_wetness * 0.3);
-	float dark = dashes(cell + vec2(6.0, 2.0), vec2(16.0, 7.0), t, 0.8, 17.0, 0.6);
+	float lit = dashes(cell, vec2(12.0, 5.0), t, 0.8, 0.0, 0.5 + pw_wetness * 0.3);
+	float dark = dashes(cell + vec2(6.0, 2.0), vec2(16.0, 7.0), t, 0.5, 17.0, 0.35);
 	c = mix(c, deep.rgb, dark * step(depth_f, 0.5));
 	c = mix(c, highlight.rgb, lit);
 

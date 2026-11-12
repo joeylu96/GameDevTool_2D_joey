@@ -22,6 +22,10 @@ const Globals := preload("res://addons/pixel_world/core/pw_globals.gd")
 @export var min_sun_elevation := 14.0
 @export var sun_azimuth := -30.0
 @export var shadows := true
+## 太阳方向每隔多少游戏分钟更新一次（0 = 每帧连续转动）。
+## 连续转动会让所有阴影边缘每帧爬动一个像素，在低分辨率像素画面里表现为整屏抖动、
+## 黑点闪烁；分步后阴影大部分时间静止，只在整步时整体挪一两个像素。光色和亮度仍连续变化。
+@export_range(0.0, 120.0, 1.0) var sun_step_minutes := 15.0
 
 ## 以下由 WeatherSystem 每帧写入
 var cloud_cover := 0.0
@@ -115,12 +119,16 @@ func _apply() -> void:
 	var amb_e: float = s[3]
 	var sky: Color = s[4]
 
-	# 太阳 5:00-19:00，其余时间同一盏灯当月光（在最暗时切换，避免阴影跳变）
+	# 太阳 5:00-19:00，其余时间同一盏灯当月光（在最暗时切换，避免阴影跳变）。
+	# 方向按 sun_step_minutes 分步，避免阴影每帧爬动。
+	var hs := hour
+	if sun_step_minutes > 0.0:
+		hs = floorf(hour * 60.0 / sun_step_minutes) * sun_step_minutes / 60.0
 	var t: float
-	if hour >= 5.0 and hour < 19.0:
-		t = (hour - 5.0) / 14.0
+	if hs >= 5.0 and hs < 19.0:
+		t = (hs - 5.0) / 14.0
 	else:
-		t = fposmod(hour - 19.0, 24.0) / 10.0
+		t = fposmod(hs - 19.0, 24.0) / 10.0
 	var elev := lerpf(min_sun_elevation, max_sun_elevation, sin(t * PI))
 	var az := sun_azimuth + lerpf(-70.0, 70.0, t)
 	sun.rotation_degrees = Vector3(-elev, az, 0.0)
