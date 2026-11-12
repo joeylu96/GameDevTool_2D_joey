@@ -97,6 +97,32 @@ func frustum(mat: String, center: Vector3, y0: float, y1: float, r0: float, r1: 
 		face(mat, b, Vector3.DOWN)
 
 
+## 正 N 边形棱台（树冠、灌木、石头）。center 只取 xz；y0/y1 为绝对高度；rot 为起始角（弧度）。
+## r1 = 0 时为尖顶；r0 不要为 0。
+func ngon_frustum(mat: String, center: Vector3, y0: float, y1: float, r0: float, r1: float,
+		sides := 8, rot := 0.0, top := true, bottom := false) -> void:
+	var c := Vector3(center.x, 0.0, center.z)
+	var b: Array[Vector3] = []
+	var t: Array[Vector3] = []
+	for i in sides:
+		var a := rot + TAU * i / sides
+		var d := Vector3(cos(a), 0.0, sin(a))
+		b.append(c + d * r0 + Vector3(0, y0, 0))
+		t.append(c + d * r1 + Vector3(0, y1, 0))
+	for i in sides:
+		var j := (i + 1) % sides
+		var mid: Vector3 = (b[i] + b[j]) * 0.5 - c
+		mid.y = 0.0
+		if r1 <= 0.001:
+			face(mat, [t[i], b[j], b[i]], mid)
+		else:
+			face(mat, [t[i], t[j], b[j], b[i]], mid)
+	if top and r1 > 0.001:
+		face(mat, t, Vector3.UP)
+	if bottom:
+		face(mat, b, Vector3.DOWN)
+
+
 func commit() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	for key: String in _surfaces:

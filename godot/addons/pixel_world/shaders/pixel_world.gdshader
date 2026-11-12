@@ -83,16 +83,18 @@ void fragment() {
 		: floor(world_pos * texel_density);
 	float h = bayer4(cell.xy + floor(cell.z));
 
-	// 积雪：朝上的面；有序抖动形成像素化的过渡边缘
+	// 积雪：朝上的面。覆盖率拉得较陡——积满后整面成块，只在过渡阶段 / 斑块边缘出现有序抖动
 	float up = clamp((world_normal.y - 0.45) / 0.35, 0.0, 1.0);
 	float s = clamp(pw_snow_amount * snow_receive, 0.0, 1.0);
-	float cov = up * s * 1.25 - 0.1;
+	float cov = up * s * 1.8 - 0.1;
 	if (snow_patchiness > 0.0) {
 		vec2 q = floor(world_pos.xz * texel_density) / texel_density;
 		cov += (vnoise(q * 0.9) * 0.65 + vnoise(q * 2.7) * 0.35 - 0.5) * snow_patchiness * 2.0 * min(s * 3.0, 1.0);
+		cov = (cov - 0.5) * 3.0 + 0.5;  // 斑块边缘变硬，避免大片颗粒感
 	}
 	float snow = step(h, cov);
-	vec3 sc = mix(snow_color.rgb, snow_color_alt.rgb, step(0.8, hash13(cell + 17.0)));
+	// 雪面深浅：成片分布，而不是逐像素随机
+	vec3 sc = mix(snow_color.rgb, snow_color_alt.rgb, step(0.62, vnoise(cell.xy * 0.3 + cell.z * 1.7)));
 	col = mix(col, sc, snow);
 
 	// 潮湿：变暗 + 更光滑
