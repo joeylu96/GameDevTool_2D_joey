@@ -48,6 +48,24 @@ static func get_tex(key: String) -> Texture2D:
 			img = planks(["wood_1", "wood_2", "wood_2", "wood_3"], 505, 16, 3)
 		"rock":
 			img = blotches(["stone_1", "stone_0", "stone_2"], 32, 506)
+		"roof_cap":
+			img = speckle(["roof_2", "roof_1"], 16, 203, 0.12, 0.0)
+		"flowers":
+			img = flowers(507)
+		"crate":
+			img = planks(["ochre_1", "ochre_2", "ochre_3", "wood_3"], 1001, 16, 4)
+			img.rotate_90(CLOCKWISE)
+		"boards":
+			img = planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1002, 16, 3)
+			img.rotate_90(CLOCKWISE)
+		"barrel":
+			img = planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1003, 16, 3)
+		"plaster_white":
+			img = speckle(["frame_0", "frame_1"], 16, 1101, 0.06, 0.0)
+		"plaster_red":
+			img = speckle(["red_0", "red_1"], 16, 1102, 0.08, 0.0)
+		"shore":
+			img = dirt(704, 64, 24)
 		"metal":
 			img = speckle(["stone_3", "stone_2", "ink"], 16, 601, 0.15, 0.1)
 		"lamp_glass":
@@ -151,8 +169,8 @@ static func planks(cols: Array, seed_value: int, size := 32, plank_w := 4) -> Im
 	return img
 
 
-## 瓦片屋顶（贴图 +v = 顺坡向下）：cols = [瓦唇高光, 主色A, 主色B, 缝/阴影]。
-## 每排：顶部一行是上一排投下的阴影，底部一行是瓦唇高光。
+## 瓦片屋顶（贴图 +v = 顺坡向下）：cols = [保留, 主色A, 主色B, 缝/阴影]（cols[0] 暂未使用）。
+## 每排：顶部一行是上一排投下的阴影；竖缝错开，不画到最后一行。
 static func shingles(cols: Array, seed_value: int, size := 32) -> Image:
 	var rng := _rng(seed_value)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
@@ -162,7 +180,7 @@ static func shingles(cols: Array, seed_value: int, size := 32) -> Image:
 		var offset := (row % 2) * (sw / 2) + rng.randi_range(0, 1)
 		var shades := []
 		for i in range(size / sw + 1):
-			shades.append(Pal.c(cols[1] if rng.randf() < 0.35 else cols[2]))
+			shades.append(Pal.c(cols[1] if rng.randf() < 0.88 else cols[2]))  # 以浅瓦为主，偶尔夹一片深瓦
 		for y in range(row * row_h, row * row_h + row_h):
 			var ly := y - row * row_h
 			for x in size:
@@ -170,10 +188,8 @@ static func shingles(cols: Array, seed_value: int, size := 32) -> Image:
 				var col: Color = shades[(xi / sw) % shades.size()]
 				if ly == 0:
 					col = Pal.c(cols[3])
-				elif xi % sw == 0:
-					col = Pal.c(cols[3])
-				elif ly == row_h - 1 and col == Pal.c(cols[1]):
-					col = Pal.c(cols[0])  # 只有较亮的瓦片带高光瓦唇，避免整排横线像砖墙
+				elif xi % sw == 0 and ly < row_h - 1:
+					col = Pal.c(cols[3])  # 竖缝不画到最后一行，瓦片之间连成一片，不像砖墙
 				img.set_pixel(x, y, col)
 	return img
 
@@ -271,8 +287,26 @@ static func grass(seed_value: int, size := 96) -> Image:
 	return img
 
 
-## 土路 64px：成片的深浅土色 + 带阴影的小石子。
-static func dirt(seed_value: int, size := 64) -> Image:
+## 花箱里的花：深绿叶底 + 密集的红 / 黄 / 白小花，每朵下方一点阴影。
+static func flowers(seed_value: int, size := 16) -> Image:
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	img.fill(Pal.c("pine_1"))
+	var cols := [Pal.c("red_0"), Pal.c("light_0"), Pal.c("frame_0"), Pal.c("red_0"), Pal.c("cloth_yellow")]
+	for i in size * size / 10:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		_px(img, x, y + 1, Pal.c("grass_1"))
+	for i in size * size / 7:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		_px(img, x, y, cols[rng.randi_range(0, cols.size() - 1)])
+		_px(img, x, y + 1, Pal.c("pine_2"))
+	return img
+
+
+## 土路 64px：成片的深浅土色 + 带阴影的小石子。pebble_div 越小石子越多（岸边碎石带用 24）。
+static func dirt(seed_value: int, size := 64, pebble_div := 110) -> Image:
 	var rng := _rng(seed_value)
 	var n := fbm(size, 8, rng)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
@@ -285,7 +319,7 @@ static func dirt(seed_value: int, size := 64) -> Image:
 			elif v < 0.3:
 				col = Pal.c("dirt_2")
 			img.set_pixel(x, y, col)
-	for i in size * size / 110:
+	for i in size * size / pebble_div:
 		var x := rng.randi_range(0, size - 1)
 		var y := rng.randi_range(0, size - 1)
 		var big := rng.randf() < 0.4

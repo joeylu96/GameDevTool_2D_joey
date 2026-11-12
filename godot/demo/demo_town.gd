@@ -5,6 +5,7 @@ extends Node3D
 const MB := preload("res://addons/pixel_world/core/pw_mesh_builder.gd")
 const House := preload("res://addons/pixel_world/assets/placeholder/pw_house_builder.gd")
 const Trees := preload("res://addons/pixel_world/assets/placeholder/pw_tree_builder.gd")
+const Props := preload("res://addons/pixel_world/assets/placeholder/pw_props_builder.gd")
 const WATER_SHADER := preload("res://addons/pixel_world/shaders/water.gdshader")
 const POOL_SHADER := preload("res://addons/pixel_world/shaders/light_pool.gdshader")
 
@@ -19,6 +20,7 @@ var _rng := RandomNumberGenerator.new()
 var _deco := RandomNumberGenerator.new()
 var _blocked: Array[Rect2] = []
 var _bush_spots: Array[Vector3] = []
+var _lamp_spots: Array[Vector3] = []
 
 
 func build(seed_value := 7) -> void:
@@ -27,7 +29,9 @@ func build(seed_value := 7) -> void:
 	_build_ground()
 	_build_roads()
 	_build_houses()
+	_build_lighthouse()
 	_build_lamps()
+	_build_props()
 	_build_trees()
 
 
@@ -47,11 +51,26 @@ func _build_ground() -> void:
 	# 岸边立面
 	mb.face("earth", [Vector3(-HALF, 0, SHORE_Z), Vector3(HALF, 0, SHORE_Z), Vector3(HALF, -1.5, SHORE_Z), Vector3(-HALF, -1.5, SHORE_Z)], Vector3.BACK)
 	_add_mesh(mb.commit())
-	# 水面
+	# 岸边碎石带：内侧边缘每半米错开几个像素（独立随机数，不影响其他布局）
+	var srng := RandomNumberGenerator.new()
+	srng.seed = 515
+	var sh := MB.new()
+	var sy := 0.015
+	var xx := -HALF
+	var prev_in := Vector3(xx, sy, SHORE_Z - 0.9)
+	while xx < HALF - 0.01:
+		var nx := minf(xx + 0.5, HALF)
+		var cur_in := Vector3(nx, sy, SHORE_Z - 0.9 + srng.randi_range(-3, 3) * MB.SNAP)
+		sh.face("shore", [prev_in, cur_in, Vector3(nx, sy, SHORE_Z), Vector3(xx, sy, SHORE_Z)], Vector3.UP)
+		prev_in = cur_in
+		xx = nx
+	_add_mesh(sh.commit(), Transform3D.IDENTITY, false)
+	# 水面：告诉 shader 岸线位置，用来画浪花和由岸向外结冰
 	var water := PlaneMesh.new()
 	water.size = Vector2(HALF * 2.0 + 40.0, 40.0)
 	var wm := ShaderMaterial.new()
 	wm.shader = WATER_SHADER
+	wm.set_shader_parameter("shore_z", SHORE_Z)
 	water.material = wm
 	_add_mesh(water, Transform3D(Basis(), Vector3(0, -0.45, SHORE_Z + 20.0)), false)
 	# 码头
@@ -130,6 +149,12 @@ func _build_houses() -> void:
 			# side<0：门朝 +Z（主街）；side>0：旋转 180° 朝 -Z
 			_add_mesh(House.build(p), Transform3D(Basis(Vector3.UP, rot), Vector3(cx, 0, cz)))
 			_blocked.append(rect.grow(1.0))
+			# 门前院子留空（不种树），一直到路边
+			if row.side < 0:
+				_blocked.append(Rect2(rect.position.x, rect.end.y, fp.x, 2.5))
+			else:
+				_blocked.append(Rect2(rect.position.x, rect.position.y - 1.9, fp.x, 1.9))
+			_build_house_fence(row.side, rect, cx)
 			# 门两侧的灌木（避开门前台阶）
 			var dir := -float(row.side)
 			var zf: float = cz + dir * (p.depth * 0.5 + 0.6)
@@ -161,6 +186,70 @@ func _build_lamps() -> void:
 	for s in spots:
 		_add_mesh(lamp, Transform3D(Basis(), s))
 		_add_mesh(pool, Transform3D(Basis(), s + Vector3(0, 0.04, 0)), false)
+	_lamp_spots = spots
+
+
+## 房屋篱笆：北侧房屋在门前围一道（门口留缺口），南侧房屋在后院（朝海一侧）围一道
+func _build_house_fence(side: int, rect: Rect2, door_x: float) -> void:
+	var x0 := rect.position.x + 0.3
+	var length := rect.size.x - 0.6
+	if side < 0:
+		if _deco.randf() > 0.6:
+			return
+		var z := rect.end.y + 1.15  # 灌木和路灯之间
+		var gap := [door_x - x0 - 0.8, door_x - x0 + 0.8]
+		_add_mesh(Props.build_fence(length, [gap]), Transform3D(Basis(), Vector3(x0, 0, z)))
+	else:
+		var z := rect.end.y + 1.0
+		if z > SHORE_Z - 2.2 or _deco.randf() > 0.7:
+			return
+		_add_mesh(Props.build_fence(length), Transform3D(Basis(), Vector3(x0, 0, z)))
+		_blocked.append(Rect2(x0, z - 0.6, length, 1.2))
+
+
+## 灯塔：放在岸边、一半伸进海里；从几个候选位置里挑第一个不和房屋 / 道路重叠的
+func _build_lighthouse() -> void:
+	var z := SHORE_Z + 1.4
+	for x in [-9.0, -15.0, -4.0, -21.0, 18.0, 24.0]:
+		var r := Rect2(x - 3.2, z - 3.2, 6.4, 6.4)
+		var ok := true
+		for b in _blocked:
+			if b.intersects(r):
+				ok = false
+				break
+		if ok:
+			_add_mesh(Props.build_lighthouse(), Transform3D(Basis(), Vector3(x, 0, z)))
+			_blocked.append(r)
+			return
+
+
+## 长椅（主街南侧，两盏路灯之间，背对房屋面朝街道）+ 码头边的木箱和木桶
+func _build_props() -> void:
+	var bench := Props.build_bench()
+	for s in _lamp_spots:
+		if s.z < 0.0:
+			continue
+		var p := Vector3(s.x + 4.5, 0, ROAD_W + CURB + 0.55)
+		if p.x > HALF - 1.5 or (p.x > -0.5 and p.x < ROAD_W + 4.5) or _deco.randf() > 0.6:
+			continue  # 出界 / 挡住土路口 / 随机留空
+		_add_mesh(bench, Transform3D(Basis(Vector3.UP, PI), p))
+		_blocked.append(Rect2(p.x - 1.0, p.z - 0.5, 2.0, 1.0))
+	var crate := Props.build_crate()
+	var crate_s := Props.build_crate(0.5)
+	var barrel := Props.build_barrel()
+	var items := [
+		[crate, Vector3(11.6, 0, 19.6), 0.2],
+		[crate_s, Vector3(11.6, 0.7, 19.6), -0.35],
+		[crate, Vector3(12.5, 0, 20.5), 0.5],
+		[barrel, Vector3(7.0, 0, 20.4), 0.0],
+		[barrel, Vector3(6.4, 0, 19.6), 0.0],
+		[barrel, Vector3(10.0, 0.05, 25.6), 0.0],
+		[crate, Vector3(8.65, 0.05, 28.2), 0.1],
+	]
+	for it: Array in items:
+		_add_mesh(it[0], Transform3D(Basis(Vector3.UP, it[2]), it[1]))
+	_blocked.append(Rect2(10.8, 18.8, 2.6, 2.6))
+	_blocked.append(Rect2(5.8, 19.0, 1.8, 2.0))
 
 
 func _build_trees() -> void:

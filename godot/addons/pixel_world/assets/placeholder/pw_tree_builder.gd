@@ -25,9 +25,13 @@ static func build_pine(seed_value: int) -> ArrayMesh:
 		var y_hem := MB.snap(y + r * 0.35)
 		var r_hem := MB.snap(r * 0.86)
 		var r_top := 0.0 if last else MB.snap(r * 0.18)
-		var rise := (r_hem - r_top) * (1.4 if last else 0.85)
+		var rise := (r_hem - r_top) * (1.05 if last else 0.85)
 		mb.ngon_frustum("pine_skirt", Vector3.ZERO, y, y_hem, MB.snap(r), r_hem, 8, rot, false)
 		mb.ngon_frustum("pine", Vector3.ZERO, y_hem, MB.snap(y_hem + rise), r_hem, r_top, 8, rot, false)
+		if last:
+			# 顶梢：细而陡的深色尖，接不住雪，保留松树的尖顶轮廓
+			var y_tip := MB.snap(y_hem + rise)
+			mb.ngon_frustum("pine_skirt", Vector3.ZERO, y_tip - 0.15, y_tip + 0.5, 0.14, 0.0, 4, rot, false)
 		y = y_hem + rise * 0.55  # 下一层压住本层顶盖的上半部分
 	return mb.commit()
 

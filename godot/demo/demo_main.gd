@@ -4,6 +4,7 @@ extends Control
 ## 命令行截图（用于自动验证）：
 ##   godot --path godot -- --weather=snow --hour=20 --screenshot=/tmp/a.png
 ## 其它参数：--snap（积雪/潮湿立刻到位） --frames=N（截图前等待帧数） --no-pixel
+##           --distance=米 --yaw=度 --focus=x,z（镜头对准的地面位置）
 
 const Globals := preload("res://addons/pixel_world/core/pw_globals.gd")
 const PixelDisplay := preload("res://addons/pixel_world/render/pw_pixel_display.gd")
@@ -42,6 +43,7 @@ func _ready() -> void:
 	vp.add_child(weather)
 	rig = CameraRig.new()
 	rig.name = "CameraRig"
+	rig.position = Vector3(-2, 0, 12)  # 初始镜头偏南：小镇、海岸、码头和灯塔都在画面里
 	vp.add_child(rig)
 	post = PostFX.new()
 	vp.add_child(post)
@@ -69,6 +71,9 @@ func _apply_cmdline() -> void:
 		rig.yaw_deg = float(args["yaw"])
 	if args.has("distance"):
 		rig.distance = float(args["distance"])
+	if args.has("focus"):  # --focus=x,z：镜头对准的地面位置
+		var xz: PackedStringArray = args["focus"].split(",")
+		rig.position = Vector3(float(xz[0]), 0.0, float(xz[1]))
 	if args.has("screenshot"):
 		var frames := int(args.get("frames", "90"))
 		for i in frames:
