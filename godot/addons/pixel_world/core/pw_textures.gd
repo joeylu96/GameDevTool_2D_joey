@@ -52,6 +52,10 @@ static func _make(key: String) -> Image:
 			return mottle(["frame_0", "frame_1"], 32, 301, 0.6)
 		"trunk":
 			return bark(505)
+		"deck":
+			return grain(["wood_0", "wood_1", "wood_2"], 1004)
+		"birch_bark":
+			return birch(509)
 		"crate":
 			return _rot(planks(["ochre_1", "ochre_2", "ochre_3", "wood_3"], 1001, 32, 8))
 		"boards":
@@ -83,6 +87,10 @@ static func _make(key: String) -> Image:
 		# 金属 / 玻璃
 		"metal":
 			return mottle(["stone_3", "ink"], 32, 601, 0.6)
+		"metal_green":
+			return mottle([Pal.mix("pine_3", "teal_3", 0.5), Pal.c("pine_3")], 32, 605, 0.6)
+		"metal_red":
+			return mottle([Pal.c("red_3"), Pal.mix("red_3", "ink", 0.5)], 32, 606, 0.6)
 		"brass":
 			return mottle(["light_1", "light_2"], 16, 602, 0.6)
 		"lamp_glass":
@@ -98,6 +106,14 @@ static func _make(key: String) -> Image:
 			return leaves(["grass_1", "grass_0", "grass_2"], 503)
 		"leaf_dark":
 			return leaves(["grass_2", "grass_1", "pine_1"], 504)
+		"leaf_birch":
+			return leaves([Pal.mix("grass_0", "cloth_yellow", 0.15), Pal.mix("grass_0", "light_0", 0.35), Pal.c("grass_1")], 510)
+		"leaf_birch_dark":
+			return leaves([Pal.c("grass_1"), Pal.c("grass_0"), Pal.c("grass_2")], 511)
+		"leaf_autumn":
+			return leaves([Pal.c("ochre_0"), Pal.mix("ochre_0", "light_0", 0.4), Pal.c("ochre_1")], 512)
+		"leaf_autumn_dark":
+			return leaves([Pal.c("red_1"), Pal.c("red_0"), Pal.c("red_2")], 513)
 		"flowers":
 			return flowers(507)
 		"weed":
@@ -265,6 +281,43 @@ static func planks_c(cols: Array, seed_value: int, size := 64, plank_w := 8) -> 
 					var ring := absi(oy) == 2 or absi(ox) == 1
 					var cur := _pix(img, kx + ox, ky + oy)
 					_px(img, kx + ox, ky + oy, cur.lerp(cols[2], 0.45) if ring else (cols[3] as Color).lerp(cols[2], 0.5))
+	return img
+
+
+## 顺纹木（甲板）：只有沿 x 方向的低对比木纹，没有板缝——板缝由几何缝隙表现，
+## 避免长条甲板上密集的高对比条纹（看着眼花、产生摩尔纹）。
+static func grain(names: Array, seed_value: int, size := 64) -> Image:
+	var cols := _cols(names)
+	var rng := _rng(seed_value)
+	var mot := tile_noise(size, 4, rng)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		var s := rng.randf() * 100.0
+		for x in size:
+			var col := cols[1].lerp(cols[0], mot[y * size + x] * 0.45)
+			var g := _n1(x * 0.08, s)
+			if g > 0.78:
+				col = col.lerp(cols[2], 0.28)
+			elif g < 0.1:
+				col = col.lerp(cols[0], 0.2)
+			img.set_pixel(x, y, col)
+	return img
+
+
+## 白桦树皮：白色底 + 不规则的黑色横向皮孔
+static func birch(seed_value: int, size := 32) -> Image:
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var n := tile_noise(size, 4, rng)
+	for y in size:
+		for x in size:
+			img.set_pixel(x, y, Pal.c("frame_0").lerp(Pal.c("snow_3"), n[y * size + x] * 0.5))
+	for i in 14:
+		var x := rng.randi_range(0, size - 1)
+		var y := rng.randi_range(0, size - 1)
+		var w := rng.randi_range(2, 6)
+		for dx in w:
+			_px(img, x + dx, y, Pal.c("ink") if dx > 0 and dx < w - 1 else Pal.c("stone_2"))
 	return img
 
 

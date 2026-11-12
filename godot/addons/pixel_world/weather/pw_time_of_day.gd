@@ -22,10 +22,13 @@ const Globals := preload("res://addons/pixel_world/core/pw_globals.gd")
 @export var min_sun_elevation := 14.0
 @export var sun_azimuth := -30.0
 @export var shadows := true
-## 太阳方向每隔多少游戏分钟更新一次（0 = 每帧连续转动）。
-## 连续转动会让所有阴影边缘每帧爬动一个像素，在低分辨率像素画面里表现为整屏抖动、
-## 黑点闪烁；分步后阴影大部分时间静止，只在整步时整体挪一两个像素。光色和亮度仍连续变化。
-@export_range(0.0, 120.0, 1.0) var sun_step_minutes := 15.0
+## 太阳方向每隔多少游戏分钟更新一次。0（默认）= 每帧连续转动，阴影平滑移动。
+## 只在低分辨率像素模式下才建议设成 10~30：那时连续转动会让阴影边缘逐像素爬动、看起来在闪；
+## 分步后阴影大部分时间静止，只在整步时整体挪一下。光色和亮度始终连续变化。
+@export_range(0.0, 120.0, 1.0) var sun_step_minutes := 0.0
+## 辉光（bloom）只在用得到时开启：夜晚（灯光、窗户）、闪电、有积雪（阳光下的雪会发亮）。
+## 晴天白天没有超过阈值的像素，关掉画面不变，省掉一组全屏模糊 pass（性能）。
+@export var auto_glow := true
 
 ## 以下由 WeatherSystem 每帧写入
 var cloud_cover := 0.0
@@ -151,6 +154,9 @@ func _apply() -> void:
 	var sun_h := sin((hour - 6.0) / 12.0 * PI)
 	night_factor = maxf(1.0 - smoothstep(-0.05, 0.25, sun_h), cloud * 0.3)
 	Globals.set_param(&"pw_night_factor", night_factor)
+	if auto_glow:
+		environment.glow_enabled = night_factor > 0.005 or flash > 0.001 \
+			or float(Globals.get_param(&"pw_snow_amount", 0.0)) > 0.05
 	var ll := sun.light_color * sun.light_energy * 0.5 + environment.ambient_light_color * environment.ambient_light_energy
 	light_level = Color(minf(ll.r, 1.0), minf(ll.g, 1.0), minf(ll.b, 1.0))
 	Globals.set_param(&"pw_light_color", light_level)

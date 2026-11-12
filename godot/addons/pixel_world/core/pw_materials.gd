@@ -30,6 +30,8 @@ const DEFS := {
 	"boards": {"tex": "boards"},
 	"barrel": {"tex": "barrel"},
 	"trunk": {"tex": "trunk"},
+	"deck": {"tex": "deck", "puddles": 0.4},
+	"birch_bark": {"tex": "birch_bark"},
 	# 石作 / 金属
 	"stone": {"tex": "stone"},
 	"brick": {"tex": "brick"},
@@ -39,6 +41,8 @@ const DEFS := {
 	"plaster_white": {"tex": "plaster_white"},
 	"plaster_red": {"tex": "plaster_red"},
 	"metal": {"tex": "metal", "roughness_base": 0.6},
+	"metal_green": {"tex": "metal_green", "roughness_base": 0.55},
+	"metal_red": {"tex": "metal_red", "roughness_base": 0.55},
 	"bulb": {"tex": "lamp_glass", "emission_full": 1.0, "emission_energy": 2.2, "snow_receive": 0.0},
 	"beacon": {"tex": "lamp_glass", "emission_full": 1.0, "emission_energy": 3.0, "snow_receive": 0.0},
 	# 植物
@@ -46,6 +50,10 @@ const DEFS := {
 	"pine_skirt": {"tex": "pine_skirt", "sway": 1.0},
 	"leaf": {"tex": "leaf", "sway": 0.6},
 	"leaf_dark": {"tex": "leaf_dark", "sway": 0.6},
+	"leaf_birch": {"tex": "leaf_birch", "sway": 0.8},
+	"leaf_birch_dark": {"tex": "leaf_birch_dark", "sway": 0.8},
+	"leaf_autumn": {"tex": "leaf_autumn", "sway": 0.6},
+	"leaf_autumn_dark": {"tex": "leaf_autumn_dark", "sway": 0.6},
 	"weed": {"tex": "weed", "sway": 2.0, "snow_receive": 0.0, "caustics": 1.0},
 	# 地面：puddles = 下雨时积水的程度
 	"grass": {"tex": "grass", "puddles": 0.55},

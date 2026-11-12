@@ -6,10 +6,12 @@ render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_s
 
 #include "res://addons/pixel_world/shaders/pw_common.gdshaderinc"
 
-uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap_anisotropic, repeat_enable, hint_default_white;
+// 线性过滤 + 下方的「锐利双线性」采样：近处贴图像素边缘锐利，镜头移动时边缘平滑过渡（不闪烁），远处走 mipmap
+uniform sampler2D albedo_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
 uniform vec4 albedo_color : source_color = vec4(1.0);
 // true：UV 以米为单位，按 texel_density 换算成贴图像素（保证全场景像素颗粒一致）
 uniform bool uv_in_meters = true;
+uniform bool pixel_aa = true;   // false = 等同最近邻采样（对比 / 调试用）
 uniform float texel_density = 32.0;
 uniform float roughness_base = 0.9;
 
@@ -32,12 +34,17 @@ uniform float water_level = -0.45;
 varying vec3 world_pos;
 varying vec3 world_normal;
 varying vec3 object_origin;
+varying vec4 inst_tint;
 
 void vertex() {
 	object_origin = MODEL_MATRIX[3].xyz;
+	// MultiMesh 实例的自定义数据：rgb = 色调，a = 1 表示启用（每棵树颜色略有不同，避免一模一样）
+	inst_tint = INSTANCE_CUSTOM;
 	if (sway > 0.0) {
 		float h = max(VERTEX.y - 0.6, 0.0);
-		float phase = TIME * 1.6 + object_origin.x * 0.37 + object_origin.z * 0.29;
+		// 合批后多棵树在同一个网格里：每棵树的相位存在 UV2.x；没有 UV2 时按物体位置算
+		float seed = UV2.x > 0.0 ? UV2.x : object_origin.x * 0.37 + object_origin.z * 0.29;
+		float phase = TIME * 1.6 + seed;
 		// 微风（晴天）时不摆，免得精细贴图细碎闪烁；起风后才明显摇动
 		float amp = smoothstep(0.3, 1.0, length(pw_wind)) * 1.4;
 		float s = (sin(phase) * 0.6 + sin(phase * 2.3) * 0.4) * amp;
@@ -51,8 +58,22 @@ void vertex() {
 void fragment() {
 	vec2 tex_size = vec2(textureSize(albedo_tex, 0));
 	vec2 uv = uv_in_meters ? UV * texel_density / tex_size : UV;
-	vec4 tex = texture(albedo_tex, uv) * albedo_color;
-	vec3 col = tex.rgb;
+	// 锐利双线性：贴图像素内部取纯色，只在像素边界上用约 1 个屏幕像素做过渡。
+	// 最近邻采样在镜头做亚像素移动时，整格像素会来回翻转，看起来就是闪烁。
+	vec2 px = uv * tex_size;
+	vec2 fw = max(abs(dFdx(px)) + abs(dFdy(px)), vec2(1e-4));  // 一个屏幕像素覆盖多少贴图像素
+	vec2 seam = floor(px + 0.5);
+	vec2 sharp = seam + clamp((px - seam) / fw, -0.5, 0.5);
+	sharp = mix(sharp, px, smoothstep(0.75, 1.25, max(fw.x, fw.y)));  // 缩小时退回普通采样
+	if (!pixel_aa) {
+		sharp = floor(px) + 0.5;
+	}
+	vec4 tex = textureGrad(albedo_tex, sharp / tex_size, dFdx(uv), dFdy(uv)) * albedo_color;
+	// 顶点色 RGB = 每个实例的色调（白色 = 不变）；MultiMesh 实例也可以用自定义数据给色调
+	vec3 col = tex.rgb * COLOR.rgb;
+	if (inst_tint.a > 0.5) {
+		col *= inst_tint.rgb;
+	}
 
 	// 以「贴图像素」为单位的格子坐标：积雪颗粒与贴图像素对齐
 	vec3 cell = uv_in_meters
@@ -71,11 +92,14 @@ void fragment() {
 		cov += (vnoise(q * 0.9) * 0.65 + vnoise(q * 2.7) * 0.35 - 0.5) * snow_patchiness * 2.0 * min(s * 3.0, 1.0);
 		cov = (cov - 0.5) * 3.0 + 0.5;
 	}
-	float h = vnoise(cell.xy * 0.07 + cell.z * 3.7) * 0.72 + vnoise(cell.xy * 0.22 + 9.0) * 0.16
-		+ hash13(cell + 41.0) * 0.12;
-	float snow = step(h, cov);
-	vec3 sc = mix(snow_color.rgb, snow_color_alt.rgb, step(0.62, vnoise(cell.xy * 0.12 + cell.z * 1.7)));
-	col = mix(col, sc, snow);
+	float snow = 0.0;
+	if (cov > 0.0) {  // 没有积雪时跳过噪声计算（性能）
+		float h = vnoise(cell.xy * 0.07 + cell.z * 3.7) * 0.72 + vnoise(cell.xy * 0.22 + 9.0) * 0.16
+			+ hash13(cell + 41.0) * 0.12;
+		snow = step(h, cov);
+		vec3 sc = mix(snow_color.rgb, snow_color_alt.rgb, step(0.62, vnoise(cell.xy * 0.12 + cell.z * 1.7)));
+		col = mix(col, sc, snow);
+	}
 
 	// 潮湿：变暗 + 更光滑
 	float wet = pw_wetness * wet_receive * (1.0 - snow) * mix(0.5, 1.0, up) * above_water;
@@ -115,8 +139,8 @@ void fragment() {
 	ROUGHNESS = rough;
 	SPECULAR = spec;
 
-	// 夜间发光；顶点色 R 作为每扇窗的随机数（没有顶点色时为 1 = 常亮）
+	// 夜间发光；顶点色 A 作为每扇窗的随机数（没有顶点色时为 1 = 常亮）
 	float em = clamp(texture(emission_tex, UV).r + emission_full, 0.0, 1.0);
-	float on = step(emission_random_off, COLOR.r);
+	float on = step(emission_random_off, COLOR.a);
 	EMISSION = emission_color.rgb * emission_energy * em * on * pw_night_factor * (1.0 - snow);
 }

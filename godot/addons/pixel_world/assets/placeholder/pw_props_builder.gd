@@ -6,8 +6,13 @@ const MB := preload("res://addons/pixel_world/core/pw_mesh_builder.gd")
 const Parts := preload("res://addons/pixel_world/assets/placeholder/pw_parts.gd")
 
 
-## 白色尖头篱笆：沿 +X 从 0 到 length。gaps = [[x0, x1], ...]，这些区间不放篱笆（门口）。
-static func build_fence(length: float, gaps: Array = []) -> ArrayMesh:
+const FENCE_STYLES := ["picket", "rail", "stone"]
+const BENCH_STYLES := ["slat", "park", "log"]
+
+
+## 篱笆：沿 +X 从 0 到 length。gaps = [[x0, x1], ...]，这些区间不放篱笆（门口）。
+## style：picket（白色尖头栅栏）/ rail（乡村木栏）/ stone（矮石墙）
+static func build_fence(length: float, gaps: Array = [], style := "picket") -> ArrayMesh:
 	var mb := MB.new()
 	# 连续的段（去掉缺口）
 	var runs: Array[Vector2] = []
@@ -19,6 +24,20 @@ static func build_fence(length: float, gaps: Array = []) -> ArrayMesh:
 	if start < length:
 		runs.append(Vector2(start, length))
 	for r in runs:
+		if style == "rail":
+			# 粗木桩 + 两道横木
+			var n := maxi(1, roundi((r.y - r.x) / 2.0))
+			for i in n + 1:
+				var px := lerpf(r.x, r.y, float(i) / n)
+				mb.box("trunk", Vector3(px - 0.08, 0, -0.08), Vector3(px + 0.08, 0.95, 0.08))
+			for y in [0.35, 0.7]:
+				mb.box("wall_wood", Vector3(r.x, y, -0.04), Vector3(r.y, y + 0.11, 0.05))
+			continue
+		if style == "stone":
+			# 矮石墙 + 浅色压顶
+			mb.box("stone", Vector3(r.x, 0, -0.16), Vector3(r.y, 0.48, 0.16))
+			mb.box("curb", Vector3(r.x - 0.03, 0.48, -0.2), Vector3(r.y + 0.03, 0.58, 0.2))
+			continue
 		# 两根横档（在栅条后面）
 		for y in [0.28, 0.6]:
 			mb.box("trim", Vector3(r.x, y, -0.07), Vector3(r.y, y + 0.07, -0.025))
@@ -37,14 +56,31 @@ static func build_fence(length: float, gaps: Array = []) -> ArrayMesh:
 	return mb.commit()
 
 
-## 长椅：面朝 +Z，长 1.6 米。木板座面 + 靠背，铁艺腿
-static func build_bench() -> ArrayMesh:
+## 长椅：面朝 +Z，长约 1.6 米。style：slat（木条 + 铁艺腿）/ park（带扶手的绿漆长椅）/ log（原木长凳，无靠背）
+static func build_bench(style := "slat") -> ArrayMesh:
 	var mb := MB.new()
-	mb.box("boards", Vector3(-0.8, 0.42, -0.2), Vector3(0.8, 0.5, 0.22))
-	mb.box("boards", Vector3(-0.8, 0.6, -0.28), Vector3(0.8, 0.95, -0.21))
-	for x in [-0.66, 0.66]:
-		mb.box("metal", Vector3(x - 0.05, 0, -0.18), Vector3(x + 0.05, 0.42, 0.2), false)
-		mb.box("metal", Vector3(x - 0.04, 0.42, -0.3), Vector3(x + 0.04, 0.98, -0.2))
+	match style:
+		"park":
+			for i in 3:
+				var z := -0.18 + i * 0.14
+				mb.box("deck", Vector3(-0.85, 0.42, z), Vector3(0.85, 0.48, z + 0.11))
+			for i in 2:
+				var y := 0.62 + i * 0.16
+				mb.box("deck", Vector3(-0.85, y, -0.3), Vector3(0.85, y + 0.11, -0.24))
+			for x in [-0.8, 0.8]:
+				mb.box("metal_green", Vector3(x - 0.05, 0, -0.26), Vector3(x + 0.05, 0.95, -0.2), false)
+				mb.box("metal_green", Vector3(x - 0.05, 0, 0.12), Vector3(x + 0.05, 0.42, 0.18), false)
+				mb.box("metal_green", Vector3(x - 0.05, 0.62, -0.26), Vector3(x + 0.05, 0.67, 0.2))  # 扶手
+		"log":
+			mb.box("trunk", Vector3(-0.8, 0.32, -0.18), Vector3(0.8, 0.48, 0.18))
+			for x in [-0.55, 0.55]:
+				mb.ngon_frustum("rock", Vector3(x, 0, 0), 0.0, 0.32, 0.2, 0.17, 6, 0.3, false)
+		_:
+			mb.box("boards", Vector3(-0.8, 0.42, -0.2), Vector3(0.8, 0.5, 0.22))
+			mb.box("boards", Vector3(-0.8, 0.6, -0.28), Vector3(0.8, 0.95, -0.21))
+			for x in [-0.66, 0.66]:
+				mb.box("metal", Vector3(x - 0.05, 0, -0.18), Vector3(x + 0.05, 0.42, 0.2), false)
+				mb.box("metal", Vector3(x - 0.04, 0.42, -0.3), Vector3(x + 0.04, 0.98, -0.2))
 	return mb.commit()
 
 

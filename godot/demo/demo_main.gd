@@ -9,6 +9,7 @@ extends Control
 ##           --player=x,z（角色位置） --walk=x,z（截图前让角色朝这个方向走）
 
 const Globals := preload("res://addons/pixel_world/core/pw_globals.gd")
+const Mats := preload("res://addons/pixel_world/core/pw_materials.gd")
 const PixelDisplay := preload("res://addons/pixel_world/render/pw_pixel_display.gd")
 const TimeOfDay := preload("res://addons/pixel_world/weather/pw_time_of_day.gd")
 const Weather := preload("res://addons/pixel_world/weather/pw_weather_system.gd")
@@ -92,6 +93,26 @@ func _apply_cmdline() -> void:
 		weather.snow_amount = float(args["snow"])
 	if args.has("wet"):
 		weather.wetness = float(args["wet"])
+	if args.has("noaa"):  # 调试：贴图改回最近邻采样（对比移动时的闪烁）
+		for m: ShaderMaterial in Mats._cache.values():
+			m.set_shader_parameter("pixel_aa", false)
+	if args.has("nopost"):  # 调试：关闭全屏后期
+		post.visible = false
+	if args.has("noglow"):
+		tod.auto_glow = false
+		tod.environment.glow_enabled = false
+	if args.has("nomsaa"):
+		display.viewport.msaa_3d = Viewport.MSAA_DISABLED
+	if args.has("noshadow"):  # 调试：关闭太阳阴影
+		tod.sun.shadow_enabled = false
+	if args.has("shadowmode"):  # 调试：ortho / 2 / 4
+		var m: String = args["shadowmode"]
+		tod.sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if m == "ortho" \
+			else (DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS if m == "4" else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
+	if args.has("shadowsoft"):  # 调试：软阴影质量 0..5
+		RenderingServer.directional_soft_shadow_filter_set_quality(int(args["shadowsoft"]))
+	if args.has("shadowblur"):
+		tod.sun.shadow_blur = float(args["shadowblur"])
 	if args.has("pixel"):
 		display.pixel_mode = true
 	if args.has("tilt"):
@@ -114,7 +135,15 @@ func _apply_cmdline() -> void:
 	if args.has("run"):  # 指定 --hour 时默认停住时间；加 --run 让时间继续走
 		tod.running = true
 	if args.has("diffshot"):
-		await _diff_shot(args["diffshot"], int(args.get("frames", "90")), int(args.get("gap", "20")))
+		var pan := Vector3.ZERO
+		if args.has("pan"):  # --pan=dx,dz：两次截图之间把镜头平移这么多（检查移动时的闪烁）
+			var pp: PackedStringArray = args["pan"].split(",")
+			pan = Vector3(float(pp[0]), 0.0, float(pp[1]))
+		await _diff_shot(args["diffshot"], int(args.get("frames", "90")), int(args.get("gap", "20")), pan)
+		get_tree().quit()
+		return
+	if args.has("bench"):
+		await _bench(int(args["bench"]))
 		get_tree().quit()
 		return
 	if args.has("screenshot"):
@@ -131,15 +160,57 @@ func _apply_cmdline() -> void:
 		get_tree().quit()
 
 
+## 性能跑分：关闭垂直同步，角色沿路走动（镜头跟随），测平均帧时间 / 帧率和渲染统计。
+## 用法：godot --path godot -- --bench=600 [--weather=rain --snap]
+func _bench(frames: int) -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	Engine.max_fps = 0
+	if _auto_walk == Vector3.ZERO:
+		_auto_walk = Vector3(0.15, 0.0, 1.0)  # 沿土路往湖边走
+	var vp_rid := display.viewport.get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(vp_rid, true)
+	for i in 60:
+		await get_tree().process_frame
+	var times := PackedFloat32Array()
+	var cpu_ms := 0.0
+	var gpu_ms := 0.0
+	var proc_ms := 0.0
+	var last := Time.get_ticks_usec()
+	for i in frames:
+		await get_tree().process_frame
+		var now := Time.get_ticks_usec()
+		times.append((now - last) / 1000.0)
+		last = now
+		cpu_ms += RenderingServer.viewport_get_measured_render_time_cpu(vp_rid) + RenderingServer.get_frame_setup_time_cpu()
+		gpu_ms += RenderingServer.viewport_get_measured_render_time_gpu(vp_rid)
+		proc_ms += Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+	print("BENCH render_cpu=%.2fms render_gpu=%.2fms script_process=%.2fms" % [cpu_ms / frames, gpu_ms / frames, proc_ms / frames])
+	var sorted := times.duplicate()
+	sorted.sort()
+	var avg := 0.0
+	for t in times:
+		avg += t
+	avg /= times.size()
+	var p95: float = sorted[int(sorted.size() * 0.95)]
+	print("BENCH frames=%d avg=%.2fms fps=%.1f p95=%.2fms draw_calls=%d objects=%d primitives=%d vram=%.0fMB" % [
+		frames, avg, 1000.0 / avg, p95,
+		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+		Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME),
+		Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+		Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0])
+
+
 ## 画面稳定性检查：隔 gap 帧截两张图（隐藏 UI），把变化的像素标成洋红色保存，并打印变化比例。
 ## 静止镜头下变化越少越好（雨雪粒子、水面波光属于正常变化）。
-func _diff_shot(path: String, frames: int, gap: int) -> void:
+## pan 非零时，两次截图之间把镜头平移 pan：平移不到 1 个屏幕像素时，变化越少说明移动时越不闪。
+func _diff_shot(path: String, frames: int, gap: int, pan := Vector3.ZERO) -> void:
 	for c in get_children():
 		if c is CanvasLayer or (c is Control and c != display):
 			c.visible = false
 	for i in frames:
 		await get_tree().process_frame
 	var a := get_viewport().get_texture().get_image()
+	rig.position += pan
 	for i in gap:
 		await get_tree().process_frame
 	var b := get_viewport().get_texture().get_image()
@@ -148,15 +219,23 @@ func _diff_shot(path: String, frames: int, gap: int) -> void:
 	var da := a.get_data()
 	var db := b.get_data()
 	var changed := 0
+	var popped := 0  # 大幅突变（像素整格翻转）的数量：闪烁的主要来源
+	var total := 0
 	for i in range(0, da.size(), 3):
-		if absi(da[i] - db[i]) + absi(da[i + 1] - db[i + 1]) + absi(da[i + 2] - db[i + 2]) > 24:
+		var d := absi(da[i] - db[i]) + absi(da[i + 1] - db[i + 1]) + absi(da[i + 2] - db[i + 2])
+		total += d
+		if d > 150:
+			popped += 1
+		if d > 24:
 			changed += 1
 			db[i] = 255
 			db[i + 1] = 0
 			db[i + 2] = 255
+	var n := da.size() / 3
 	var out := Image.create_from_data(b.get_width(), b.get_height(), false, Image.FORMAT_RGB8, db)
 	out.save_png(path)
-	print("diff saved: %s  changed=%d (%.2f%%)" % [path, changed, 100.0 * changed / (da.size() / 3)])
+	print("diff saved: %s  changed=%d (%.2f%%)  popped=%.2f%%  mean=%.2f" % [
+		path, changed, 100.0 * changed / n, 100.0 * popped / n, float(total) / n])
 
 
 ## 走路模式：WASD / 方向键按镜头方向移动角色，镜头平滑跟随
@@ -181,6 +260,8 @@ func _process(delta: float) -> void:
 	player.walk(dir, delta)
 	if walk_mode:
 		rig.position = rig.position.lerp(Vector3(player.position.x, 0.0, player.position.z), 1.0 - exp(-delta * 4.0))
+	# 阴影只算到画面能看到的距离：镜头拉近时少画阴影投射物、近处阴影也更清晰（性能 + 画质）
+	tod.sun.directional_shadow_max_distance = clampf(rig.distance * 1.9 + 12.0, 40.0, 120.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:

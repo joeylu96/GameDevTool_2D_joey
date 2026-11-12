@@ -38,6 +38,11 @@ var _solid_circles: Array[Vector3] = []
 
 var fish: PWFishSchool
 
+## 静态合批：不会动的模型按「区块 × 是否投影」分组，同一材质的几何合并进一个 surface，
+## 几百个物体的绘制调用降到几十个（性能）。区块边长 CHUNK 米，保留一定的视锥剔除。
+const CHUNK := 40.0
+var _batches := {}  # "ix,iz,shadow" -> {Material: SurfaceTool}
+
 
 func build(seed_value := 7) -> void:
 	_rng.seed = seed_value
@@ -50,16 +55,47 @@ func build(seed_value := 7) -> void:
 	_build_lamps()
 	_build_props()
 	_build_trees()
+	_flush_static()
 
 
-func _add_mesh(mesh: Mesh, xf := Transform3D.IDENTITY, shadows := true) -> MeshInstance3D:
+## 放一个静态模型。程序生成的 ArrayMesh 进入合批；其它（水面等内置网格）直接实例化
+func _add_mesh(mesh: Mesh, xf := Transform3D.IDENTITY, shadows := true) -> void:
+	if mesh is ArrayMesh:
+		var o := xf.origin
+		var key := "%d,%d,%s" % [floori((o.x + 60.0) / CHUNK), floori((o.z + 60.0) / CHUNK), shadows]
+		if not _batches.has(key):
+			_batches[key] = {}
+		var groups: Dictionary = _batches[key]
+		for s in mesh.get_surface_count():
+			var mat := mesh.surface_get_material(s)
+			if not groups.has(mat):
+				var st := SurfaceTool.new()
+				st.begin(Mesh.PRIMITIVE_TRIANGLES)
+				groups[mat] = st
+			(groups[mat] as SurfaceTool).append_from(mesh, s, xf)
+		return
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.transform = xf
 	if not shadows:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
-	return mi
+
+
+func _flush_static() -> void:
+	for key: String in _batches:
+		var groups: Dictionary = _batches[key]
+		var mesh := ArrayMesh.new()
+		for mat: Material in groups:
+			mesh = (groups[mat] as SurfaceTool).commit(mesh)
+			mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
+		var mi := MeshInstance3D.new()
+		mi.name = "Static_" + key.replace(",", "_")
+		mi.mesh = mesh
+		if key.ends_with("false"):
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mi)
+	_batches.clear()
 
 
 # ---------------------------------------------------------------- 查询
@@ -107,7 +143,7 @@ func can_stand(p: Vector2) -> bool:
 func _build_ground() -> void:
 	var mb := MB.new()
 	mb.box("grass", Vector3(-HALF, -0.5, -HALF), Vector3(HALF, 0.0, SHORE_Z), true, false, false)
-	_add_mesh(mb.commit())
+	_add_mesh(mb.commit(), Transform3D.IDENTITY, false)  # 平地投不出可见的影子，不进阴影贴图
 	# 岸边碎石带：内侧边缘每半米错开几个像素（独立随机数，不影响其他布局）
 	var srng := RandomNumberGenerator.new()
 	srng.seed = 515
@@ -122,12 +158,21 @@ func _build_ground() -> void:
 		prev_in = cur_in
 		xx = nx
 	_add_mesh(sh.commit(), Transform3D.IDENTITY, false)
-	# 码头（木桩一直插到湖底）
+	# 码头：一块块独立的甲板（板间留缝，低对比木纹，不晃眼）+ 三根托梁 + 插到湖底的木桩 + 系船柱
 	var pier := MB.new()
-	pier.box("boards", Vector3(PIER.position.x, -0.2, PIER.position.y), Vector3(PIER.end.x, 0.05, PIER.end.y))
-	for z in [SHORE_Z + 3.0, SHORE_Z + 6.0, SHORE_Z + 8.6]:
-		for x in [8.2, 10.1]:
-			pier.box("trunk", Vector3(x, -4.0, z), Vector3(x + 0.25, 0.25, z + 0.25))
+	var z := PIER.position.y
+	while z < PIER.end.y - 0.05:
+		var z1 := minf(z + 0.26, PIER.end.y)
+		pier.box("deck", Vector3(PIER.position.x, -0.04, z), Vector3(PIER.end.x, 0.05, z1 - 0.035))
+		z += 0.26
+	for bx in [PIER.position.x + 0.15, PIER.get_center().x, PIER.end.x - 0.15]:
+		pier.box("trunk", Vector3(bx - 0.08, -0.3, PIER.position.y), Vector3(bx + 0.08, -0.04, PIER.end.y), false, true)
+	for pz in [SHORE_Z + 3.0, SHORE_Z + 6.0, SHORE_Z + 8.6]:
+		for px in [8.2, 10.1]:
+			pier.box("trunk", Vector3(px, -4.0, pz), Vector3(px + 0.25, -0.04, pz + 0.25), false)
+	for c in [Vector2(PIER.position.x + 0.15, PIER.end.y - 0.2), Vector2(PIER.end.x - 0.15, PIER.end.y - 0.2),
+			Vector2(PIER.position.x + 0.15, SHORE_Z + 4.5), Vector2(PIER.end.x - 0.15, SHORE_Z + 4.5)]:
+		pier.ngon_frustum("trunk", Vector3(c.x, 0, c.y), 0.05, 0.45, 0.11, 0.1, 8, 0.0, true)
 	_add_mesh(pier.commit())
 
 
@@ -286,7 +331,8 @@ func _build_houses() -> void:
 
 
 func _build_lamps() -> void:
-	var lamp := Trees.build_lamp()
+	# 每个款式 × 颜色只生成一次网格（合批后没有额外开销）；每盏灯随机挑款式、颜色和朝向
+	var lamp_meshes := {}
 	var pool := PlaneMesh.new()
 	pool.size = Vector2(5, 5)
 	var pm := ShaderMaterial.new()
@@ -303,10 +349,35 @@ func _build_lamps() -> void:
 	while z < -ROAD_W - 2.0:
 		spots.append(Vector3(ROAD_W + 0.6, 0, z))
 		z += 9.0
-	for s in spots:
-		_add_mesh(lamp, Transform3D(Basis(), s))
-		_add_mesh(pool, Transform3D(Basis(), s + Vector3(0, 0.04, 0)), false)
+	var pools := MultiMesh.new()
+	pools.transform_format = MultiMesh.TRANSFORM_3D
+	pools.mesh = pool
+	pools.instance_count = spots.size()
+	for i in spots.size():
+		var s := spots[i]
+		var style: String = Trees.LAMP_STYLES[_deco.randi_range(0, Trees.LAMP_STYLES.size() - 1)]
+		var metal: String = Trees.LAMP_METALS[_deco.randi_range(0, Trees.LAMP_METALS.size() - 1)]
+		var key := style + "/" + metal
+		if not lamp_meshes.has(key):
+			lamp_meshes[key] = Trees.build_lamp(style, metal)
+		# 悬臂灯把灯箱伸向道路一侧（绕 Y 转 θ 后，局部 +X 指向 (cosθ, 0, -sinθ)）
+		var yaw := 0.0
+		if style == "arm":
+			if absf(s.x - (ROAD_W + 0.6)) < 0.1 and s.z < -ROAD_W - 1.0:
+				yaw = PI           # 支路东侧：伸向 -X
+			elif s.z < 0.0:
+				yaw = -PI * 0.5    # 主街北侧：伸向 +Z
+			else:
+				yaw = PI * 0.5     # 主街南侧：伸向 -Z
+		var basis := Basis(Vector3.UP, yaw)
+		_add_mesh(lamp_meshes[key], Transform3D(basis, s))
+		pools.set_instance_transform(i, Transform3D(Basis(), s + basis * Trees.lamp_light_offset(style) + Vector3(0, 0.04, 0)))
 		_solid_circles.append(Vector3(s.x, s.z, 0.25))
+	var pmi := MultiMeshInstance3D.new()
+	pmi.name = "LightPools"
+	pmi.multimesh = pools
+	pmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(pmi)
 	_lamp_spots = spots
 
 
@@ -314,19 +385,20 @@ func _build_lamps() -> void:
 func _build_house_fence(side: int, rect: Rect2, door_x: float) -> void:
 	var x0 := rect.position.x + 0.3
 	var length := rect.size.x - 0.6
+	var style: String = Props.FENCE_STYLES[_deco.randi_range(0, Props.FENCE_STYLES.size() - 1)]
 	if side < 0:
 		if _deco.randf() > 0.6:
 			return
 		var z := rect.end.y + 1.15  # 灌木和路灯之间
 		var gap := [door_x - x0 - 0.8, door_x - x0 + 0.8]
-		_add_mesh(Props.build_fence(length, [gap]), Transform3D(Basis(), Vector3(x0, 0, z)))
+		_add_mesh(Props.build_fence(length, [gap], style), Transform3D(Basis(), Vector3(x0, 0, z)))
 		_solid_rects.append(Rect2(x0, z - 0.15, gap[0], 0.3))
 		_solid_rects.append(Rect2(x0 + gap[1], z - 0.15, length - gap[1], 0.3))
 	else:
 		var z := rect.end.y + 1.0
 		if z > SHORE_Z - 2.2 or _deco.randf() > 0.7:
 			return
-		_add_mesh(Props.build_fence(length), Transform3D(Basis(), Vector3(x0, 0, z)))
+		_add_mesh(Props.build_fence(length, [], style), Transform3D(Basis(), Vector3(x0, 0, z)))
 		_blocked.append(Rect2(x0, z - 0.6, length, 1.2))
 		_solid_rects.append(Rect2(x0, z - 0.15, length, 0.3))
 
@@ -350,14 +422,17 @@ func _build_lighthouse() -> void:
 
 ## 长椅（主街南侧，两盏路灯之间，背对房屋面朝街道）+ 码头边的木箱和木桶
 func _build_props() -> void:
-	var bench := Props.build_bench()
+	var benches := {}
 	for s in _lamp_spots:
 		if s.z < 0.0:
 			continue
 		var p := Vector3(s.x + 4.5, 0, ROAD_W + CURB + 0.55)
 		if p.x > HALF - 1.5 or (p.x > -0.5 and p.x < ROAD_W + 4.5) or _deco.randf() > 0.6:
 			continue  # 出界 / 挡住土路口 / 随机留空
-		_add_mesh(bench, Transform3D(Basis(Vector3.UP, PI), p))
+		var bstyle: String = Props.BENCH_STYLES[_deco.randi_range(0, Props.BENCH_STYLES.size() - 1)]
+		if not benches.has(bstyle):
+			benches[bstyle] = Props.build_bench(bstyle)
+		_add_mesh(benches[bstyle], Transform3D(Basis(Vector3.UP, PI), p))
 		_blocked.append(Rect2(p.x - 1.0, p.z - 0.5, 2.0, 1.0))
 		_solid_rects.append(Rect2(p.x - 0.85, p.z - 0.3, 1.7, 0.6))
 	var crate := Props.build_crate()
@@ -383,11 +458,21 @@ func _build_props() -> void:
 # ---------------------------------------------------------------- 植被
 
 func _build_trees() -> void:
-	var pines: Array[Mesh] = [Trees.build_pine(1000), Trees.build_pine(1001), Trees.build_pine(1002)]
-	var broads: Array[Mesh] = [Trees.build_broadleaf(2000), Trees.build_broadleaf(2001)]
-	var bushes: Array[Mesh] = [Trees.build_bush(3000), Trees.build_bush(3001), Trees.build_bush(3002)]
-	var rocks: Array[Mesh] = [Trees.build_rock(4000), Trees.build_rock(4001), Trees.build_rock(4002)]
-	var xforms := {}  # Mesh -> Array[Transform3D]
+	# 变体池：每种都按不同种子生成不同的形状；再加上每棵独立的朝向、宽高比例和色调，场景里不会有两棵一样的树
+	var pines: Array[Mesh] = []
+	for i in 10:
+		pines.append(Trees.build_pine(1000 + i))
+	var broad_styles := ["oak", "oak", "birch", "poplar", "autumn", "oak", "birch", "poplar", "oak", "autumn", "birch", "poplar"]
+	var broads: Array[Mesh] = []
+	for i in broad_styles.size():
+		broads.append(Trees.build_broadleaf(2000 + i, broad_styles[i]))
+	var bushes: Array[Mesh] = []
+	for i in 8:
+		bushes.append(Trees.build_bush(3000 + i))
+	var rocks: Array[Mesh] = []
+	for i in 8:
+		rocks.append(Trees.build_rock(4000 + i))
+	var xforms := {}  # Mesh -> [[Transform3D, 色调], ...]
 	var placed: Array[Vector2] = []
 	for attempt in 2500:
 		var p := Vector2(_rng.randf_range(-HALF + 1.0, HALF - 1.0), _rng.randf_range(-HALF + 1.0, SHORE_Z - 1.5))
@@ -399,17 +484,20 @@ func _build_trees() -> void:
 			continue
 		placed.append(p)
 		var s := _rng.randf_range(0.75, 1.2)
-		var b := Basis(Vector3.UP, _rng.randi_range(0, 3) * PI * 0.5).scaled(Vector3(s, s, s))
-		var variant := _rng.randi_range(0, 2)
+		var yaw := _rng.randi_range(0, 3) * PI * 0.5 + _deco.randf() * TAU
+		_rng.randi_range(0, 2)  # 保留原来的随机数消耗，树的位置和以前一致
 		# 林带几乎全是松树；镇子里松树和阔叶树混种
 		var broad_chance := 0.08 if p.y < -28.0 else 0.45
 		var is_broad := _deco.randf() < broad_chance
-		var mesh: Mesh = broads[variant % broads.size()] if is_broad else pines[variant]
-		_push(xforms, mesh, Transform3D(b, Vector3(p.x, 0, p.y)))
-		_solid_circles.append(Vector3(p.x, p.y, 0.35 if is_broad else 0.9 * s))
+		var mesh: Mesh = broads[_deco.randi_range(0, broads.size() - 1)] if is_broad else pines[_deco.randi_range(0, pines.size() - 1)]
+		var sxz := s * _deco.randf_range(0.88, 1.12)
+		var sy := s * _deco.randf_range(0.88, 1.2)
+		var b := Basis(Vector3.UP, yaw).scaled(Vector3(sxz, sy, sxz))
+		_push(xforms, mesh, Transform3D(b, Vector3(p.x, 0, p.y)), _tint(0.1))
+		_solid_circles.append(Vector3(p.x, p.y, 0.35 if is_broad else 0.9 * sxz))
 	# 灌木：房门两侧 + 空地上零星几丛
 	for spot in _bush_spots:
-		_push(xforms, bushes[_deco.randi_range(0, bushes.size() - 1)], _rand_xf(spot, 0.8, 1.15))
+		_push(xforms, bushes[_deco.randi_range(0, bushes.size() - 1)], _rand_xf(spot, 0.8, 1.15), _tint(0.1))
 		_solid_circles.append(Vector3(spot.x, spot.z, 0.5))
 	var scattered := 0
 	for attempt in 600:
@@ -420,7 +508,7 @@ func _build_trees() -> void:
 			continue
 		placed.append(p)
 		scattered += 1
-		_push(xforms, bushes[_deco.randi_range(0, bushes.size() - 1)], _rand_xf(Vector3(p.x, 0, p.y), 0.7, 1.1))
+		_push(xforms, bushes[_deco.randi_range(0, bushes.size() - 1)], _rand_xf(Vector3(p.x, 0, p.y), 0.7, 1.1), _tint(0.1))
 		_solid_circles.append(Vector3(p.x, p.y, 0.5))
 	# 石头：沿岸一排 + 林间几块
 	for i in 40:
@@ -429,26 +517,81 @@ func _build_trees() -> void:
 		if not _free(p, placed, 1.2):
 			continue
 		placed.append(p)
-		_push(xforms, rocks[_deco.randi_range(0, rocks.size() - 1)], _rand_xf(Vector3(p.x, 0, p.y), 0.7, 1.4))
+		_push(xforms, rocks[_deco.randi_range(0, rocks.size() - 1)], _rand_xf(Vector3(p.x, 0, p.y), 0.7, 1.4), _tint(0.08))
 		_solid_circles.append(Vector3(p.x, p.y, 0.45))
 	_flush_multimesh(xforms, true)
 
 
-## MultiMesh 批量渲染（Web 性能）：每种网格一个
+## 植被合批（性能）：所有实例按区块、按材质合并成静态网格——几十种变体 × 每种 2~3 个材质
+## 不再各占一次绘制调用（WebGL 上每次绘制调用开销很大）。
+## 每个实例的色调写进顶点色 RGB，摇摆相位写进 UV2.x，所以合并后每棵树仍然颜色不同、各摆各的。
+## 顶点变换用 Transform3D * PackedVector3Array（引擎内批量计算），启动开销很小。
 func _flush_multimesh(xforms: Dictionary, shadows: bool) -> void:
+	var chunks := {}  # "ix,iz" -> {Material: {"v": [...], "n": [...], "uv": [...], "uv2": [...], "c": [...]}}
 	for mesh: Mesh in xforms:
-		var list: Array = xforms[mesh]
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.mesh = mesh
-		mm.instance_count = list.size()
-		for j in list.size():
-			mm.set_instance_transform(j, list[j])
-		var mmi := MultiMeshInstance3D.new()
-		mmi.multimesh = mm
+		var surfaces := []
+		for s in mesh.get_surface_count():
+			surfaces.append([mesh.surface_get_arrays(s), mesh.surface_get_material(s)])
+		for item: Array in xforms[mesh]:
+			var xf: Transform3D = item[0]
+			var tint: Color = item[1]
+			tint = Color(tint.r, tint.g, tint.b, 1.0) if tint.a > 0.5 else Color.WHITE
+			var key := "%d,%d" % [floori((xf.origin.x + 60.0) / CHUNK), floori((xf.origin.z + 60.0) / CHUNK)]
+			if not chunks.has(key):
+				chunks[key] = {}
+			var groups: Dictionary = chunks[key]
+			var nxf := Transform3D(xf.basis.inverse().transposed(), Vector3.ZERO)
+			var phase := fposmod(xf.origin.x * 0.37 + xf.origin.z * 0.29, TAU) + 0.01
+			for sf: Array in surfaces:
+				var arr: Array = sf[0]
+				var mat: Material = sf[1]
+				if not groups.has(mat):
+					groups[mat] = {"v": [], "n": [], "uv": [], "uv2": [], "c": []}
+				var g: Dictionary = groups[mat]
+				var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+				var count := verts.size()
+				g.v.append(xf * verts)
+				g.n.append(nxf * (arr[Mesh.ARRAY_NORMAL] as PackedVector3Array))
+				g.uv.append(arr[Mesh.ARRAY_TEX_UV])
+				var uv2 := PackedVector2Array()
+				uv2.resize(count)
+				uv2.fill(Vector2(phase, 0.0))
+				g.uv2.append(uv2)
+				var cols := PackedColorArray()
+				cols.resize(count)
+				cols.fill(tint)
+				g.c.append(cols)
+	for key: String in chunks:
+		var groups: Dictionary = chunks[key]
+		var mesh := ArrayMesh.new()
+		for mat: Material in groups:
+			var g: Dictionary = groups[mat]
+			var v := PackedVector3Array()
+			var n := PackedVector3Array()
+			var uv := PackedVector2Array()
+			var uv2 := PackedVector2Array()
+			var c := PackedColorArray()
+			for i in g.v.size():
+				v.append_array(g.v[i])
+				n.append_array(g.n[i])
+				uv.append_array(g.uv[i])
+				uv2.append_array(g.uv2[i])
+				c.append_array(g.c[i])
+			var arrays := []
+			arrays.resize(Mesh.ARRAY_MAX)
+			arrays[Mesh.ARRAY_VERTEX] = v
+			arrays[Mesh.ARRAY_NORMAL] = n
+			arrays[Mesh.ARRAY_TEX_UV] = uv
+			arrays[Mesh.ARRAY_TEX_UV2] = uv2
+			arrays[Mesh.ARRAY_COLOR] = c
+			mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+			mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
+		var mi := MeshInstance3D.new()
+		mi.name = "Plants_" + key.replace(",", "_")
+		mi.mesh = mesh
 		if not shadows:
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(mmi)
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mi)
 
 
 ## p 不在道路 / 房屋范围内，且离已放置的物体至少 min_dist
@@ -462,13 +605,20 @@ func _free(p: Vector2, placed: Array[Vector2], min_dist: float) -> bool:
 	return true
 
 
-func _push(xforms: Dictionary, mesh: Mesh, xf: Transform3D) -> void:
+func _push(xforms: Dictionary, mesh: Mesh, xf: Transform3D, tint := Color(1, 1, 1, 0)) -> void:
 	if not xforms.has(mesh):
 		xforms[mesh] = []
-	xforms[mesh].append(xf)
+	xforms[mesh].append([xf, tint])
 
 
-## 随机朝向 + 等比缩放
+## 每个实例的随机色调：整体明暗 ± amount，三个通道各自再微调一点（偏黄 / 偏蓝 / 偏暗）
+func _tint(amount: float) -> Color:
+	var k := _deco.randf_range(1.0 - amount, 1.0 + amount * 0.6)
+	return Color(k * _deco.randf_range(0.95, 1.05), k * _deco.randf_range(0.96, 1.04), k * _deco.randf_range(0.93, 1.05), 1.0)
+
+
+## 随机朝向 + 等比缩放（高度再单独随机一点）
 func _rand_xf(pos: Vector3, s_min: float, s_max: float) -> Transform3D:
 	var s := _deco.randf_range(s_min, s_max)
-	return Transform3D(Basis(Vector3.UP, _deco.randf() * TAU).scaled(Vector3(s, s, s)), pos)
+	var sy := s * _deco.randf_range(0.85, 1.15)
+	return Transform3D(Basis(Vector3.UP, _deco.randf() * TAU).scaled(Vector3(s, sy, s)), pos)

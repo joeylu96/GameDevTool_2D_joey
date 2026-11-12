@@ -1,7 +1,7 @@
 # PixelWorld：3D 像素风场景工具链（Godot + Blender）
 
 用来自动生成 3D 像素风的小镇和野外场景，并提供天气、昼夜系统和风格统一的 NPC。画面参考 `pixel.jpg`。
-完整方案见 [docs/DESIGN.md](docs/DESIGN.md)。
+完整方案见 [docs/DESIGN.md](docs/DESIGN.md)；当前画面的关键参数和性能基线见 [docs/VISUAL_SPEC.md](docs/VISUAL_SPEC.md)。
 
 ## 环境要求（请与项目版本保持一致）
 

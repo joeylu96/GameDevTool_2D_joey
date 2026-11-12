@@ -59,5 +59,14 @@ static func ensure_project_settings() -> bool:
 	return changed
 
 
+## 最近一次写入的值（脚本侧读取用，避免每帧向渲染线程查询）
+static var values := {}
+
+
 static func set_param(key: StringName, value: Variant) -> void:
+	values[key] = value
 	RenderingServer.global_shader_parameter_set(key, value)
+
+
+static func get_param(key: StringName, default: Variant = 0.0) -> Variant:
+	return values.get(key, default)

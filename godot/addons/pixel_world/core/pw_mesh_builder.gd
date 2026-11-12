@@ -7,7 +7,7 @@ const Mats := preload("res://addons/pixel_world/core/pw_materials.gd")
 const SNAP := 1.0 / 32.0
 
 var _surfaces := {}
-## 之后添加的顶点都带这个顶点色。shader 用 R 通道当「每个部件的随机数」（例如每扇窗夜里亮不亮）。
+## 之后添加的顶点都带这个顶点色。shader 把 RGB 当色调（白色 = 不变），A 当「每个部件的随机数」（例如每扇窗夜里亮不亮）。
 var color := Color.WHITE
 
 

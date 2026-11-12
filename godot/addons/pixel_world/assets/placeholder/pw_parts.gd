@@ -18,7 +18,7 @@ static func window(mb: MB, c: Vector3, n: Vector3, hw: float, h: float, opts := 
 	var px: int = opts.get("panes_x", 2)
 	var py: int = opts.get("panes_y", 2)
 	# 玻璃
-	mb.color = Color(opts.get("rnd", 0.5), 0, 0)
+	mb.color = Color(1, 1, 1, opts.get("rnd", 0.5))
 	var g := c + n * 0.012
 	mb.face("glass", [g + left * hw + Vector3(0, h, 0), g - left * hw + Vector3(0, h, 0), g - left * hw, g + left * hw], n)
 	mb.color = Color.WHITE
@@ -80,7 +80,7 @@ static func door(mb: MB, c: Vector3, n: Vector3, opts := {}) -> void:
 	var y0 := h * 0.54
 	var y1 := h - 0.12
 	if opts.get("glass_top", true):
-		mb.color = Color(opts.get("rnd", 0.9), 0, 0)
+		mb.color = Color(1, 1, 1, opts.get("rnd", 0.9))
 		var g := c + n * 0.04
 		var gx := hw - 0.13
 		mb.face("glass", [g + left * gx + Vector3(0, y1, 0), g - left * gx + Vector3(0, y1, 0),
