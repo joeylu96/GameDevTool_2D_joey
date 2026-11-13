@@ -26,13 +26,15 @@ ap.add_argument("--out", default=str(ROOT / "godot" / "assets" / "blender"))
 ap.add_argument("--variants", type=int, default=4)
 ap.add_argument("--only", default="", help="生成器名或 spec_<规格 id>，逗号分隔")
 ap.add_argument("--specs-dir", default=str(ROOT / "shared" / "asset_specs" / "props"))
+ap.add_argument("--preview-dir", default=str(ROOT / ".workshop" / "previews"))
 args = ap.parse_args(argv)
 
 if bpy.app.version < (5, 2, 0):
     print("警告：项目锁定 Blender 5.2 LTS，当前是 %s" % bpy.app.version_string)
 
 kinds = [k for k in args.only.split(",") if k] or None
-cat = export.build_all(args.out, kinds=kinds, variants=args.variants, specs_dir=args.specs_dir)
-for a in cat["assets"]:
+cat = export.build_all(args.out, kinds=kinds, variants=args.variants, specs_dir=args.specs_dir,
+                       preview_dir=args.preview_dir)
+for a in [a for a in cat["assets"] if not kinds or a["kind"] in kinds]:
     print("  %-14s %-8s %d 个变体  占地 %s  高 %.1f 米" % (a["id"], a["name"], len(a["files"]), a["footprint"], a["height"]))
 print("已导出 %d 种资产到 %s" % (len(cat["assets"]), args.out))

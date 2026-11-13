@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 .DS_Store
 build/
+# 资产工坊：预览图、任务日志（可重新生成）
+.workshop/

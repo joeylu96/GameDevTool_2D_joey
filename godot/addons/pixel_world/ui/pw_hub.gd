@@ -79,6 +79,7 @@ func _ready() -> void:
 	_pages["generator"] = _build_generator_page()
 	_pages["effects"] = _build_effects_page()
 	_pages["lighting"] = _build_lighting_page()
+	_pages["workshop"] = _build_workshop_page()
 	_pages["about"] = _build_about_page()
 	for k: String in _pages:
 		host.add_child(_pages[k])
@@ -102,7 +103,8 @@ func _build_nav() -> Control:
 	var sp := Control.new()
 	sp.custom_minimum_size.y = 18
 	v.add_child(sp)
-	for spec in [["generator", "场景生成器"], ["assets", "资源库"], ["effects", "特效库"], ["lighting", "天气光照"], ["about", "关于"]]:
+	for spec in [["generator", "场景生成器"], ["assets", "资源库"], ["workshop", "AI 资产工坊"], ["effects", "特效库"],
+			["lighting", "天气光照"], ["about", "关于"]]:
 		var b := Button.new()
 		b.text = "  " + spec[1]
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -133,6 +135,8 @@ func show_page(id: String) -> void:
 		"effects":
 			_attach_diorama(_fx_host)
 			_apply_fx()
+		"workshop":
+			_ws_check()
 		"lighting":
 			_attach_diorama(_light_host)
 			if _fx_actor != null:
@@ -194,6 +198,16 @@ func _build_assets_page() -> Control:
 	_asset_vary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	iv.add_child(_asset_vary)
 	return page
+
+
+## 资源数量变了（资产工坊生成了新资源）：更新分类列表里的数字，当前分类重新列一遍
+func _refresh_categories() -> void:
+	for i in PWAssetLibrary.CATEGORIES.size():
+		var c: Dictionary = PWAssetLibrary.CATEGORIES[i]
+		_cat_list.set_item_text(i, "%s（%d）" % [c.name, PWAssetLibrary.in_category(c.id).size()])
+	var sel := _cat_list.get_selected_items()
+	if not sel.is_empty():
+		_select_category(sel[0])
 
 
 func _select_category(i: int) -> void:
@@ -658,6 +672,11 @@ func _attach_diorama(host: Control) -> void:
 
 
 func _process(delta: float) -> void:
+	if _current == "workshop":
+		_ws_timer += delta
+		if _ws_timer > 3.0:
+			_ws_timer = 0.0
+			_ws_check()
 	if _current == "effects" and _fx_current.has("vfx") and _fx_loop != null and _fx_loop.button_pressed:
 		_fx_timer += delta
 		if _fx_timer > 2.2:
@@ -666,6 +685,112 @@ func _process(delta: float) -> void:
 		_clock.text = "时间 " + _diorama.tod.get_clock_text()
 		if _auto_time.button_pressed:
 			_hour.set_value_no_signal(_diorama.tod.hour)
+
+
+# ---------------------------------------------------------------- AI 资产工坊
+
+var _ws_port: SpinBox
+var _ws_status: Label
+var _ws_counts: Label
+var _ws_http: HTTPRequest
+var _ws_timer := 0.0
+
+
+func _build_workshop_page() -> Control:
+	var page := _page("AI 资产工坊", "用一句话或一张原画生成像素角色、角色动作和 3D 摆件：大模型写规格，Blender 建模渲染，画风和场景自动一致。")
+	var box := PanelContainer.new()
+	box.add_theme_stylebox_override("panel", T.box(T.PANEL, 10, 16))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	box.add_child(v)
+	page.add_child(box)
+	_ws_status = T.label("正在检查工坊服务……", 16)
+	v.add_child(_ws_status)
+	_ws_port = _spin(1024, 65535, 1, 8777)
+	_ws_port.custom_minimum_size.x = 120
+	_ws_port.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.add_child(_labeled("端口", _ws_port))
+	var start := T.button("启动工坊", func(): _ws_start(), true)
+	start.disabled = OS.has_feature("web")  # 网页版不能启动本机进程，只能打开已经在跑的工坊
+	row.add_child(start)
+	row.add_child(T.button("在浏览器打开", func(): OS.shell_open("http://127.0.0.1:%d/" % int(_ws_port.value))))
+	row.add_child(T.button("刷新资源库", func(): _ws_reload()))
+	v.add_child(row)
+	_ws_counts = T.label("", 14, T.TEXT_DIM)
+	v.add_child(_ws_counts)
+	var txt := T.label("", 14)
+	txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	txt.text = """怎么用
+  1. 点「启动工坊」（或在仓库根目录运行 python tools/pw_asset_server.py），再点「在浏览器打开」。
+  2. 在网页的「模型设置」里填接口类型、Host、API Key、模型：
+       Anthropic Claude —— Host 留空用官方地址，模型默认 claude-opus-5-5；
+       OpenAI 兼容接口 —— Host 填到 /v1 为止，可以接任何兼容的模型。
+     Key 只保存在本机 ~/.pixelworld/workshop.json，不进仓库。
+  3. 选「像素角色 / 角色动作 / 3D 摆件」，写一句描述（角色可以上传原画），点「让模型生成」。
+     也可以不调模型，直接粘贴规格 JSON 生成。
+  4. 生成完回到这里点「刷新资源库」，新资源就出现在资源库里；带 plaza / roadside / yard 标签的摆件会自动摆进小镇。
+
+背后发生了什么
+  大模型只负责写 JSON 规格（角色的发型衣服配色、动作的关键帧、摆件的零件组合），
+  校验不通过会把错误发回模型改一次；Blender 按规格搭模型、贴 32 texel/米 的像素贴图、渲染 8 方向精灵或导出 glb，
+  所以画风和手写的资产完全一致。规格存在 shared/asset_specs/，可以手改后重新生成。"""
+	v.add_child(txt)
+	_ws_http = HTTPRequest.new()
+	_ws_http.timeout = 2.0
+	_ws_http.request_completed.connect(_ws_ping_done)
+	page.add_child(_ws_http)
+	_ws_update_counts()
+	return page
+
+
+func _ws_check() -> void:
+	if _ws_http == null or not _ws_http.is_inside_tree():
+		return
+	_ws_http.cancel_request()
+	_ws_http.request("http://127.0.0.1:%d/api/ping" % int(_ws_port.value))
+
+
+func _ws_ping_done(result: int, code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
+	if result == HTTPRequest.RESULT_SUCCESS and code == 200:
+		_ws_status.text = "● 工坊服务在运行：http://127.0.0.1:%d/" % int(_ws_port.value)
+		_ws_status.add_theme_color_override("font_color", Color("7fc77a"))
+	else:
+		_ws_status.text = "○ 工坊服务没有运行（点「启动工坊」）"
+		_ws_status.add_theme_color_override("font_color", T.TEXT_DIM)
+
+
+func _ws_start() -> void:
+	var script := ProjectSettings.globalize_path("res://").path_join("../tools/pw_asset_server.py").simplify_path()
+	if not FileAccess.file_exists(script):
+		_ws_status.text = "找不到 %s（需要完整的仓库）" % script
+		return
+	var py := "python" if OS.get_name() == "Windows" else "python3"
+	var pid := OS.create_process(py, [script, "--port", str(int(_ws_port.value))])
+	_ws_status.text = "正在启动工坊（进程 %d）……" % pid if pid > 0 else "启动失败：找不到 %s" % py
+	get_tree().create_timer(2.0).timeout.connect(_ws_check)
+
+
+func _ws_reload() -> void:
+	PWSpriteVisual.reload_catalog()
+	var n := PWAssetLibrary.reload_blender_catalog()
+	_ws_update_counts()
+	_refresh_categories()
+	_ws_counts.text += "　已刷新（Blender 资产 %d 种）" % n
+
+
+func _ws_update_counts() -> void:
+	var chars := PWSpriteVisual.characters()
+	var acts := 0
+	for c: Dictionary in chars:
+		acts = maxi(acts, (c.get("anims", {}) as Dictionary).size())
+	var spec_props := 0
+	for it in PWAssetLibrary.in_category("blender"):
+		if it.get("source", "") == "spec":
+			spec_props += 1
+	_ws_counts.text = "现有像素角色 %d 个（最多 %d 个动作），Blender 资产 %d 种（其中规格生成 %d 种）" % [
+		chars.size(), acts, PWAssetLibrary.in_category("blender").size(), spec_props]
 
 
 # ---------------------------------------------------------------- 关于
@@ -678,9 +803,11 @@ func _build_about_page() -> Control:
   WASD / 方向键：走动（镜头跟随）    Q / E：旋转镜头    滚轮：缩放
   左上角面板：换天气、调时间、切换显示效果、回到主界面
 
+  J：攻击    K：施法    H：受击    Shift：跑步
+
 当前进度
-  P0 风格规范、统一材质     P1 天气与昼夜     P2 场景生成（小镇 / 森林 / 平原）
-  P3 Blender 资产生成（进行中）     P4 NPC     P5 打磨
+  P0 风格规范、统一材质     P1 天气与昼夜     P2 场景生成（7 种风格）
+  P3 Blender 资产生成     P4 HD-2D 像素角色、动作、NPC     AI 资产工坊（大模型写规格 → Blender 生成）
 
 文档
   docs/DESIGN.md        方案设计与进度

@@ -12,62 +12,6 @@
   "dir_order": "第 d 行 = 相机从角色正面逆时针（俯视）转 d×45°",
   "characters": [
     {
-      "id": "swordsman",
-      "name": "旅人剑士",
-      "desc": "背着红披风的年轻剑士，腰间挂一把长剑，短发翘起。",
-      "anims": {
-        "idle": {
-          "file": "swordsman/idle.png",
-          "count": 4,
-          "fps": 4,
-          "loop": true,
-          "name": "待机"
-        },
-        "walk": {
-          "file": "swordsman/walk.png",
-          "count": 6,
-          "fps": 10,
-          "loop": true,
-          "name": "走路"
-        },
-        "run": {
-          "file": "swordsman/run.png",
-          "count": 6,
-          "fps": 14,
-          "loop": true,
-          "name": "跑步"
-        },
-        "attack": {
-          "file": "swordsman/attack.png",
-          "count": 6,
-          "fps": 12,
-          "loop": false,
-          "name": "攻击（劈砍）"
-        },
-        "hit": {
-          "file": "swordsman/hit.png",
-          "count": 4,
-          "fps": 10,
-          "loop": false,
-          "name": "受击"
-        },
-        "cast": {
-          "file": "swordsman/cast.png",
-          "count": 6,
-          "fps": 10,
-          "loop": false,
-          "name": "施法"
-        },
-        "wave": {
-          "file": "swordsman/wave.png",
-          "count": 4,
-          "fps": 6,
-          "loop": true,
-          "name": "挥手"
-        }
-      }
-    },
-    {
       "id": "merchant",
       "name": "行商",
       "desc": "戴宽檐帽的行商，系着白围裙，腰边挎一个货袋。",
@@ -348,69 +292,6 @@
       }
     },
     {
-      "id": "mercenary",
-      "name": "佣兵队长",
-      "desc": "金色短发、留山羊胡的佣兵队长，黑色皮甲背心配棕褐色内衬，袖口绑着红色臂带，腰挂长剑。",
-      "anims": {
-        "idle": {
-          "file": "mercenary/idle.png",
-          "count": 4,
-          "fps": 4,
-          "loop": true,
-          "name": "待机"
-        },
-        "walk": {
-          "file": "mercenary/walk.png",
-          "count": 6,
-          "fps": 10,
-          "loop": true,
-          "name": "走路"
-        },
-        "run": {
-          "file": "mercenary/run.png",
-          "count": 6,
-          "fps": 14,
-          "loop": true,
-          "name": "跑步"
-        },
-        "attack": {
-          "file": "mercenary/attack.png",
-          "count": 6,
-          "fps": 12,
-          "loop": false,
-          "name": "攻击（劈砍）"
-        },
-        "hit": {
-          "file": "mercenary/hit.png",
-          "count": 4,
-          "fps": 10,
-          "loop": false,
-          "name": "受击"
-        },
-        "cast": {
-          "file": "mercenary/cast.png",
-          "count": 6,
-          "fps": 10,
-          "loop": false,
-          "name": "施法"
-        },
-        "wave": {
-          "file": "mercenary/wave.png",
-          "count": 4,
-          "fps": 6,
-          "loop": true,
-          "name": "挥手"
-        },
-        "shoulder_rest": {
-          "file": "mercenary/shoulder_rest.png",
-          "count": 4,
-          "fps": 4,
-          "loop": true,
-          "name": "扛剑"
-        }
-      }
-    },
-    {
       "id": "villager_1",
       "name": "路人 1",
       "desc": "随机组合的小镇路人（种子 1）。",
@@ -575,6 +456,195 @@
           "fps": 6,
           "loop": true,
           "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "fisherwoman",
+      "name": "渔家大婶",
+      "desc": "港口卖鱼的大婶：盘着发髻，蓝白条纹围裙配深蓝长裙，肩上挎着鱼篓。",
+      "anims": {
+        "idle": {
+          "file": "fisherwoman/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "fisherwoman/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "fisherwoman/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "fisherwoman/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "fisherwoman/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "fisherwoman/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "fisherwoman/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "swordsman",
+      "name": "旅人剑士",
+      "desc": "背着红披风的年轻剑士，腰间挂一把长剑，短发翘起。",
+      "anims": {
+        "idle": {
+          "file": "swordsman/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "swordsman/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "swordsman/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "swordsman/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "swordsman/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "swordsman/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "swordsman/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        },
+        "victory": {
+          "file": "swordsman/victory.png",
+          "count": 6,
+          "fps": 8,
+          "loop": false,
+          "name": "胜利欢呼"
+        }
+      }
+    },
+    {
+      "id": "mercenary",
+      "name": "佣兵队长",
+      "desc": "金色短发、留山羊胡的佣兵队长，黑色皮甲背心配棕褐色内衬，袖口绑着红色臂带，腰挂长剑。",
+      "anims": {
+        "idle": {
+          "file": "mercenary/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "mercenary/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "mercenary/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "mercenary/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "mercenary/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "mercenary/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "mercenary/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        },
+        "shoulder_rest": {
+          "file": "mercenary/shoulder_rest.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "扛剑"
+        },
+        "victory": {
+          "file": "mercenary/victory.png",
+          "count": 6,
+          "fps": 8,
+          "loop": false,
+          "name": "胜利欢呼"
         }
       }
     }

@@ -197,7 +197,8 @@ def validate_action(spec):
     out = {"id": aid, "name": str(spec.get("name") or aid)[:20],
            "frames": int(max(2, min(12, int(spec.get("frames", 6) or 6)))),
            "fps": int(max(2, min(24, int(spec.get("fps", 10) or 10)))),
-           "loop": bool(spec.get("loop", False)), "keys": []}
+           "loop": bool(spec.get("loop", False)), "keys": [],
+           "for": [re.sub(r"[^a-z0-9_]+", "_", str(x).lower()) for x in (spec.get("for") or []) if isinstance(x, str)][:20]}
     keys = spec.get("keys") or []
     if not isinstance(keys, list) or not keys:
         raise ValueError("动作至少要有一个关键帧（keys）")

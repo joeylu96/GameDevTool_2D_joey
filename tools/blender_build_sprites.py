@@ -10,7 +10,8 @@
   2. shared/asset_specs/characters/*.json（大模型 / 资产工坊生成的规格都存在这里）
   3. 随机路人 villager_1..N（--villagers N，默认 6；只渲染待机、走路、挥手）
   4. --spec 指定的文件
-自定义动作：shared/asset_specs/actions/*.json，角色规格里 "extra_anims": ["动作 id"] 就会多渲染这些动作。
+自定义动作：shared/asset_specs/actions/*.json。角色规格里写 "extra_anims": ["动作 id"]，或者动作规格里写
+"for": ["角色 id", ...]（"all" = 全部主要角色，不含随机路人），这些角色就会多渲染这个动作。
 输出：godot/assets/sprites/<角色>/<动作>.png（8 方向 × N 帧）+ catalog.json。
 需要 Blender 5.2 LTS。
 """
@@ -36,6 +37,7 @@ ap.add_argument("--anims", default="", help="只渲染这些动作（逗号分�
 ap.add_argument("--villagers", type=int, default=6)
 ap.add_argument("--spec", action="append", default=[])
 ap.add_argument("--specs-dir", default=str(ROOT / "shared" / "asset_specs"))
+ap.add_argument("--preview-dir", default=str(ROOT / ".workshop" / "previews"), help="预览图输出目录（资产工坊网页用）")
 args = ap.parse_args(argv)
 
 if bpy.app.version < (5, 2, 0):
@@ -82,7 +84,17 @@ for cid, (spec, default_anims) in specs.items():
     if only and cid not in only:
         continue
     t1 = time.time()
-    e = sprites.render_character(spec, args.out, anims or default_anims, actions)
+    want = anims
+    if want is None:
+        extra = [aid for aid, act in actions.items()
+                 if cid in act.get("for", []) or ("all" in act.get("for", []) and default_anims is None)]
+        if default_anims is None:
+            want = poses.DEFAULT_ANIMS + [x for x in spec.get("extra_anims", []) if x in actions] + extra
+        else:
+            want = default_anims + extra
+        want = list(dict.fromkeys(want))
+    e = sprites.render_character(spec, args.out, want, actions,
+                                 preview=str(Path(args.preview_dir) / ("char_%s.png" % cid)) if "idle" in want else None)
     entries.append(e)
     print("  角色 %-14s %-8s %s  %.1f 秒" % (cid, e["name"], ",".join(e["anims"]), time.time() - t1))
 cat = sprites.write_catalog(args.out, entries)

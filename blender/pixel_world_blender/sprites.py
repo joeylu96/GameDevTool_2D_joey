@@ -530,21 +530,42 @@ def render_anim(spec, anim, out_png, tmpdir, cam, actions=None):
         bpy.data.meshes.remove(me)
     _save_png(sheet, out_png)
     return {"file": "%s/%s.png" % (spec["id"], anim), "count": n, "fps": a["fps"], "loop": bool(a.get("loop")),
-            "name": a.get("name", anim)}
+            "name": a.get("name", anim)}, sheet
 
 
-def render_character(spec, out_dir, anims=None, actions=None, tmpdir=None):
-    """渲染一个角色的全部动作，返回目录条目"""
+def render_character(spec, out_dir, anims=None, actions=None, tmpdir=None, preview=None):
+    """渲染一个角色的全部（或指定）动作，返回目录条目。preview：预览图路径（正面、侧前、侧面、背面 + 每个动作一帧）"""
     spec, _ = charspec.validate(spec)
     out = Path(out_dir) / spec["id"]
     out.mkdir(parents=True, exist_ok=True)
     tmp = tmpdir or tempfile.mkdtemp(prefix="pw_sprites_")
     cam = _setup_scene()
     entry = {"id": spec["id"], "name": spec["name"], "desc": spec["desc"], "anims": {}}
+    sheets = {}
     for anim in anims or (poses.DEFAULT_ANIMS + [x for x in spec.get("extra_anims", []) if x in (actions or {})]):
-        entry["anims"][anim] = render_anim(spec, anim, out / ("%s.png" % anim), tmp, cam, actions)
+        entry["anims"][anim], sheets[anim] = render_anim(spec, anim, out / ("%s.png" % anim), tmp, cam, actions)
     (out / "spec.json").write_text(json.dumps(spec, ensure_ascii=False, indent=2), encoding="utf-8")
+    if preview:
+        _preview(sheets, preview)
     return entry
+
+
+def _preview(sheets, path):
+    """预览图：待机的 4 个方向 + 其余每个动作中间一帧（侧前方），透明底，一行排开"""
+    cells = []
+    if "idle" in sheets:
+        for d in (0, 1, 2, 4):
+            cells.append(sheets["idle"][d * FRAME:(d + 1) * FRAME, 0:FRAME])
+    for anim, sh in sheets.items():
+        if anim == "idle":
+            continue
+        n = sh.shape[1] // FRAME
+        f = n // 2
+        cells.append(sh[1 * FRAME:2 * FRAME, f * FRAME:(f + 1) * FRAME])
+    if not cells:
+        return
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    _save_png(np.concatenate(cells, axis=1), path)
 
 
 def catalog_header():
@@ -566,6 +587,13 @@ def write_catalog(out_dir, entries):
             chars = json.loads(path.read_text(encoding="utf-8")).get("characters", [])
         except ValueError:
             chars = []
+    # 同 id：动作逐个合并（只重渲了某几个动作时，其余动作保留）
+    old = {c.get("id"): c for c in chars if "anims" in c}
+    for e in entries:
+        if e["id"] in old:
+            merged = dict(old[e["id"]].get("anims", {}))
+            merged.update(e["anims"])
+            e["anims"] = merged
     ids = {e["id"] for e in entries}
     chars = [c for c in chars if c.get("id") not in ids and "anims" in c] + entries
     cat = catalog_header()

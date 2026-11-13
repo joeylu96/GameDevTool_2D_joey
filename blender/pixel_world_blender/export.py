@@ -53,6 +53,46 @@ def export_object(obj, path):
     )
 
 
+def render_preview(obj, path, size=320):
+    """资产工坊用的预览图：Workbench 显示像素贴图，从斜前上方看，透明底。"""
+    import math
+    from mathutils import Vector
+    sc = bpy.context.scene
+    sc.render.engine = "BLENDER_WORKBENCH"
+    sc.render.resolution_x = size
+    sc.render.resolution_y = size
+    sc.render.resolution_percentage = 100
+    sc.render.film_transparent = True
+    sc.render.image_settings.file_format = "PNG"
+    sc.render.image_settings.color_mode = "RGBA"
+    sc.view_settings.view_transform = "Standard"
+    sh = sc.display.shading
+    sh.light = "STUDIO"
+    sh.color_type = "TEXTURE"
+    sh.show_shadows = False
+    sh.show_cavity = False
+    pts = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+    lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
+    hi = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    ctr = (lo + hi) * 0.5
+    span = max((hi - lo).length, 0.5)
+    cam_data = bpy.data.cameras.new("pw_preview_cam")
+    cam_data.type = "ORTHO"
+    cam_data.ortho_scale = span * 1.05
+    cam = bpy.data.objects.new("pw_preview_cam", cam_data)
+    sc.collection.objects.link(cam)
+    sc.camera = cam
+    yaw, pitch = math.radians(-60.0), math.radians(28.0)  # 正面朝 -Y：从左前上方看
+    d = Vector((math.cos(yaw) * math.cos(pitch), math.sin(yaw) * math.cos(pitch), math.sin(pitch)))
+    cam.location = ctr + d * (span * 3.0)
+    cam.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    sc.render.filepath = str(path)
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(cam, do_unlink=True)
+    bpy.data.cameras.remove(cam_data)
+
+
 def _rel(path):
     """路径记成相对仓库根目录（Windows / macOS 都能用）"""
     root = Path(__file__).resolve().parent.parent.parent
@@ -96,8 +136,8 @@ def load_prop_specs(specs_dir):
     return out
 
 
-def export_spec(spec, out_dir, seed0=1):
-    """按一个摆件规格生成全部变体并导出，返回目录条目"""
+def export_spec(spec, out_dir, seed0=1, preview_dir=None):
+    """按一个摆件规格生成全部变体并导出，返回目录条目。preview_dir：第一个变体的预览图放这里"""
     from .generators import spec_parts
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -111,11 +151,13 @@ def export_spec(spec, out_dir, seed0=1):
         name = "%s_%d.glb" % (kind, v)
         export_object(obj, out / name)
         files.append(name)
+        if preview_dir and v == 0:
+            render_preview(obj, Path(preview_dir) / ("prop_%s.png" % kind))
     return _entry(kind, spec["name"], spec["category"], spec["desc"], spec["vary"], files, info, spec.get("tags"),
                   source="spec")
 
 
-def build_all(out_dir, kinds=None, variants=4, seed0=1, specs_dir=None):
+def build_all(out_dir, kinds=None, variants=4, seed0=1, specs_dir=None, preview_dir=None):
     """生成所有（或指定）资产的若干变体，导出到 out_dir，写 catalog.json。
     kinds：生成器名或 "spec_<id>"；只重做部分资产时，目录里其他资产的条目保留。"""
     out = Path(out_dir)
@@ -147,12 +189,14 @@ def build_all(out_dir, kinds=None, variants=4, seed0=1, specs_dir=None):
             name = "%s_%d.glb" % (kind, v)
             export_object(obj, out / name)
             files.append(name)
+            if preview_dir and v == 0:
+                render_preview(obj, Path(preview_dir) / ("prop_%s.png" % kind))
         catalog["assets"].append(_entry(kind, gen.NAME, gen.CATEGORY, gen.DESC, gen.VARY, files, info,
                                         getattr(gen, "TAGS", [])))
     for spec in load_prop_specs(specs_dir) if specs_dir else []:
         if kinds and "spec_" + spec["id"] not in kinds:
             continue
-        catalog["assets"].append(export_spec(spec, out, seed0))
+        catalog["assets"].append(export_spec(spec, out, seed0, preview_dir))
     done = {a["id"] for a in catalog["assets"]}
     catalog["assets"] = [a for a in old if a.get("id") not in done] + catalog["assets"]
     path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding="utf-8")

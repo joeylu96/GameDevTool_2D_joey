@@ -23,7 +23,8 @@
   {"shape": "repeat",  "count": 2..24, "radius": r, "center": [x,y], "part": 零件}
        把 part 绕中心均匀复制 count 份（part 的坐标以 (radius, 0) 为基准）：柱子一圈、石头一圈、花瓣
 数值可以写成 {"rand": [最小, 最大]}，每个变体随机取值；mat 可以写成数组，每个变体随机挑一个。
-共享变量：顶层 "vars": {"h": {"rand": [1.4, 1.9]}, "lean": 0.3}，零件里写 "$h"、"$h+0.1"、"$lean*2" 引用
+共享变量：顶层 "vars": {"h": {"rand": [1.4, 1.9]}, "lean": 0.3, "hull": ["wall_teal", "wall_red"]}，
+零件里写 "$h"、"$h+0.1"、"$lean*2" 引用数值，"mat": "$hull" 引用随机选中的材质（几个零件同色）
 （只支持数字、变量、+ - * / 和括号）。几个零件要对齐（树干接树冠、柱子接屋顶）时一定要用变量，不要各自随机。
 """
 import ast
@@ -69,7 +70,7 @@ def _vec(v, n):
 
 def _isnum(x):
     return (isinstance(x, (int, float)) or (isinstance(x, dict) and "rand" in x and _vec(x["rand"], 2))
-            or (isinstance(x, str) and x.startswith("$")))
+            or (isinstance(x, str) and "$" in x))
 
 
 _OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv,
@@ -114,6 +115,9 @@ def _check_part(p, path, warn, depth=0):
              "radius": p.get("radius", 1.0), "center": p.get("center", [0, 0]), "part": inner}
         return q
     mats = p.get("mat")
+    if isinstance(mats, str) and mats.startswith("$"):
+        q = copy.deepcopy(p)  # 材质变量：生成变体时再取值
+        return q
     mlist = mats if isinstance(mats, list) else [mats]
     good = [m for m in mlist if m in MATERIALS]
     if not good:
@@ -160,6 +164,8 @@ def validate(spec):
         for k, v in list(vars_in.items())[:20]:
             if re.match(r"^[a-z_][a-z0-9_]*$", str(k)) and (_isnum(v)):
                 out["vars"][k] = v
+            elif re.match(r"^[a-z_][a-z0-9_]*$", str(k)) and isinstance(v, list) and v and all(m in MATERIALS for m in v):
+                out["vars"][k] = v  # 材质候选列表
             else:
                 warn.append("变量 %s 的值不是数字或 {rand}，已忽略" % k)
     # 先试算一遍，表达式写错（引用未定义变量）就在这里报出来
@@ -186,10 +192,12 @@ def resolve(value, rnd, env=None):
             a, b = (resolve(x, rnd, env) for x in value["rand"])
             return rnd.uniform(float(a), float(b))
         return {k: resolve(v, rnd, env) for k, v in value.items()}
-    if isinstance(value, str) and value.startswith("$"):
+    if isinstance(value, str) and value.startswith("$") and isinstance(env.get(value[1:]), str):
+        return env[value[1:]]  # 材质变量
+    if isinstance(value, str) and "$" in value:
         return eval_expr(value, env)
     if isinstance(value, list):
-        if value and all(isinstance(x, str) and not x.startswith("$") for x in value):
+        if value and all(isinstance(x, str) and "$" not in x for x in value):
             return rnd.choice(value)
         return [resolve(v, rnd, env) for v in value]
     return value
@@ -200,5 +208,8 @@ def variant(spec, seed):
     rnd = random.Random(zlib.crc32(("%s:%d" % (spec["id"], seed)).encode("utf-8")))
     env = {}
     for k, v in (spec.get("vars") or {}).items():  # 变量按顺序算，后面的可以引用前面的
-        env[k] = float(resolve(v, rnd, env))
+        if isinstance(v, list) and v and all(isinstance(x, str) and "$" not in x for x in v):
+            env[k] = rnd.choice(v)
+        else:
+            env[k] = float(resolve(v, rnd, env))
     return resolve(spec["parts"], rnd, env)

@@ -1,0 +1,2 @@
+# 资产工坊（tools/pw_asset_server.py）用 Claude 时需要；只用 OpenAI 兼容接口可以不装
+anthropic>=1.0

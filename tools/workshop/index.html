@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelWorld 资产工坊</title>
+<style>
+  :root { --bg:#14161f; --panel:#1d2030; --panel2:#262a3d; --line:#33384f; --text:#e6e8ef; --dim:#9aa0b4;
+          --accent:#f0a040; --accent2:#c7802c; --ok:#7fc77a; --err:#e06a5a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.55 "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; }
+  header { display:flex; align-items:baseline; gap:14px; padding:18px 26px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:22px; color:var(--accent); font-weight:600; }
+  header span { color:var(--dim); }
+  main { display:grid; grid-template-columns: 420px minmax(0, 1fr); gap:18px; padding:18px 26px; }
+  section { background:var(--panel); border-radius:10px; padding:16px 18px; margin-bottom:18px; }
+  h2 { margin:0 0 12px; font-size:16px; color:var(--accent); font-weight:600; }
+  label { display:block; color:var(--dim); font-size:13px; margin:8px 0 4px; }
+  input[type=text], input[type=password], select, textarea { width:100%; background:var(--panel2); border:1px solid var(--line);
+    color:var(--text); border-radius:6px; padding:7px 9px; font:inherit; }
+  textarea { min-height:90px; resize:vertical; }
+  textarea.code { font-family: Menlo, Consolas, monospace; font-size:12px; min-height:180px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row > * { flex:1; }
+  button { background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:7px 14px;
+    font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#1d1408; border-color:var(--accent); font-weight:600; }
+  button.primary:hover { background:#ffb85c; }
+  button:disabled { opacity:.5; cursor:default; }
+  .tabs { display:flex; gap:6px; margin-bottom:10px; }
+  .tabs button.on { background:var(--accent2); border-color:var(--accent2); color:#fff; }
+  .hint { color:var(--dim); font-size:12px; margin-top:6px; }
+  .ok { color:var(--ok); } .err { color:var(--err); }
+  #log { background:#0f1118; border-radius:6px; padding:10px; font:12px/1.5 Menlo,Consolas,monospace; color:#b9c0d4;
+    max-height:260px; overflow:auto; white-space:pre-wrap; }
+  .status { font-weight:600; margin:6px 0; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap:12px; }
+  .card { background:var(--panel2); border-radius:8px; padding:10px; cursor:pointer; border:1px solid transparent; }
+  .card:hover { border-color:var(--accent); }
+  .card .name { font-weight:600; margin-top:6px; }
+  .card .meta { color:var(--dim); font-size:12px; }
+  .badge { display:inline-block; font-size:11px; padding:0 6px; border-radius:8px; background:#3a3f58; color:#cdd3e6; margin-right:4px; }
+  .badge.ai { background:#5b3f1a; color:#ffd9a0; }
+  canvas, img.pv { image-rendering: pixelated; image-rendering: crisp-edges; background:#9fb48a22; border-radius:6px; display:block; }
+  img.pv { width:100%; height:150px; object-fit:contain; }
+  #detail canvas { width:256px; height:256px; }
+  #detail pre { white-space:pre-wrap; word-break:break-all; background:#0f1118; border-radius:6px; padding:10px; font:12px/1.45 Menlo,Consolas,monospace; max-height:340px; overflow:auto; }
+  .anims button { margin:0 4px 4px 0; padding:3px 10px; font-size:12px; }
+  .anims button.on { background:var(--accent2); border-color:var(--accent2); }
+  details summary { cursor:pointer; color:var(--dim); }
+  #imgthumb { max-width:100%; max-height:140px; margin-top:6px; border-radius:6px; display:none; }
+</style>
+</head>
+<body>
+<header><h1>PixelWorld 资产工坊</h1><span>用一句话或一张原画生成像素角色、角色动作和 3D 摆件 —— 大模型写规格，Blender 建模渲染，画风和场景一致</span></header>
+<main>
+<div>
+  <section>
+    <h2>模型设置</h2>
+    <label>接口类型</label>
+    <select id="provider">
+      <option value="anthropic">Anthropic Claude（官方 SDK）</option>
+      <option value="openai">OpenAI 兼容接口（/chat/completions）</option>
+    </select>
+    <label>Host <span id="hosthint"></span></label>
+    <input type="text" id="host" placeholder="留空 = https://api.anthropic.com">
+    <label>API Key</label>
+    <input type="password" id="api_key" placeholder="sk-...">
+    <div class="row">
+      <div><label>模型</label><input type="text" id="model" placeholder="claude-opus-5-5"></div>
+      <div id="effortbox"><label>思考强度</label>
+        <select id="effort"><option value="low">低（快）</option><option value="medium">中</option><option value="high">高</option><option value="">不发送</option></select></div>
+    </div>
+    <label id="fbbox"><input type="checkbox" id="fallback"> 拒答时自动换模型重试（Claude 官方地址的 server-side fallback）</label>
+    <details><summary>Blender / Godot 路径（一般自动找到）</summary>
+      <label>Blender 5.2</label><input type="text" id="blender" placeholder="自动查找">
+      <div class="hint" id="blenderfound"></div>
+      <label>Godot 4.7（生成后自动导入，可选）</label><input type="text" id="godot" placeholder="自动查找">
+      <div class="hint" id="godotfound"></div>
+    </details>
+    <div class="row" style="margin-top:12px"><button class="primary" id="save">保存</button><button id="test">测试连接</button></div>
+    <div class="hint" id="cfgmsg"></div>
+    <div class="hint">Key 只保存在本机 <span id="cfgpath"></span>，不会进仓库；页面上只显示末尾 4 位。</div>
+  </section>
+
+  <section>
+    <h2>生成新资产</h2>
+    <div class="tabs">
+      <button data-kind="character" class="on">像素角色</button>
+      <button data-kind="action">角色动作</button>
+      <button data-kind="prop">3D 摆件</button>
+    </div>
+    <label id="promptlabel">描述</label>
+    <textarea id="prompt"></textarea>
+    <div id="charextra">
+      <label>原画（可选，jpg / png）</label>
+      <input type="file" id="image" accept="image/png,image/jpeg,image/webp">
+      <img id="imgthumb">
+    </div>
+    <div id="actextra" style="display:none">
+      <label>给哪些角色（不选 = 全部主要角色）</label>
+      <select id="targets" multiple size="5"></select>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="gen">让模型生成</button>
+      <button id="manualbtn">直接用规格 JSON</button>
+    </div>
+    <div id="manual" style="display:none">
+      <label>规格 JSON（格式见 blender/pw_specs/，或先「查看规格」复制一个改）</label>
+      <textarea class="code" id="specjson"></textarea>
+      <button class="primary" id="buildspec" style="margin-top:8px">按这份规格生成</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>任务</h2>
+    <div class="status" id="jobstatus">还没有任务</div>
+    <div id="log"></div>
+    <div id="jobwarn" class="hint"></div>
+  </section>
+</div>
+
+<div>
+  <section id="detail" style="display:none">
+    <h2 id="dtitle"></h2>
+    <div class="row" style="align-items:flex-start">
+      <div style="flex:0 0 270px">
+        <canvas id="anim" width="128" height="128"></canvas>
+        <img id="dimg" class="pv" style="width:256px;height:256px;display:none">
+        <img id="dstrip" class="pv" style="width:100%;height:auto;display:none;margin-top:6px">
+        <div class="anims" id="danims" style="margin-top:8px"></div>
+        <div class="row" style="margin-top:6px"><button id="rotl">◀ 转向</button><button id="rotr">转向 ▶</button></div>
+      </div>
+      <div>
+        <div id="ddesc"></div>
+        <pre id="dspec"></pre>
+        <div class="row"><button id="editspec">改这份规格再生成</button></div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <h2>像素角色</h2>
+    <div class="grid" id="chars"></div>
+  </section>
+  <section>
+    <h2>3D 摆件</h2>
+    <div class="grid" id="props"></div>
+  </section>
+  <section>
+    <h2>自定义动作</h2>
+    <div class="grid" id="actions"></div>
+  </section>
+</div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let kind = "character", assets = null, image = null, poll = null, cur = null, dir = 1, animName = "idle", animTimer = null;
+const PROMPTS = {
+  character: ["描述角色的外形、服装、配色和武器", "例如：一个在港口卖鱼的大婶，系着蓝白条纹围裙，扎着发髻，手里拿着一根扁担"],
+  action: ["描述动作", "例如：双手叉腰、得意地点头，循环播放"],
+  prop: ["描述要做的 3D 摆件", "例如：海边的木制渔船，倒扣在沙滩上晒网，旁边堆着几个浮球"],
+};
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  return r.json();
+}
+
+// ---------------- 设置
+function showProvider() {
+  const p = $("provider").value;
+  $("host").placeholder = p === "anthropic" ? "留空 = https://api.anthropic.com（也可以填兼容 Anthropic 接口的代理）" : "https://api.example.com/v1";
+  $("hosthint").textContent = p === "anthropic" ? "" : "（填到 /v1 为止）";
+  $("effortbox").style.visibility = p === "anthropic" ? "visible" : "hidden";
+  $("fbbox").style.display = p === "anthropic" ? "block" : "none";
+  if (!$("model").value) $("model").value = p === "anthropic" ? "claude-opus-5-5" : "";
+}
+async function loadConfig() {
+  const c = await api("/api/config");
+  for (const k of ["provider", "host", "api_key", "model", "effort", "blender", "godot"]) $(k).value = c[k] ?? "";
+  $("fallback").checked = !!c.fallback;
+  $("blenderfound").textContent = c.blender_found ? "已找到：" + c.blender_found : "没找到 Blender，请填路径";
+  $("godotfound").textContent = c.godot_found ? "已找到：" + c.godot_found : "没找到 Godot（生成后打开 Godot 编辑器会自动导入）";
+  $("cfgpath").textContent = c.config_path;
+  showProvider();
+}
+$("provider").onchange = () => { $("model").value = ""; showProvider(); };
+$("save").onclick = async () => {
+  const body = {};
+  for (const k of ["provider", "host", "api_key", "model", "effort", "blender", "godot"]) body[k] = $(k).value.trim();
+  body.fallback = $("fallback").checked;
+  await api("/api/config", body);
+  $("cfgmsg").innerHTML = '<span class="ok">已保存</span>';
+  loadConfig();
+};
+$("test").onclick = async () => {
+  $("cfgmsg").textContent = "正在测试……";
+  const r = await api("/api/test", {});
+  $("cfgmsg").innerHTML = r.ok ? `<span class="ok">连接成功：${r.reply}（${r.usage}）</span>` : `<span class="err">${r.error}</span>`;
+};
+
+// ---------------- 生成
+function setKind(k) {
+  kind = k;
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.kind === k));
+  $("promptlabel").textContent = PROMPTS[k][0];
+  $("prompt").placeholder = PROMPTS[k][1];
+  $("charextra").style.display = k === "character" ? "block" : "none";
+  $("actextra").style.display = k === "action" ? "block" : "none";
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setKind(b.dataset.kind));
+$("image").onchange = () => {
+  const f = $("image").files[0];
+  if (!f) { image = null; $("imgthumb").style.display = "none"; return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    const url = rd.result;
+    image = {media_type: f.type || "image/png", data: url.split(",")[1], name: f.name};
+    $("imgthumb").src = url; $("imgthumb").style.display = "block";
+  };
+  rd.readAsDataURL(f);
+};
+$("manualbtn").onclick = () => { $("manual").style.display = $("manual").style.display === "none" ? "block" : "none"; };
+async function start(body) {
+  body.kind = kind;
+  if (kind === "action") body.for = [...$("targets").selectedOptions].map(o => o.value);
+  const r = await api("/api/generate", body);
+  if (r.error) { $("jobstatus").innerHTML = `<span class="err">${r.error}</span>`; return; }
+  watch(r.job);
+}
+$("gen").onclick = () => start({prompt: $("prompt").value, image: kind === "character" ? image : null});
+$("buildspec").onclick = () => {
+  let spec;
+  try { spec = JSON.parse($("specjson").value); } catch (e) { $("jobstatus").innerHTML = `<span class="err">JSON 格式不对：${e.message}</span>`; return; }
+  start({spec});
+};
+function watch(id) {
+  clearInterval(poll);
+  $("gen").disabled = $("buildspec").disabled = true;
+  poll = setInterval(async () => {
+    const j = await api("/api/jobs/" + id);
+    $("jobstatus").innerHTML = j.state === "error" ? `<span class="err">${j.status}</span>` : j.state === "done" ? `<span class="ok">${j.status}</span>` : j.status + " ……";
+    $("log").textContent = j.logs.join("\n");
+    $("log").scrollTop = 1e9;
+    $("jobwarn").textContent = j.warnings.length ? "提示：" + j.warnings.join("；") : "";
+    if (j.state !== "running") {
+      clearInterval(poll);
+      $("gen").disabled = $("buildspec").disabled = false;
+      await loadAssets();
+      if (j.state === "done" && j.spec) {
+        if (j.kind === "character") showChar(j.spec.id);
+        else if (j.kind === "prop") showProp("bl_spec_" + j.spec.id);
+        else if (j.kind === "action" && j.result.characters) showChar(j.result.characters[0], j.spec.id);
+      }
+    }
+  }, 1000);
+}
+
+// ---------------- 资产
+async function loadAssets() {
+  assets = await api("/api/assets");
+  $("chars").innerHTML = assets.characters.map(c => `<div class="card" onclick="showChar('${c.id}')">
+      <canvas class="thumb" data-id="${c.id}" width="128" height="128" style="width:100%;height:150px;object-fit:contain"></canvas>
+      <div class="name">${c.name}</div><div class="meta">${c.generated ? '<span class="badge ai">工坊生成</span>' : ""}${Object.keys(c.anims).length} 个动作</div></div>`).join("");
+  // 卡片缩略图：直接从精灵表里取「待机」第一帧的侧前方（第 1 行）
+  document.querySelectorAll("canvas.thumb").forEach(cv => {
+    const c = assets.characters.find(x => x.id === cv.dataset.id);
+    const a = c && c.anims.idle;
+    if (!a) return;
+    const img = new Image();
+    img.onload = () => { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+      g.drawImage(img, 0, assets.frame, assets.frame, assets.frame, 0, 0, 128, 128); };
+    img.src = "/files/sprites/" + a.file + "?t=" + Date.now();
+  });
+  $("props").innerHTML = assets.props.map(p => `<div class="card" onclick="showProp('${p.id}')">
+      ${p.preview ? `<img class="pv" src="${p.preview}?t=${Date.now()}">` : '<div class="pv" style="height:150px"></div>'}
+      <div class="name">${p.name}</div><div class="meta">${p.source === "spec" ? '<span class="badge ai">规格生成</span>' : '<span class="badge">代码生成器</span>'}${p.variants} 个变体</div></div>`).join("");
+  $("actions").innerHTML = assets.actions.map(a => `<div class="card" onclick="showAction('${a.id}')">
+      <div class="name">${a.name}</div><div class="meta">${a.frames} 帧 · ${(a.for || []).join("、") || "（未指定角色）"}</div></div>`).join("") || '<div class="hint">还没有自定义动作</div>';
+  $("targets").innerHTML = assets.characters.filter(c => !c.id.startsWith("villager_")).map(c => `<option value="${c.id}">${c.name}（${c.id}）</option>`).join("");
+}
+function drawAnim() {
+  clearInterval(animTimer);
+  const c = assets.characters.find(x => x.id === cur.id);
+  const a = c && c.anims[animName];
+  if (!a) return;
+  const img = new Image();
+  img.src = "/files/sprites/" + a.file + "?t=" + Date.now();
+  let f = 0;
+  const ctx = $("anim").getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  img.onload = () => {
+    animTimer = setInterval(() => {
+      const F = assets.frame;
+      ctx.clearRect(0, 0, F, F);
+      ctx.fillStyle = "#9fb48a"; ctx.fillRect(0, 0, F, F);
+      ctx.drawImage(img, (f % a.count) * F, dir * F, F, F, 0, 0, F, F);
+      f++;
+    }, 1000 / a.fps);
+  };
+}
+async function showChar(id, anim) {
+  const c = assets.characters.find(x => x.id === id);
+  if (!c) return;
+  cur = {kind: "character", id};
+  animName = anim && c.anims[anim] ? anim : "idle";
+  $("detail").style.display = "block"; $("anim").style.display = "block"; $("dimg").style.display = "none";
+  $("dtitle").textContent = c.name + "（" + c.id + "）";
+  $("ddesc").textContent = c.desc || "";
+  $("danims").innerHTML = Object.entries(c.anims).map(([k, v]) => `<button class="${k === animName ? "on" : ""}" onclick="setAnim('${k}')">${v.name || k}</button>`).join("");
+  $("rotl").parentElement.style.display = "flex";
+  $("dstrip").style.display = c.preview ? "block" : "none";
+  if (c.preview) $("dstrip").src = c.preview + "?t=" + Date.now();
+  const spec = await api("/api/spec/character/" + id);
+  $("dspec").textContent = spec.error ? "（随机路人：由种子生成，没有单独的规格文件）" : JSON.stringify(spec, null, 1);
+  drawAnim();
+  $("detail").scrollIntoView({behavior: "smooth"});
+}
+function setAnim(k) { animName = k; document.querySelectorAll("#danims button").forEach(b => b.classList.toggle("on", b.textContent === (assets.characters.find(x => x.id === cur.id).anims[k].name || k))); drawAnim(); }
+$("rotl").onclick = () => { dir = (dir + 1) % assets.dirs; drawAnim(); };
+$("rotr").onclick = () => { dir = (dir + assets.dirs - 1) % assets.dirs; drawAnim(); };
+async function showProp(id) {
+  const p = assets.props.find(x => x.id === id);
+  if (!p) return;
+  clearInterval(animTimer);
+  cur = {kind: "prop", id};
+  $("detail").style.display = "block"; $("anim").style.display = "none";
+  $("dimg").style.display = p.preview ? "block" : "none"; $("dimg").src = p.preview + "?t=" + Date.now();
+  $("dstrip").style.display = "none";
+  $("danims").innerHTML = (p.tags || []).map(t => `<span class="badge">${t}</span>`).join("");
+  $("rotl").parentElement.style.display = "none";
+  $("dtitle").textContent = p.name + "（" + p.id + "）";
+  $("ddesc").textContent = (p.desc || "") + "  分类：" + p.category + "，" + p.variants + " 个变体";
+  const spec = p.source === "spec" ? await api("/api/spec/prop/" + id.replace("bl_spec_", "")) : null;
+  $("dspec").textContent = spec && !spec.error ? JSON.stringify(spec, null, 1) : "（代码生成器：blender/pixel_world_blender/generators/" + id.replace("bl_", "") + ".py）";
+  $("detail").scrollIntoView({behavior: "smooth"});
+}
+async function showAction(id) {
+  const a = assets.actions.find(x => x.id === id);
+  const who = (a.for || []).find(t => t !== "all") || "swordsman";
+  showChar(who, id);
+}
+$("editspec").onclick = () => {
+  if (!$("dspec").textContent.startsWith("{")) return;
+  setKind(cur.kind === "prop" ? "prop" : "character");
+  $("manual").style.display = "block";
+  $("specjson").value = $("dspec").textContent;
+  window.scrollTo({top: 0, behavior: "smooth"});
+};
+
+setKind("character");
+loadConfig();
+loadAssets().then(() => {
+  // 直达链接：#char=角色id[&anim=动作] / #prop=资产id
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get("char")) showChar(h.get("char"), h.get("anim"));
+  else if (h.get("prop")) showProp(h.get("prop"));
+});
+</script>
+</body>
+</html>
