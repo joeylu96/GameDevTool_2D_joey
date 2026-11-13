@@ -200,6 +200,16 @@ static func items() -> Array[Dictionary]:
 			"vary": "目前单一造型；P4 会接入「原画 → 参数」的换装体系。",
 			"build": func(s: int) -> Node3D: return PWCharacter.new()},
 	]
+	# P4：Blender 渲染的 HD-2D 像素精灵角色（tools/blender_build_sprites.py 生成）
+	for c: Dictionary in PWSpriteVisual.characters():
+		var cid: String = c.id
+		out.append({"id": "sprite_" + cid, "show": 1, "cat": "characters", "name": c.name + "（像素精灵）", "size": 1.7,
+			"plant": false, "desc": c.desc + "  Blender 搭模、8 方向渲染、分档上色 + 描边的 HD-2D 精灵，场景里受光照和阴影影响。",
+			"vary": "8 个方向 × 待机 4 帧 + 走路 6 帧；预览里在待机和原地走路之间切换，转动视角可以看不同方向。",
+			"build": func(s: int) -> Node3D:
+				var v := PWSpriteVisual.create(cid)
+				v.demo = true
+				return v})
 	out.append_array(_extra)
 	return out
 

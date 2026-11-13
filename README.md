@@ -33,11 +33,15 @@
 | `godot/addons/pixel_world/world/` | 场景生成：`PWWorld`、风格表 `PWStyles`、小镇 / 自然（森林、平原）生成器、草、摆放规则、合批 |
 | `godot/addons/pixel_world/ui/` | 主界面 `PWHub`（资源库 / 场景生成器 / 特效库 / 天气光照）、3D 预览、界面主题、中文字体 |
 | `godot/assets/blender/` | Blender 生成的资产（.glb + `catalog.json`），由 `tools/blender_build_assets.py` 产出 |
+| `godot/assets/sprites/` | HD-2D 像素角色精灵表（8 方向 × 待机 / 走路）+ `catalog.json`，由 `tools/blender_build_sprites.py` 产出 |
+| `godot/addons/pixel_world/actors/` | 角色 `PWCharacter`、像素精灵显示 `PWSpriteVisual`、NPC `PWNPC`、鱼群 |
+| `godot/addons/pixel_world/vfx/` | 动作特效 `PWVFX`（攻击、受击、法术、增益、移动） |
 | `godot/demo/` | 演示场景 |
 | `godot/tests/` | 无界面回归测试和画面闪烁统计脚本 |
-| `blender/pixel_world_blender/` | Blender 5.2 插件（P3）：参数化资产生成器、像素贴图、glTF 导出 |
+| `blender/pixel_world_blender/` | Blender 5.2 插件：参数化资产生成器、像素贴图、glTF 导出（P3）；像素角色渲染 `sprites.py`（P4） |
 | `tools/sync_style.py` | 把 `style.json` 同步成 Godot 可用的常量文件 |
 | `tools/blender_build_assets.py` | 命令行批量生成 Blender 资产 |
+| `tools/blender_build_sprites.py` | 命令行生成像素角色精灵表 |
 | `tools/subset_font.py` | 裁剪中文界面字体（思源黑体，OFL 许可） |
 
 ## 运行 Demo
@@ -45,11 +49,12 @@
 用 Godot 4.7 打开 `godot/project.godot`，按 F5 运行。启动后先看到**主界面**：
 
 - **场景生成器**：选风格（海边小镇、森林、平原；雪原、海岛、沙漠绿洲、峡谷即将推出），设种子 / 尺寸 / 密度，「预览」后「进入场景」。
-- **资源库**：按分类浏览所有资源，3D 预览可拖动旋转、滚轮缩放，「换一批」看同一资源放进场景时的不同变化；「Blender 资产」分类是 P3 生成的模型。
-- **特效库**：天气、积水涟漪、积雪、夜间灯光、水面，在演示小场景里实时查看。
+- **资源库**：按分类浏览所有资源，「换一批」看同一资源放进场景时的不同变化。树木、灌木会随机撒几个（每个都不一样），路灯、篱笆等排出全部款式，角色只放一个；「角色」分类里有像素精灵角色，「Blender 资产」分类是 P3 生成的模型。
+- **特效库**：分「天气 / 环境 / 动作」三类；动作特效（斩击、火球、爆炸、落雷、治疗、魔法阵、护盾、尘土等）由演示角色施放，可「播放」或「循环播放」。
+- **3D 预览的操作**：预览不会自己转。底部按钮：左转、右转、抬高、压低、放大、缩小、重置；鼠标放在预览上时也可以用键盘：←→ 旋转、↑↓ 俯仰、WASD 平移、+/- 缩放、R 重置；左键拖动旋转、右键拖动平移、滚轮缩放。
 - **天气光照**：拖动时间看一天的光线，查看昼夜关键帧。
 
-进入场景后：WASD / 方向键走动（镜头跟随），Q/E 旋转镜头，滚轮缩放；左上角面板可回到主界面、换一个场景、切换天气和时间、开关像素风和移轴。
+进入场景后：玩家是像素精灵角色（旅人剑士），WASD / 方向键走动（镜头跟随），Q/E 旋转镜头，滚轮缩放；镇上的 NPC 白天在家附近闲逛、天黑回家。左上角面板可回到主界面、换一个场景、切换天气和时间、开关像素风和移轴。
 在 Godot 编辑器里，插件会在顶部多一个「Pixel World」主屏幕（与 2D / 3D / 脚本 并列），内容相同，按钮是「生成到当前场景」。
 
 也可以用命令行截图，方便验证效果：
@@ -85,10 +90,36 @@ add_child(world)            # generate_on_ready 默认为 true，加入场景树
 - **在 Blender 里交互使用**：把 `blender/pixel_world_blender` 文件夹安装为插件（编辑 → 偏好设置 → 插件 → 从磁盘安装，选这个文件夹打包的 zip，或直接复制到 Blender 的 addons 目录），
   3D 视图侧边栏（N）出现「Pixel World」标签页：选资产和种子「生成」，或「导出全部到 Godot」。
 
-目前的生成器：农舍、松树、石井、集市摊位（`blender/pixel_world_blender/generators/`）。它们读取同一份 `shared/style/style.json`，
+目前的生成器：农舍、松树、阔叶树、石井、集市摊位、铸铁路灯、手推车、路牌（`blender/pixel_world_blender/generators/`）。它们读取同一份 `shared/style/style.json`，
 像素密度 32 texel/米、只用调色板颜色；导入 Godot 后材质自动换成统一的 `pixel_world` 材质，所以积雪、潮湿、夜间窗户发光和代码生成的资产完全一样。
 小镇会把石井和集市摊位摆在路边（同样经过摆放规则检查）。
 回归测试：`godot --headless --path godot --script res://tests/test_world_gen.gd`。
+
+## 像素角色（P4，HD-2D）
+
+参考《八方旅人》的 HD-2D 做法（3D 场景里站 2D 像素角色），但分辨率更高：每帧 128 像素、角色约 96 像素高。
+角色在 Blender 里用参数搭成 Q 版低模，按帧摆姿势，从 8 个方向渲染，再自动转成「三档明暗 + 1 像素描边」的像素画：
+
+```bash
+blender -b --factory-startup -P tools/blender_build_sprites.py               # 6 个原创角色，约 40 秒
+blender -b --factory-startup -P tools/blender_build_sprites.py -- --only maiden
+```
+
+在 Godot 里使用：
+
+```gdscript
+var hero := PWCharacter.new()
+hero.sprite_id = "swordsman"      # 角色 id 见 godot/assets/sprites/catalog.json；为空则用低模身体
+add_child(hero)
+hero.walk(Vector3(1, 0, 0), delta) # 每帧调用，自动切换待机 / 走路、按镜头方向选 8 方向的帧
+
+var npc := PWNPC.new()             # NPC：白天在 home 附近闲逛，天黑回家（进门隐藏），早上再出门
+npc.sprite_id = "maiden"
+npc.home = world.homes[0]          # PWWorld.homes：小镇每栋房子门口 / 野外营地
+npc.hour = func() -> float: return tod.hour
+```
+
+新增角色：在 `blender/pixel_world_blender/sprites.py` 的 `PRESETS` 里加一项（发型、帽子、衣服、道具和各部位的三色色阶）。规格见 [docs/VISUAL_SPEC.md](docs/VISUAL_SPEC.md)。
 
 ## 在自己的场景里使用
 

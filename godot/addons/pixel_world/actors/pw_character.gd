@@ -2,6 +2,7 @@
 class_name PWCharacter
 extends Node3D
 ## 简单的小镇居民：Q 版低模身体（约 1.6 米），程序化走路动画。
+## 设置 sprite_id（加入场景前）就换成 HD-2D 像素精灵角色（PWSpriteVisual，8 方向，见 tools/blender_build_sprites.py）。
 ## 脚步会写入全局涟漪源 pw_step0..3：踩进雨天的水洼或浅水时，shader 会画出向外扩散的波纹。
 ##
 ## 用法：每帧调用 walk(dir, delta)，dir 为世界 XZ 方向（长度 0..1，0 = 站着不动）。
@@ -16,6 +17,8 @@ const STEP_PARAMS: Array[StringName] = [&"pw_step0", &"pw_step1", &"pw_step2", &
 
 @export var walk_speed := 3.2
 @export var turn_speed := 10.0
+## 像素精灵角色 id（res://assets/sprites/catalog.json）。为空或找不到时用低模身体
+@export var sprite_id := ""
 
 var ground_height: Callable
 var can_stand: Callable
@@ -28,8 +31,11 @@ var _move := 0.0
 var _time := 0.0
 var _last_side := 0
 var _idle_ripple := 0.0
-var _steps: Array[Vector4] = []
-var _step_i := 0
+# 脚步涟漪源是全局的 4 个槽（shader 参数 pw_step0..3），所有角色（玩家 + NPC）共用一个环形缓冲，
+# 每帧只由第一个更新的角色统一计龄、上传一次，互相不会覆盖
+static var _steps: Array[Vector4] = []
+static var _step_i := 0
+static var _steps_frame := -1
 
 var _body: Node3D
 var _head: Node3D
@@ -37,12 +43,14 @@ var _leg_l: Node3D
 var _leg_r: Node3D
 var _arm_l: Node3D
 var _arm_r: Node3D
+var _sprite: PWSpriteVisual
 
 
 func _ready() -> void:
 	Globals.ensure_runtime()
-	for i in 4:
-		_steps.append(Vector4(0, 0, 99, 0))
+	if _steps.is_empty():
+		for i in 4:
+			_steps.append(Vector4(0, 0, 99, 0))
 	_build()
 
 
@@ -83,6 +91,10 @@ func _ok(p: Vector3) -> bool:
 
 
 func _animate() -> void:
+	if _sprite != null:
+		_sprite.anim = "walk" if _move > 0.15 else "idle"
+		_sprite.rate = clampf(_move * walk_speed / 3.2, 0.6, 1.4) if _move > 0.15 else 1.0
+		return
 	var sw := sin(_phase) * 0.6 * _move
 	_leg_l.rotation.x = sw
 	_leg_r.rotation.x = -sw
@@ -95,8 +107,14 @@ func _animate() -> void:
 
 ## 脚步涟漪：每迈一步记一个源；站在水里时每隔一会儿泛一圈小涟漪
 func _update_ripples(delta: float, spd: float) -> void:
-	for i in 4:
-		_steps[i].z += delta
+	var f := Engine.get_process_frames()
+	if f != _steps_frame:
+		_steps_frame = f
+		for i in 4:
+			_steps[i].z += delta
+			Globals.set_param(STEP_PARAMS[i], _steps[i])
+	if not visible:
+		return
 	var side := 1 if sin(_phase) > 0.0 else -1
 	if _move > 0.3 and side != _last_side:
 		_last_side = side
@@ -110,8 +128,6 @@ func _update_ripples(delta: float, spd: float) -> void:
 		if _idle_ripple <= 0.0:
 			_idle_ripple = 1.3
 			_emit(Vector2(position.x, position.z), 0.6)
-	for i in 4:
-		Globals.set_param(STEP_PARAMS[i], _steps[i])
 
 
 func _emit(p: Vector2, strength: float) -> void:
@@ -122,6 +138,10 @@ func _emit(p: Vector2, strength: float) -> void:
 # ---------------------------------------------------------------- 模型
 
 func _build() -> void:
+	if sprite_id != "" and PWSpriteVisual.has_character(sprite_id):
+		_sprite = PWSpriteVisual.create(sprite_id)
+		add_child(_sprite)
+		return
 	_body = Node3D.new()
 	_body.name = "Body"
 	add_child(_body)

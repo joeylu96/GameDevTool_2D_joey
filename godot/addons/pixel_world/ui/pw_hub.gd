@@ -552,6 +552,7 @@ func _ensure_fx_actor() -> void:
 	if _fx_actor == null:
 		var c := PWCharacter.new()
 		c.name = "FxActor"
+		c.sprite_id = "swordsman"  # 有像素精灵就用精灵角色（没有时自动退回低模）
 		var p := _diorama_world.spawn_point
 		c.position = p
 		_diorama.root.add_child(c)

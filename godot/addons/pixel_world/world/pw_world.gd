@@ -39,6 +39,8 @@ const DEPTH_RANGE := 4.0
 ## 生成结果
 var placement: PWPlacement
 var spawn_point := Vector3.ZERO
+## NPC 的家：小镇是每栋房子门口，野外是营地 / 兴趣点旁。NPC 白天在附近闲逛、天黑回这里
+var homes: Array[Vector3] = []
 var fish: PWFishSchool
 var water_y := -0.45
 var violations := PackedStringArray()
@@ -71,6 +73,7 @@ func _ready() -> void:
 ## 清空并重新生成
 func generate() -> void:
 	clear()
+	homes.clear()
 	var t0 := Time.get_ticks_msec()
 	placement = PWPlacement.new()
 	_content = Node3D.new()

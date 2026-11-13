@@ -8,6 +8,7 @@ extends Control
 ##           --snap（积雪/潮湿立刻到位） --frames=N（截图前等待帧数） --pixel（像素模式）
 ##           --distance=米 --yaw=度 --focus=x,z（镜头对准的地面位置，并关闭走路模式）
 ##           --player=x,z（角色位置） --walk=x,z（截图前让角色朝这个方向走）
+##           --model3d（玩家用低模身体而不是像素精灵） --npcs=N（NPC 数量，默认 8，0 = 不要）
 
 const Globals := preload("res://addons/pixel_world/core/pw_globals.gd")
 const Mats := preload("res://addons/pixel_world/core/pw_materials.gd")
@@ -25,6 +26,9 @@ var rig: PWCameraRig
 var post: PWPostFX
 var world: PWWorld
 var player: PWCharacter
+var npcs: Array[PWNPC] = []
+## 玩家用的像素精灵角色（没生成精灵表时自动退回低模身体）
+var player_sprite := "swordsman"
 ## 走路模式：WASD 控制角色、镜头跟随
 var walk_mode := true:
 	set(v):
@@ -109,6 +113,7 @@ func back_to_hub() -> void:
 	ui = null
 	world = null
 	player = null
+	npcs.clear()
 	tod = null
 	weather = null
 	rig = null
@@ -130,6 +135,8 @@ func _start_scene(cfg: Dictionary) -> void:
 
 	player = PWCharacter.new()
 	player.name = "Player"
+	if not _args().has("model3d"):
+		player.sprite_id = player_sprite
 	player.ground_height = world.ground_y
 	player.can_stand = world.can_stand
 	player.water_depth = world.water_depth
@@ -184,6 +191,42 @@ func _after_generate() -> void:
 	rig.bounds = Rect2(-world.size * 0.5, -world.size * 0.5, world.size, world.size)
 	if world.fish != null:
 		world.fish.threat = player
+	_spawn_npcs(int(_args().get("npcs", "8")))
+
+
+## NPC：每个家（房门口 / 营地）最多住一个，角色轮流用精灵表里除玩家以外的那些
+func _spawn_npcs(count: int) -> void:
+	for n in npcs:
+		if is_instance_valid(n):
+			n.queue_free()
+	npcs.clear()
+	var ids: Array[String] = []
+	for c: Dictionary in PWSpriteVisual.characters():
+		if c.id != player_sprite:
+			ids.append(c.id)
+	if ids.is_empty() or world.homes.is_empty():
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = world.seed_value
+	var homes := world.homes.duplicate()
+	for i in homes.size():  # 洗牌，挑前 count 个
+		var j := rng.randi_range(i, homes.size() - 1)
+		var t: Vector3 = homes[i]
+		homes[i] = homes[j]
+		homes[j] = t
+	for i in mini(count, homes.size()):
+		var npc := PWNPC.new()
+		npc.name = "NPC_%d" % i
+		npc.sprite_id = ids[i % ids.size()]
+		npc.home = homes[i]
+		npc.wake_hour = rng.randf_range(6.0, 8.5)
+		npc.sleep_hour = rng.randf_range(18.5, 21.0)
+		npc.ground_height = world.ground_y
+		npc.can_stand = world.can_stand
+		npc.water_depth = world.water_depth
+		npc.hour = func() -> float: return tod.hour if tod != null else 12.0
+		display.viewport.add_child(npc)
+		npcs.append(npc)
 
 
 func _apply_cmdline() -> void:

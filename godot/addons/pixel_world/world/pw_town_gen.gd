@@ -443,6 +443,8 @@ func _try_house(road: Rect2, horiz: bool, side: int, u: float, p: Dictionary, fp
 	batch.add_static(House.build(p), Transform3D(basis, Vector3(center.x, 0, center.y)))
 	pl.add_rect(P.HOUSE, rect, 0.3, true)
 	pl.add_rect(P.DOOR, door)
+	var door_pt := center + front * (fp.y * 0.5 + 0.8)  # 门前通道上、离墙 0.8 米：NPC 的家
+	w.homes.append(Vector3(door_pt.x, 0.0, door_pt.y))
 	var body := Vector2(p.width + 0.5, p.depth + 0.5) if horiz else Vector2(p.depth + 0.5, p.width + 0.5)
 	pl.solid_rects.append(Rect2(center - body * 0.5, body))
 	# 篱笆：沿前院靠路一侧，门口留缺口

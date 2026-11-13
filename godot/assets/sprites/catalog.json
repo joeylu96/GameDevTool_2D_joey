@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "generator": "pixel_world_blender sprites 0.1.0",
+  "blender": "5.2.4 LTS",
+  "frame": 128,
+  "px_per_m": 60.0,
+  "origin": [
+    64.0,
+    119.75
+  ],
+  "dirs": 8,
+  "dir_order": "第 d 行 = 相机从角色正面逆时针（俯视）转 d×45°",
+  "anims": {
+    "idle": {
+      "start": 0,
+      "count": 4,
+      "fps": 4
+    },
+    "walk": {
+      "start": 4,
+      "count": 6,
+      "fps": 10
+    }
+  },
+  "characters": [
+    {
+      "id": "swordsman",
+      "name": "旅人剑士",
+      "desc": "背着红披风的年轻剑士，腰间挂一把长剑，短发翘起。",
+      "file": "swordsman.png"
+    },
+    {
+      "id": "merchant",
+      "name": "行商",
+      "desc": "戴宽檐帽的行商，系着白围裙，腰边挎一个货袋。",
+      "file": "merchant.png"
+    },
+    {
+      "id": "maiden",
+      "name": "村姑",
+      "desc": "长发的村庄姑娘，青色长裙配白围裙，走路时裙摆轻轻摆动。",
+      "file": "maiden.png"
+    },
+    {
+      "id": "scholar",
+      "name": "学者",
+      "desc": "扎马尾的学者，紫色长袍，手持顶端嵌着宝石的木杖。",
+      "file": "scholar.png"
+    },
+    {
+      "id": "guard",
+      "name": "卫兵",
+      "desc": "戴铁盔、穿红色罩袍的镇上卫兵，手持长枪。",
+      "file": "guard.png"
+    },
+    {
+      "id": "elder",
+      "name": "长者",
+      "desc": "白发白须的村中长者，披着棕色长袍，拄一根短拐杖。",
+      "file": "elder.png"
+    }
+  ]
+}

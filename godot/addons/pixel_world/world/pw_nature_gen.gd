@@ -73,6 +73,7 @@ func run() -> void:
 	_town._variants()
 	for i in pois.size():
 		_build_poi(_poi_kinds[i], pois[i])
+		w.homes.append(Vector3(pois[i].x, 0.0, pois[i].y))  # 野外的 NPC 以营地 / 兴趣点为家
 	_connect_paths()
 	_scatter_trees()
 	_scatter_small()
