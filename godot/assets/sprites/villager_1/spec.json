@@ -1,0 +1,60 @@
+{
+  "id": "villager_1",
+  "name": "路人 1",
+  "desc": "随机组合的小镇路人（种子 1）。",
+  "hair": "long",
+  "hat": "hood",
+  "weapon": null,
+  "sleeves": "short",
+  "skirt": 0.46742365971831074,
+  "height": 1.025064385958069,
+  "build": 0.9974522017552835,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": true,
+  "sleeve_band": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f7d6b8",
+      "#e8b892",
+      "#bf8466"
+    ],
+    "hair": [
+      "#5a412e",
+      "#3d2c22",
+      "#2a1e17"
+    ],
+    "top": [
+      "#8fb36a",
+      "#6e9652",
+      "#527a40"
+    ],
+    "bottom": [
+      "#d0564a",
+      "#a3352d",
+      "#6e2424"
+    ],
+    "skirt": [
+      "#d0564a",
+      "#a3352d",
+      "#6e2424"
+    ],
+    "trim": [
+      "#8fb36a",
+      "#6e9652",
+      "#527a40"
+    ],
+    "vest": [
+      "#6f9c94",
+      "#4f7c78",
+      "#3a5c5c"
+    ],
+    "hat": [
+      "#6f9c94",
+      "#4f7c78",
+      "#3a5c5c"
+    ]
+  }
+}

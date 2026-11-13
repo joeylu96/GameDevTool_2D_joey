@@ -8,6 +8,7 @@ NAME = "松树"
 CATEGORY = "trees"
 DESC = "Blender 生成的松树：八边形分层树冠，裙边深、顶盖浅，下雪时每层顶盖积白。"
 VARY = "层数、底部粗细、收分、坡度、扭转角随种子变化；放进场景时再随机朝向、比例、色调。"
+TAGS = ["forest", "winter", "town"]
 
 
 def build(seed, **over):

@@ -5,7 +5,8 @@ extends Node3D
 ## 设置 sprite_id（加入场景前）就换成 HD-2D 像素精灵角色（PWSpriteVisual，8 方向，见 tools/blender_build_sprites.py）。
 ## 脚步会写入全局涟漪源 pw_step0..3：踩进雨天的水洼或浅水时，shader 会画出向外扩散的波纹。
 ##
-## 用法：每帧调用 walk(dir, delta)，dir 为世界 XZ 方向（长度 0..1，0 = 站着不动）。
+## 用法：每帧调用 walk(dir, delta, running)，dir 为世界 XZ 方向（长度 0..1，0 = 站着不动），running = 跑步。
+## 动作（像素精灵角色才有）：attack() / cast() / hurt() / wave()，返回动作时长；攻击和施法时原地站定。
 ## 可选回调（由场景提供）：
 ##   ground_height(x, z) -> float   脚下高度（浅水里会踩到湖底）
 ##   can_stand(Vector2) -> bool     这个位置能不能站（房屋、树、深水等返回 false）
@@ -44,6 +45,9 @@ var _leg_r: Node3D
 var _arm_l: Node3D
 var _arm_r: Node3D
 var _sprite: PWSpriteVisual
+var _running := false
+var _lock := 0.0      # 攻击 / 施法时站定的剩余时间
+var _flash := 0.0
 
 
 func _ready() -> void:
@@ -55,10 +59,18 @@ func _ready() -> void:
 
 
 ## 让角色朝 dir（世界 XZ，长度 0..1）走一帧
-func walk(dir: Vector3, delta: float) -> void:
+func walk(dir: Vector3, delta: float, running := false) -> void:
 	_time += delta
 	dir.y = 0.0
-	velocity = velocity.lerp(dir.limit_length(1.0) * walk_speed, 1.0 - exp(-delta * 10.0))
+	_running = running
+	if _lock > 0.0:
+		_lock -= delta
+		dir = Vector3.ZERO
+	if _flash > 0.0 and _sprite != null:
+		_flash = maxf(0.0, _flash - delta * 5.0)
+		_sprite.set_flash(_flash)
+	var speed := walk_speed * (1.8 if running else 1.0)
+	velocity = velocity.lerp(dir.limit_length(1.0) * speed, 1.0 - exp(-delta * 10.0))
 	var p := position + velocity * delta
 	if not _ok(p):
 		var px := Vector3(p.x, position.y, position.z)
@@ -80,10 +92,50 @@ func walk(dir: Vector3, delta: float) -> void:
 	if spd > 0.15:
 		_heading = lerp_angle(_heading, atan2(velocity.x, velocity.z), 1.0 - exp(-delta * turn_speed))
 		rotation.y = _heading
-	_move = move_toward(_move, clampf(spd / walk_speed, 0.0, 1.0), delta * 4.0)
+	_move = move_toward(_move, clampf(spd / walk_speed, 0.0, 1.8), delta * 4.0)
 	_phase += delta * spd * 3.4
 	_animate()
 	_update_ripples(delta, spd)
+
+
+## 像素精灵角色的动作。返回动作时长（秒）；没有这个动作（低模身体、或精灵表里没渲染）返回 0
+func attack() -> float:
+	return _action("attack", true)
+
+
+func cast() -> float:
+	return _action("cast", true)
+
+
+func wave() -> float:
+	return _action("wave", false)
+
+
+func hurt() -> float:
+	_flash = 1.0
+	return _action("hit", true)
+
+
+func is_busy() -> bool:
+	return _lock > 0.0 or (_sprite != null and _sprite.is_busy())
+
+
+func _action(a: String, lock: bool) -> float:
+	if _sprite == null:
+		return 0.0
+	var t := _sprite.play_once(a)
+	if lock:
+		_lock = t
+		velocity = Vector3.ZERO
+	return t
+
+
+## 转身面向某个方向（世界 XZ），比如攻击前对准目标、NPC 和玩家打招呼
+func face(dir: Vector3) -> void:
+	if Vector2(dir.x, dir.z).length() < 0.01:
+		return
+	_heading = atan2(dir.x, dir.z)
+	rotation.y = _heading
 
 
 func _ok(p: Vector3) -> bool:
@@ -92,8 +144,9 @@ func _ok(p: Vector3) -> bool:
 
 func _animate() -> void:
 	if _sprite != null:
-		_sprite.anim = "walk" if _move > 0.15 else "idle"
-		_sprite.rate = clampf(_move * walk_speed / 3.2, 0.6, 1.4) if _move > 0.15 else 1.0
+		var run := _running and _move > 1.2 and _sprite.has_anim("run")
+		_sprite.anim = ("run" if run else "walk") if _move > 0.15 else "idle"
+		_sprite.rate = (clampf(_move / 1.8, 0.7, 1.2) if run else clampf(_move * walk_speed / 3.2, 0.6, 1.4)) if _move > 0.15 else 1.0
 		return
 	var sw := sin(_phase) * 0.6 * _move
 	_leg_l.rotation.x = sw

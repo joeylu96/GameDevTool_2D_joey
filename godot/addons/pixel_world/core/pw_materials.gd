@@ -53,6 +53,15 @@ const DEFS := {
 	"leaf_dark": {"tex": "leaf_dark", "sway": 0.6},
 	"leaf_birch": {"tex": "leaf_birch", "sway": 0.8},
 	"leaf_birch_dark": {"tex": "leaf_birch_dark", "sway": 0.8},
+	# Blender 资产（P3 / 资产工坊）用到的材质：贴图来自 glb，这里只定义行为（摆动、积雪、发光）
+	"palm_leaf": {"tex": "leaf", "sway": 1.2},
+	"cactus": {"tex": "leaf_dark", "snow_receive": 0.3},
+	"snow": {"tex": "plaster_white", "snow_receive": 0.0, "roughness_base": 0.8},
+	"coal": {"tex": "metal", "snow_receive": 0.0},
+	"siding_white": {"tex": "plaster_white"},
+	"siding_ochre": {"tex": "wall_ochre"},
+	"rock_red": {"tex": "rock"},
+	"bulb_warm": {"tex": "lamp_glass", "emission_full": 1.0, "emission_energy": 2.2, "snow_receive": 0.0},
 	"weed": {"tex": "weed", "sway": 2.0, "snow_receive": 0.0, "caustics": 1.0},
 	# 草叶：纯白贴图，颜色全靠顶点色（根部深、尖端亮）；从根部开始随风摆
 	"blade": {"tex": "flat_snow_0", "sway": 30.0, "sway_base": 0.0, "snow_receive": 0.0, "roughness_base": 0.8},

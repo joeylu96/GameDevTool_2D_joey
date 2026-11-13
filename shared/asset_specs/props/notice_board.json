@@ -1,0 +1,22 @@
+{
+  "id": "notice_board",
+  "name": "布告栏",
+  "category": "street",
+  "desc": "小镇广场的木制布告栏：两根立柱撑着木板，钉着几张告示，顶上有一个小双坡雨棚。",
+  "vary": "木板颜色、雨棚瓦色、告示的位置随变体变化。",
+  "tags": ["plaza", "roadside", "town"],
+  "plant": false,
+  "variants": 4,
+  "parts": [
+    {"shape": "box", "mat": "trunk", "min": [-0.95, -0.07, 0], "max": [-0.81, 0.07, 2.3]},
+    {"shape": "box", "mat": "trunk", "min": [0.81, -0.07, 0], "max": [0.95, 0.07, 2.3]},
+    {"shape": "box", "mat": ["wall_wood", "wall_ochre"], "min": [-0.85, -0.05, 0.9], "max": [0.85, 0.05, 2.0]},
+    {"shape": "box", "mat": "trim", "min": [-0.88, -0.07, 0.86], "max": [0.88, 0.07, 0.92]},
+    {"shape": "box", "mat": "trim", "min": [-0.88, -0.07, 1.98], "max": [0.88, 0.07, 2.04]},
+    {"shape": "box", "mat": "plaster_white", "min": [{"rand": [-0.7, -0.55]}, -0.08, 1.35], "max": [{"rand": [-0.3, -0.2]}, -0.06, 1.85]},
+    {"shape": "box", "mat": "plaster_white", "min": [-0.05, -0.08, {"rand": [1.0, 1.2]}], "max": [0.32, -0.06, {"rand": [1.5, 1.7]}]},
+    {"shape": "box", "mat": "siding_white", "min": [0.42, -0.08, 1.4], "max": [0.72, -0.06, 1.9]},
+    {"shape": "box", "mat": "canvas_red", "min": [0.5, -0.09, 1.78], "max": [0.56, -0.07, 1.84]},
+    {"shape": "gable_roof", "mat": ["roof_grey", "roof_red"], "center": [0, 0], "size": [1.9, 0.5], "z": 2.3, "pitch": 30, "overhang": 0.12}
+  ]
+}

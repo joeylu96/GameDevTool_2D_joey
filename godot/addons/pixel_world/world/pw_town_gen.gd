@@ -639,18 +639,22 @@ func _build_trees() -> void:
 		try_tree(p, mesh, rng.randf_range(0.75, 1.2), pine)
 
 
-## Blender 资产（P3）：有资产目录时，在路边放一口石井和几个集市摊位（正面朝路），同样经过摆放规则检查
+## Blender 资产（P3 + 资产工坊）：按标签挑选——带 plaza / roadside / yard 标签的摆件放在路边（正面朝路），
+## 同样经过摆放规则检查。石井 1 口、集市摊位 3 个，其余每种 1~2 个。资产工坊新生成的同类资产会自动出现在小镇里。
+## 路灯、灯塔、树、房屋有各自的生成逻辑，这里不放。
 func _build_blender_props() -> void:
-	if not PWAssetLibrary._blender_loaded:
-		PWAssetLibrary.load_blender_catalog()
-	var specs := [["bl_well", 1, 2.6], ["bl_market_stall", 3, 2.0]]
-	for spec: Array in specs:
-		var item: Dictionary = {}
-		for it in PWAssetLibrary.in_category("blender"):
-			if it.id == spec[0]:
-				item = it
-		if item.is_empty():
+	var counts := {"bl_well": 1, "bl_market_stall": 3}
+	var exclude := ["bl_street_lamp", "bl_lighthouse", "bl_cottage", "bl_pine", "bl_oak"]
+	var specs := []
+	for it in PWAssetLibrary.blender_with_tags(["plaza", "roadside", "yard"], exclude):
+		if it.get("semantic", "") in ["trees", "buildings", "landmarks"]:
 			continue
+		if not PWAssetLibrary.fits_climate(it, w.theme):
+			continue
+		var fp: Array = it.get("footprint", [2, 2])
+		specs.append([it, counts.get(it.id, rng.randi_range(1, 2)), maxf(1.6, float(fp[1]) * 0.5 + 0.9)])
+	for spec: Array in specs:
+		var item: Dictionary = spec[0]
 		var placed := 0
 		for attempt in 60:
 			if placed >= spec[1]:
@@ -680,7 +684,7 @@ func _build_blender_props() -> void:
 			pl.add_rect(P.PROP, rect, 0.0, true)
 			pl.solid_rects.append(rect)
 			placed += 1
-		w.stats[String(spec[0])] = placed
+		w.stats[String(item.id)] = placed
 
 
 ## 草坪：密度 0.45，北边林带下 0.25；岸边碎石带和湖里没有；路、房子、门前通道等由 PWPlacement 排除

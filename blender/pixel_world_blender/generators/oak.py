@@ -9,6 +9,7 @@ NAME = "阔叶树"
 CATEGORY = "trees"
 DESC = "Blender 生成的阔叶树：树干分叉成几根主枝，每根枝头一簇树冠，下层深上层浅。"
 VARY = "主枝数量和方向、树冠簇的大小和数量、树干高度和粗细随种子变化；放进场景时再随机朝向、比例、色调。"
+TAGS = ["forest", "plains", "town"]
 
 
 def build(seed, **over):

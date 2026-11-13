@@ -1,0 +1,19 @@
+{
+  "id": "campfire",
+  "name": "篝火",
+  "category": "props",
+  "desc": "一圈石头围着的篝火：木柴搭成小尖塔，中间的火炭夜里发光，旁边放着一截坐人的原木。",
+  "vary": "石头数量和大小、木柴倾斜角度、旁边原木的位置随变体变化。",
+  "tags": ["camp", "forest", "plains", "desert", "winter"],
+  "plant": false,
+  "variants": 4,
+  "parts": [
+    {"shape": "repeat", "count": 9, "radius": 0.62, "center": [0, 0],
+     "part": {"shape": "blob", "mat": "stone", "center": [0.62, 0, 0.08], "r": {"rand": [0.12, 0.17]}, "h": 0.2}},
+    {"shape": "repeat", "count": 5, "radius": 0.36, "center": [0, 0],
+     "part": {"shape": "tube", "mat": "trunk", "from": [0.36, 0, 0.04], "to": [0.04, 0, {"rand": [0.5, 0.62]}], "r": [0.055, 0.04], "sides": 6}},
+    {"shape": "blob", "mat": "bulb", "center": [0, 0, 0.12], "r": 0.2, "h": 0.22},
+    {"shape": "blob", "mat": "fruit_yellow", "center": [0, 0, 0.3], "r": 0.1, "h": 0.28},
+    {"shape": "tube", "mat": "trunk", "from": [{"rand": [-1.4, -1.2]}, -0.9, 0.2], "to": [{"rand": [-0.3, -0.1]}, -1.25, 0.2], "r": [0.2, 0.19], "sides": 8}
+  ]
+}

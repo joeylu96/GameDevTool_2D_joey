@@ -8,6 +8,7 @@ NAME = "路牌"
 CATEGORY = "street"
 DESC = "Blender 生成的路口指示牌：木柱上钉着几块朝向不同的箭头牌，柱脚压着石块。"
 VARY = "指示牌数量、朝向、长度和颜色，柱子高度随种子变化。"
+TAGS = ["roadside", "plains", "forest"]
 
 
 def _arrow(mb, z, ang, ln, key):

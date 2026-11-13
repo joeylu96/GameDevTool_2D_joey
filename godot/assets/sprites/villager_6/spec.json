@@ -1,0 +1,60 @@
+{
+  "id": "villager_6",
+  "name": "路人 6",
+  "desc": "随机组合的小镇路人（种子 6）。",
+  "hair": "short",
+  "hat": null,
+  "weapon": null,
+  "sleeves": "short",
+  "skirt": 0.009205685929305318,
+  "height": 0.938177731994076,
+  "build": 1.1004788707906508,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#a8735a",
+      "#86563f",
+      "#5e3a2b"
+    ],
+    "hair": [
+      "#f4f7fb",
+      "#d3dae6",
+      "#9fabbf"
+    ],
+    "top": [
+      "#9a80b8",
+      "#735a94",
+      "#4f3d6a"
+    ],
+    "bottom": [
+      "#8fb36a",
+      "#6e9652",
+      "#527a40"
+    ],
+    "skirt": [
+      "#f3eee3",
+      "#d9d0bf",
+      "#ada28c"
+    ],
+    "trim": [
+      "#d0564a",
+      "#a3352d",
+      "#6e2424"
+    ],
+    "vest": [
+      "#6f9c94",
+      "#4f7c78",
+      "#3a5c5c"
+    ],
+    "hat": [
+      "#8a8f99",
+      "#6b707c",
+      "#4c505c"
+    ]
+  }
+}

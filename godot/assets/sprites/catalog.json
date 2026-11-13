@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "generator": "pixel_world_blender sprites 0.1.0",
+  "version": 2,
+  "generator": "pixel_world_blender sprites 0.2.0",
   "blender": "5.2.4 LTS",
   "frame": 128,
   "px_per_m": 60.0,
@@ -10,54 +10,573 @@
   ],
   "dirs": 8,
   "dir_order": "第 d 行 = 相机从角色正面逆时针（俯视）转 d×45°",
-  "anims": {
-    "idle": {
-      "start": 0,
-      "count": 4,
-      "fps": 4
-    },
-    "walk": {
-      "start": 4,
-      "count": 6,
-      "fps": 10
-    }
-  },
   "characters": [
     {
       "id": "swordsman",
       "name": "旅人剑士",
       "desc": "背着红披风的年轻剑士，腰间挂一把长剑，短发翘起。",
-      "file": "swordsman.png"
+      "anims": {
+        "idle": {
+          "file": "swordsman/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "swordsman/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "swordsman/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "swordsman/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "swordsman/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "swordsman/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "swordsman/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
     },
     {
       "id": "merchant",
       "name": "行商",
       "desc": "戴宽檐帽的行商，系着白围裙，腰边挎一个货袋。",
-      "file": "merchant.png"
+      "anims": {
+        "idle": {
+          "file": "merchant/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "merchant/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "merchant/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "merchant/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "merchant/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "merchant/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "merchant/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
     },
     {
       "id": "maiden",
       "name": "村姑",
-      "desc": "长发的村庄姑娘，青色长裙配白围裙，走路时裙摆轻轻摆动。",
-      "file": "maiden.png"
+      "desc": "长发的村庄姑娘，青色长裙配白上衣，走路时裙摆轻轻摆动。",
+      "anims": {
+        "idle": {
+          "file": "maiden/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "maiden/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "maiden/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "maiden/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "maiden/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "maiden/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "maiden/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
     },
     {
       "id": "scholar",
       "name": "学者",
       "desc": "扎马尾的学者，紫色长袍，手持顶端嵌着宝石的木杖。",
-      "file": "scholar.png"
+      "anims": {
+        "idle": {
+          "file": "scholar/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "scholar/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "scholar/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "scholar/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "scholar/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "scholar/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "scholar/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
     },
     {
       "id": "guard",
       "name": "卫兵",
       "desc": "戴铁盔、穿红色罩袍的镇上卫兵，手持长枪。",
-      "file": "guard.png"
+      "anims": {
+        "idle": {
+          "file": "guard/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "guard/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "guard/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "guard/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "guard/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "guard/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "guard/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
     },
     {
       "id": "elder",
       "name": "长者",
       "desc": "白发白须的村中长者，披着棕色长袍，拄一根短拐杖。",
-      "file": "elder.png"
+      "anims": {
+        "idle": {
+          "file": "elder/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "elder/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "elder/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "elder/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "elder/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "elder/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "elder/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "mercenary",
+      "name": "佣兵队长",
+      "desc": "金色短发、留山羊胡的佣兵队长，黑色皮甲背心配棕褐色内衬，袖口绑着红色臂带，腰挂长剑。",
+      "anims": {
+        "idle": {
+          "file": "mercenary/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "mercenary/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "mercenary/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "mercenary/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "mercenary/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "mercenary/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "mercenary/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        },
+        "shoulder_rest": {
+          "file": "mercenary/shoulder_rest.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "扛剑"
+        }
+      }
+    },
+    {
+      "id": "villager_1",
+      "name": "路人 1",
+      "desc": "随机组合的小镇路人（种子 1）。",
+      "anims": {
+        "idle": {
+          "file": "villager_1/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "villager_1/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "villager_1/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "villager_2",
+      "name": "路人 2",
+      "desc": "随机组合的小镇路人（种子 2）。",
+      "anims": {
+        "idle": {
+          "file": "villager_2/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "villager_2/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "villager_2/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "villager_3",
+      "name": "路人 3",
+      "desc": "随机组合的小镇路人（种子 3）。",
+      "anims": {
+        "idle": {
+          "file": "villager_3/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "villager_3/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "villager_3/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "villager_4",
+      "name": "路人 4",
+      "desc": "随机组合的小镇路人（种子 4）。",
+      "anims": {
+        "idle": {
+          "file": "villager_4/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "villager_4/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "villager_4/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "villager_5",
+      "name": "路人 5",
+      "desc": "随机组合的小镇路人（种子 5）。",
+      "anims": {
+        "idle": {
+          "file": "villager_5/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "villager_5/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "villager_5/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "villager_6",
+      "name": "路人 6",
+      "desc": "随机组合的小镇路人（种子 6）。",
+      "anims": {
+        "idle": {
+          "file": "villager_6/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "villager_6/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "villager_6/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
     }
   ]
 }

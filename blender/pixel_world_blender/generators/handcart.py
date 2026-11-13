@@ -9,6 +9,7 @@ NAME = "手推车"
 CATEGORY = "props"
 DESC = "Blender 生成的手推车：木车斗、辐条木轮、车把和支腿，车上随机装干草、木箱或木桶。"
 VARY = "车斗长宽、轮子大小和辐条数、装载的货物随种子变化。"
+TAGS = ["roadside", "yard", "plains", "town"]
 
 
 def _wheel(mb, x, y, z, rad, spokes, r):

@@ -1,0 +1,50 @@
+{
+  "id": "elder",
+  "name": "长者",
+  "desc": "白发白须的村中长者，披着棕色长袍，拄一根短拐杖。",
+  "hair": "bald",
+  "hat": null,
+  "weapon": "cane",
+  "sleeves": "long",
+  "skirt": 0.55,
+  "height": 0.94,
+  "build": 1.0,
+  "cape": false,
+  "scarf": true,
+  "beard": true,
+  "vest": false,
+  "sleeve_band": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#f4f7fb",
+      "#d3dae6",
+      "#9fabbf"
+    ],
+    "top": [
+      "#a8835e",
+      "#7a5a3e",
+      "#5a412e"
+    ],
+    "bottom": [
+      "#7a5a3e",
+      "#5a412e",
+      "#3d2c22"
+    ],
+    "skirt": [
+      "#a8835e",
+      "#7a5a3e",
+      "#5a412e"
+    ],
+    "trim": [
+      "#6f9c94",
+      "#4f7c78",
+      "#3a5c5c"
+    ],
+    "scarf": [
+      "#c4473a",
+      "#a3352d",
+      "#7d2826"
+    ]
+  }
+}

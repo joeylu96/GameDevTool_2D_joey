@@ -1,6 +1,7 @@
 extends Control
 ## Demo 入口：先显示主界面（PWHub），进入场景后是渲染容器 + 生成的场景（PWWorld）+ 昼夜 + 天气 + 相机 + 后期 + 角色 + 控制面板。
 ## 默认「走路模式」：WASD / 方向键控制角色，镜头跟随；关闭后 WASD 平移镜头。
+## 像素精灵角色的动作：Shift 跑步，J 攻击（带斩击特效），K 施法（带魔法阵），H 受击。NPC 走近会挥手打招呼。
 ##
 ## 命令行截图（用于自动验证）：
 ##   godot --path godot -- --weather=snow --hour=20 --screenshot=/tmp/a.png
@@ -27,6 +28,7 @@ var post: PWPostFX
 var world: PWWorld
 var player: PWCharacter
 var npcs: Array[PWNPC] = []
+var nav: PWNavGrid
 ## 玩家用的像素精灵角色（没生成精灵表时自动退回低模身体）
 var player_sprite := "swordsman"
 ## 走路模式：WASD 控制角色、镜头跟随
@@ -204,8 +206,11 @@ func _spawn_npcs(count: int) -> void:
 	for c: Dictionary in PWSpriteVisual.characters():
 		if c.id != player_sprite:
 			ids.append(c.id)
-	if ids.is_empty() or world.homes.is_empty():
+	if ids.is_empty() or world.homes.is_empty() or count <= 0:
 		return
+	# 寻路网格：整个场景 1 米一格，所有 NPC 共用
+	nav = PWNavGrid.new()
+	nav.build(Rect2(-world.size * 0.5, -world.size * 0.5, world.size, world.size), world.can_stand)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = world.seed_value
 	var homes := world.homes.duplicate()
@@ -225,6 +230,8 @@ func _spawn_npcs(count: int) -> void:
 		npc.can_stand = world.can_stand
 		npc.water_depth = world.water_depth
 		npc.hour = func() -> float: return tod.hour if tod != null else 12.0
+		npc.nav = nav
+		npc.player = player
 		display.viewport.add_child(npc)
 		npcs.append(npc)
 
@@ -430,7 +437,8 @@ func _process(delta: float) -> void:
 		dir = (right * mv.x + down * mv.y).normalized()
 	if _auto_walk != Vector3.ZERO:
 		dir = _auto_walk.normalized()
-	player.walk(dir, delta)
+	var running := walk_mode and Input.is_physical_key_pressed(KEY_SHIFT)
+	player.walk(dir, delta, running)
 	if walk_mode:
 		rig.position = rig.position.lerp(Vector3(player.position.x, 0.0, player.position.z), 1.0 - exp(-delta * 4.0))
 	# 阴影范围和级联跟着镜头距离走：画面主体落在高精度的第一级（性能 + 画质 + 细阴影稳定）
@@ -440,6 +448,14 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if rig == null:
 		return
+	if event is InputEventKey and event.pressed and not event.echo and player != null and walk_mode:
+		match (event as InputEventKey).physical_keycode:
+			KEY_J:
+				player_action("attack")
+			KEY_K:
+				player_action("cast")
+			KEY_H:
+				player_action("hit")
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -450,3 +466,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dragging = mb.pressed
 	elif event is InputEventMouseMotion and _dragging and not walk_mode:
 		rig.pan_pixels((event as InputEventMouseMotion).relative, size.y)
+
+
+## 玩家动作 + 配套特效：攻击在出刀那一刻放斩击，施法放魔法阵，受击闪白 + 火花
+func player_action(a: String) -> void:
+	if player.is_busy():
+		return
+	var fwd := player.global_transform.basis.z
+	var root := display.viewport
+	match a:
+		"attack":
+			if player.attack() > 0.0:
+				get_tree().create_timer(0.12).timeout.connect(func():
+					if is_instance_valid(player):
+						PWVFX.spawn("slash", root, player.global_position, player.global_transform.basis.z))
+		"cast":
+			if player.cast() > 0.0:
+				PWVFX.spawn("magic_circle", root, player.global_position, fwd)
+		"hit":
+			if player.hurt() > 0.0:
+				PWVFX.spawn("hit", root, player.global_position + fwd * 0.3, fwd)

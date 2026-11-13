@@ -1,0 +1,45 @@
+{
+  "id": "guard",
+  "name": "卫兵",
+  "desc": "戴铁盔、穿红色罩袍的镇上卫兵，手持长枪。",
+  "hair": "short",
+  "hat": "helmet",
+  "weapon": "spear",
+  "sleeves": "long",
+  "skirt": 0.26,
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#5a412e",
+      "#3d2c22",
+      "#2a1e17"
+    ],
+    "top": [
+      "#d0564a",
+      "#a3352d",
+      "#6e2424"
+    ],
+    "bottom": [
+      "#6b707c",
+      "#4c505c",
+      "#353845"
+    ],
+    "skirt": [
+      "#d0564a",
+      "#a3352d",
+      "#6e2424"
+    ],
+    "trim": [
+      "#e0b84a",
+      "#b9843a",
+      "#8f6230"
+    ]
+  }
+}

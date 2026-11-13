@@ -1,0 +1,45 @@
+{
+  "id": "scholar",
+  "name": "学者",
+  "desc": "扎马尾的学者，紫色长袍，手持顶端嵌着宝石的木杖。",
+  "hair": "ponytail",
+  "hat": null,
+  "weapon": "staff",
+  "sleeves": "long",
+  "skirt": 0.55,
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#3a3550",
+      "#27233a",
+      "#181626"
+    ],
+    "top": [
+      "#9a80b8",
+      "#735a94",
+      "#4f3d6a"
+    ],
+    "bottom": [
+      "#4f3d6a",
+      "#3a2d50",
+      "#281f38"
+    ],
+    "skirt": [
+      "#9a80b8",
+      "#735a94",
+      "#4f3d6a"
+    ],
+    "trim": [
+      "#e0b84a",
+      "#b9843a",
+      "#8f6230"
+    ]
+  }
+}

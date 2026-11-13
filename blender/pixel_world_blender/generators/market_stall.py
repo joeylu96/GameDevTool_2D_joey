@@ -7,6 +7,7 @@ NAME = "集市摊位"
 CATEGORY = "street"
 DESC = "Blender 生成的集市摊位：木柜台、条纹帆布顶棚、水果筐和木箱，适合小镇广场。"
 VARY = "顶棚颜色（红 / 青 / 黄条纹）、摊位宽度、水果种类和数量随种子变化。"
+TAGS = ["plaza", "town"]
 
 
 def build(seed, **over):

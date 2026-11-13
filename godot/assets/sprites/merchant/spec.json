@@ -1,0 +1,55 @@
+{
+  "id": "merchant",
+  "name": "行商",
+  "desc": "戴宽檐帽的行商，系着白围裙，腰边挎一个货袋。",
+  "hair": "short",
+  "hat": "wide",
+  "weapon": "bag",
+  "sleeves": "long",
+  "skirt": 0.32,
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": true,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#3d3a40",
+      "#2a282e",
+      "#1c1b20"
+    ],
+    "top": [
+      "#e2b25c",
+      "#c48f3c",
+      "#8f6230"
+    ],
+    "bottom": [
+      "#7a5a3e",
+      "#5a412e",
+      "#3d2c22"
+    ],
+    "skirt": [
+      "#f3eee3",
+      "#d9d0bf",
+      "#ada28c"
+    ],
+    "trim": [
+      "#6f9c94",
+      "#4f7c78",
+      "#3a5c5c"
+    ],
+    "hat": [
+      "#9b7653",
+      "#7a5a3e",
+      "#5a412e"
+    ],
+    "scarf": [
+      "#6f9c94",
+      "#4f7c78",
+      "#3a5c5c"
+    ]
+  }
+}

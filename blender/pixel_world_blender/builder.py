@@ -40,6 +40,18 @@ _TEX = {
     "bulb": lambda: pixtex.mottle(["light_0", "light_1"], 612, size=16),
     "hay": lambda: pixtex.stripes(["cloth_yellow", "ochre_0"], 613, width=3),
     "crate": lambda: pixtex.planks(["ochre_1", "ochre_2", "ochre_2", "ochre_3"], 614, size=32, plank_w=6),
+    # 横木板墙：竖木板贴图转 90°
+    "siding_white": lambda: np.ascontiguousarray(np.transpose(pixtex.planks(["frame_0", "frame_0", "frame_1", "snow_2"], 121), (1, 0, 2))),
+    "siding_ochre": lambda: np.ascontiguousarray(np.transpose(pixtex.planks(["ochre_0", "ochre_1", "ochre_2", "ochre_3"], 122), (1, 0, 2))),
+    "plaster_white": lambda: pixtex.mottle(["frame_0", "frame_1"], 131, threshold=0.75),
+    "plaster_red": lambda: pixtex.mottle(["red_0", "red_1"], 132, threshold=0.75),
+    "palm_leaf": lambda: pixtex.foliage(["grass_0", "grass_1", "grass_2"], 521, droop=True),
+    "cactus": lambda: pixtex.planks(["teal_1", "teal_2", "grass_2", "teal_3"], 522, size=32, plank_w=4),
+    "snow": lambda: pixtex.mottle(["snow_0", "snow_1"], 621, threshold=0.7),
+    "sand": lambda: pixtex.mottle(["ochre_0", "dirt_0"], 622, threshold=0.6),
+    "rock_red": lambda: pixtex.bricks(["ochre_1", "ochre_2", "red_2", "ochre_3"], 623, brick_w=20, row_h=10),
+    "coal": lambda: pixtex.mottle(["ink", "stone_3"], 624, size=16),
+    "cloth_blue": lambda: pixtex.mottle(["cloth_blue", "teal_2"], 625, threshold=0.7),
 }
 # 整张贴图铺满一个面（UV 0..1）而不是按米平铺的材质
 _STRETCH = {"glass"}

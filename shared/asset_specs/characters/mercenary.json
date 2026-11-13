@@ -1,0 +1,36 @@
+{
+  "id": "mercenary",
+  "name": "佣兵队长",
+  "desc": "金色短发、留山羊胡的佣兵队长，黑色皮甲背心配棕褐色内衬，袖口绑着红色臂带，腰挂长剑。",
+  "hair": "spiky",
+  "hat": null,
+  "beard": true,
+  "skirt": 0.14,
+  "sleeves": "long",
+  "vest": true,
+  "sleeve_band": true,
+  "scarf": false,
+  "cape": false,
+  "weapon": "sword",
+  "height": 1.04,
+  "build": 1.15,
+  "extra_anims": ["shoulder_rest"],
+  "colors": {
+    "hair": ["#f0d27a", "#cfa94e", "#94723a"],
+    "skin": ["#f2c9a6", "#d9a383", "#a8705a"],
+    "top": ["#c9a97a", "#a8835e", "#7a5a3e"],
+    "vest": ["#5a5d5b", "#3a3d3e", "#24262a"],
+    "band": ["#d0564a", "#a3352d", "#6e2424"],
+    "bottom": ["#6c6e6e", "#4c505c", "#353845"],
+    "trim": ["#8d775c", "#6c4d37", "#4a3426"],
+    "scarf": ["#f3eee3", "#d1ccc1", "#a8a296"],
+    "boots": ["#6c4d37", "#4a3426", "#2e2119"]
+  },
+  "source": {
+    "kind": "ref_image",
+    "file": "~/Downloads/原画.jpg",
+    "colors_extracted": ["#aa9c7b", "#8d775c", "#474b49", "#343832", "#6c4d37"],
+    "model": "claude-opus-5-5（当前会话手动充当模型做测试）",
+    "note": "原画是现有作品里的角色，这里只取通用特征（金发、胡子、黑背心、长剑、配色）做成原创角色，不沿用原角色的名字。"
+  }
+}

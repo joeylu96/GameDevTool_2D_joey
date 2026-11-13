@@ -8,9 +8,10 @@ from ..builder import MeshBuilder
 NAME = "农舍"
 CATEGORY = "buildings"
 DESC = "Blender 生成的农舍：石基、木板墙、双坡瓦顶、门窗和烟囱。"
-VARY = "宽度、进深、墙色（红 / 赭 / 青 / 木）、屋顶（灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。"
+VARY = "宽度、进深、墙面（红 / 赭 / 青 / 原木竖木板、白 / 黄横木板、石墙、白灰泥）、屋顶（双坡 / 四坡，灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。"
+TAGS = ["town", "yard"]
 
-WALLS = ["wall_red", "wall_ochre", "wall_teal", "wall_wood"]
+WALLS = ["wall_red", "wall_ochre", "wall_teal", "wall_wood", "siding_white", "siding_ochre", "stone", "plaster_white"]
 
 
 def params(seed):
@@ -22,6 +23,7 @@ def params(seed):
         "roof": r.choice(["roof_grey", "roof_grey", "roof_red"]),
         "pitch": r.uniform(34, 44),
         "chimney_x": r.uniform(-0.6, 0.6),
+        "roof_type": r.choice(["gable", "gable", "hip"]),
     }
 
 
@@ -38,9 +40,11 @@ def build(seed, **over):
     wall, roof = p["wall"], p["roof"]
     # 地基 + 墙 + 山墙
     mb.box("stone", (-hw - 0.1, -hd - 0.1, 0), (hw + 0.1, hd + 0.1, base_h))
+    hip = p["roof_type"] == "hip"
     mb.box(wall, (-hw, -hd, base_h), (hw, hd, h), top=False)
-    mb.face(wall, [(hw, -hd, h), (hw, hd, h), (hw, 0, ridge)], (1, 0, 0))
-    mb.face(wall, [(-hw, hd, h), (-hw, -hd, h), (-hw, 0, ridge)], (-1, 0, 0))
+    if not hip:  # 四坡顶没有山墙
+        mb.face(wall, [(hw, -hd, h), (hw, hd, h), (hw, 0, ridge)], (1, 0, 0))
+        mb.face(wall, [(-hw, hd, h), (-hw, -hd, h), (-hw, 0, ridge)], (-1, 0, 0))
     for sx in (-1, 1):
         for sy in (-1, 1):
             mb.box("trim", (sx * hw - 0.1, sy * hd - 0.1, base_h), (sx * hw + 0.1, sy * hd + 0.1, h), top=False)
@@ -48,16 +52,24 @@ def build(seed, **over):
     ov = 0.45
     eave = h - ov * math.tan(pitch)
     ye, xe, t = hd + ov, hw + ov, 0.18
+    rx = max(0.4, xe - ye) if hip else xe  # 四坡顶的屋脊短一截（四面坡度相同）
     for s in (-1, 1):
-        tl, tr = (-xe, 0, ridge), (xe, 0, ridge)
+        tl, tr = (-rx, 0, ridge), (rx, 0, ridge)
         br, bl = (xe, s * ye, eave), (-xe, s * ye, eave)
         mb.face(roof, [tl, tr, br, bl], (0, s, 1))
         mb.face("wall_wood", [(x, y, z - t) for (x, y, z) in (tl, tr, br, bl)], (0, -s, -1))
         mb.face("trim", [bl, br, (br[0], br[1], br[2] - t), (bl[0], bl[1], bl[2] - t)], (0, s, 0))
+        if not hip:
+            for sx in (-1, 1):
+                a, b = (sx * xe, 0, ridge), (sx * xe, s * ye, eave)
+                mb.face("trim", [a, b, (b[0], b[1], b[2] - t), (a[0], a[1], a[2] - t)], (sx, 0, 0))
+    if hip:  # 两头的三角坡面 + 下表面 + 封檐
         for sx in (-1, 1):
-            a, b = (sx * xe, 0, ridge), (sx * xe, s * ye, eave)
+            a, b, c = (sx * xe, -ye, eave), (sx * xe, ye, eave), (sx * rx, 0, ridge)
+            mb.face(roof, [a, b, c], (sx, 0, 1))
+            mb.face("wall_wood", [(x, y, z - t) for (x, y, z) in (a, b, c)], (-sx, 0, -1))
             mb.face("trim", [a, b, (b[0], b[1], b[2] - t), (a[0], a[1], a[2] - t)], (sx, 0, 0))
-    mb.box("roof_grey" if roof == "roof_red" else "brick", (-xe - 0.03, -0.14, ridge - 0.06), (xe + 0.03, 0.14, ridge + 0.1))
+    mb.box("roof_grey" if roof == "roof_red" else "brick", (-rx - 0.03, -0.14, ridge - 0.06), (rx + 0.03, 0.14, ridge + 0.1))
     # 门（正面 -Y 中间）：门框 + 门板 + 门楣 + 台阶
     fy = -hd
     mb.box("trim", (-0.65, fy - 0.08, base_h), (-0.55, fy, base_h + 2.1))
@@ -75,7 +87,7 @@ def build(seed, **over):
                 continue
             _window(mb, x, s * hd, s, base_h + 0.85)
     # 山墙小窗
-    if ridge - h > 1.8:
+    if ridge - h > 1.8 and not hip:
         for sx in (-1, 1):
             _window_side(mb, sx * hw, sx, h + 0.15)
     # 烟囱（后坡）

@@ -8,6 +8,7 @@ NAME = "石井"
 CATEGORY = "props"
 DESC = "Blender 生成的石井：石砌井圈、木柱小屋顶、辘轳和吊桶，适合放在小镇广场或农舍旁。"
 VARY = "井圈粗细、屋顶颜色（灰 / 红）、屋顶坡度随种子变化。"
+TAGS = ["plaza", "yard", "town"]
 
 
 def build(seed, **over):

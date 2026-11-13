@@ -1,0 +1,199 @@
+{
+  "id": "palm_tree",
+  "name": "椰子树",
+  "category": "trees",
+  "desc": "海岛和沙漠绿洲的椰子树：弯曲的分节树干，顶上一圈下垂的长叶子，叶根挂着几个椰子。",
+  "vary": "树干弯曲程度和高度、叶子下垂角度随变体变化；放进场景时再随机朝向、比例、色调。",
+  "tags": [
+    "island",
+    "desert",
+    "shore"
+  ],
+  "plant": true,
+  "variants": 4,
+  "parts": [
+    {
+      "shape": "tube",
+      "mat": "trunk",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        "$lean*0.15",
+        0,
+        "$top*0.34"
+      ],
+      "r": [
+        0.2,
+        0.17
+      ],
+      "sides": 8
+    },
+    {
+      "shape": "tube",
+      "mat": "trunk",
+      "from": [
+        "$lean*0.15",
+        0,
+        "$top*0.34"
+      ],
+      "to": [
+        "$lean*0.5",
+        0,
+        "$top*0.68"
+      ],
+      "r": [
+        0.17,
+        0.15
+      ],
+      "sides": 8
+    },
+    {
+      "shape": "tube",
+      "mat": "trunk",
+      "from": [
+        "$lean*0.5",
+        0,
+        "$top*0.68"
+      ],
+      "to": [
+        "$lean",
+        0,
+        "$top"
+      ],
+      "r": [
+        0.15,
+        0.13
+      ],
+      "sides": 8
+    },
+    {
+      "shape": "frustum",
+      "mat": "trunk",
+      "center": [
+        "$lean",
+        0
+      ],
+      "z": [
+        "$top-0.05",
+        "$top+0.12"
+      ],
+      "r": [
+        0.16,
+        0.12
+      ],
+      "sides": 8
+    },
+    {
+      "shape": "repeat",
+      "count": 7,
+      "radius": 0.0,
+      "center": [
+        "$lean",
+        0
+      ],
+      "part": {
+        "shape": "tube",
+        "mat": "palm_leaf",
+        "from": [
+          0,
+          0,
+          "$top+0.1"
+        ],
+        "to": [
+          1.5,
+          0,
+          "$top-$droop"
+        ],
+        "r": [
+          0.16,
+          0.02
+        ],
+        "sides": 3
+      }
+    },
+    {
+      "shape": "repeat",
+      "count": 5,
+      "radius": 0.0,
+      "center": [
+        "$lean",
+        0
+      ],
+      "part": {
+        "shape": "tube",
+        "mat": "palm_leaf",
+        "from": [
+          0,
+          0,
+          "$top+0.12"
+        ],
+        "to": [
+          0.9,
+          0.5,
+          "$top+0.25"
+        ],
+        "r": [
+          0.12,
+          0.02
+        ],
+        "sides": 3
+      }
+    },
+    {
+      "shape": "blob",
+      "mat": "trunk",
+      "center": [
+        "$lean-0.12",
+        -0.15,
+        "$top-0.08"
+      ],
+      "r": 0.1,
+      "h": 0.17
+    },
+    {
+      "shape": "blob",
+      "mat": "trunk",
+      "center": [
+        "$lean+0.1",
+        0.14,
+        "$top-0.1"
+      ],
+      "r": 0.1,
+      "h": 0.17
+    },
+    {
+      "shape": "blob",
+      "mat": "trunk",
+      "center": [
+        "$lean+0.06",
+        -0.12,
+        "$top-0.12"
+      ],
+      "r": 0.09,
+      "h": 0.15
+    }
+  ],
+  "vars": {
+    "lean": {
+      "rand": [
+        0.55,
+        0.95
+      ]
+    },
+    "top": {
+      "rand": [
+        3.3,
+        3.8
+      ]
+    },
+    "droop": {
+      "rand": [
+        0.3,
+        0.7
+      ]
+    }
+  }
+}

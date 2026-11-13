@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "generator": "pixel_world_blender 0.1.0",
   "blender": "5.2.4 LTS",
   "texel_density": 32.0,
@@ -11,7 +11,12 @@
       "name": "农舍",
       "category": "buildings",
       "desc": "Blender 生成的农舍：石基、木板墙、双坡瓦顶、门窗和烟囱。",
-      "vary": "宽度、进深、墙色（红 / 赭 / 青 / 木）、屋顶（灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。",
+      "vary": "宽度、进深、墙面（红 / 赭 / 青 / 原木竖木板、白 / 黄横木板、石墙、白灰泥）、屋顶（双坡 / 四坡，灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。",
+      "tags": [
+        "town",
+        "yard"
+      ],
+      "source": "generator",
       "files": [
         "cottage_0.glb",
         "cottage_1.glb",
@@ -32,6 +37,12 @@
       "category": "trees",
       "desc": "Blender 生成的松树：八边形分层树冠，裙边深、顶盖浅，下雪时每层顶盖积白。",
       "vary": "层数、底部粗细、收分、坡度、扭转角随种子变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "forest",
+        "winter",
+        "town"
+      ],
+      "source": "generator",
       "files": [
         "pine_0.glb",
         "pine_1.glb",
@@ -52,6 +63,12 @@
       "category": "props",
       "desc": "Blender 生成的石井：石砌井圈、木柱小屋顶、辘轳和吊桶，适合放在小镇广场或农舍旁。",
       "vary": "井圈粗细、屋顶颜色（灰 / 红）、屋顶坡度随种子变化。",
+      "tags": [
+        "plaza",
+        "yard",
+        "town"
+      ],
+      "source": "generator",
       "files": [
         "well_0.glb",
         "well_1.glb",
@@ -72,6 +89,11 @@
       "category": "street",
       "desc": "Blender 生成的集市摊位：木柜台、条纹帆布顶棚、水果筐和木箱，适合小镇广场。",
       "vary": "顶棚颜色（红 / 青 / 黄条纹）、摊位宽度、水果种类和数量随种子变化。",
+      "tags": [
+        "plaza",
+        "town"
+      ],
+      "source": "generator",
       "files": [
         "market_stall_0.glb",
         "market_stall_1.glb",
@@ -92,6 +114,12 @@
       "category": "trees",
       "desc": "Blender 生成的阔叶树：树干分叉成几根主枝，每根枝头一簇树冠，下层深上层浅。",
       "vary": "主枝数量和方向、树冠簇的大小和数量、树干高度和粗细随种子变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "forest",
+        "plains",
+        "town"
+      ],
+      "source": "generator",
       "files": [
         "oak_0.glb",
         "oak_1.glb",
@@ -112,6 +140,11 @@
       "category": "street",
       "desc": "Blender 生成的铸铁路灯：石墩、装饰灯杆、弯臂和四面玻璃灯笼，夜里灯笼自动发光。",
       "vary": "单臂 / 双臂、灯杆高度、颜色（墨绿 / 铁灰）、灯笼大小随种子变化。",
+      "tags": [
+        "roadside",
+        "town"
+      ],
+      "source": "generator",
       "files": [
         "street_lamp_0.glb",
         "street_lamp_1.glb",
@@ -132,6 +165,13 @@
       "category": "props",
       "desc": "Blender 生成的手推车：木车斗、辐条木轮、车把和支腿，车上随机装干草、木箱或木桶。",
       "vary": "车斗长宽、轮子大小和辐条数、装载的货物随种子变化。",
+      "tags": [
+        "roadside",
+        "yard",
+        "plains",
+        "town"
+      ],
+      "source": "generator",
       "files": [
         "handcart_0.glb",
         "handcart_1.glb",
@@ -152,6 +192,12 @@
       "category": "street",
       "desc": "Blender 生成的路口指示牌：木柱上钉着几块朝向不同的箭头牌，柱脚压着石块。",
       "vary": "指示牌数量、朝向、长度和颜色，柱子高度随种子变化。",
+      "tags": [
+        "roadside",
+        "plains",
+        "forest"
+      ],
+      "source": "generator",
       "files": [
         "signpost_0.glb",
         "signpost_1.glb",
@@ -163,6 +209,215 @@
         1.44
       ],
       "height": 2.29,
+      "plant": false
+    },
+    {
+      "id": "bl_lighthouse",
+      "kind": "lighthouse",
+      "name": "灯塔",
+      "category": "landmarks",
+      "desc": "Blender 生成的灯塔：石砌底座、红白条纹的塔身、观景平台和玻璃灯室，夜里灯室发光。",
+      "vary": "高度、条纹数量和颜色（红白 / 灰白）、塔身收分、栏杆柱数随种子变化。",
+      "tags": [
+        "shore",
+        "island",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "lighthouse_0.glb",
+        "lighthouse_1.glb",
+        "lighthouse_2.glb",
+        "lighthouse_3.glb"
+      ],
+      "footprint": [
+        3.75,
+        4.75
+      ],
+      "height": 10.17,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_cactus",
+      "kind": "spec_cactus",
+      "name": "仙人掌",
+      "category": "plants",
+      "desc": "沙漠里的柱状仙人掌：竖条纹的主干和一两根向上弯的侧臂，顶上开一朵小黄花。",
+      "vary": "高度、侧臂的高度和长度随变体变化。",
+      "tags": [
+        "desert",
+        "canyon"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_cactus_0.glb",
+        "spec_cactus_1.glb",
+        "spec_cactus_2.glb",
+        "spec_cactus_3.glb"
+      ],
+      "footprint": [
+        1.12,
+        0.42
+      ],
+      "height": 1.66,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_campfire",
+      "kind": "spec_campfire",
+      "name": "篝火",
+      "category": "props",
+      "desc": "一圈石头围着的篝火：木柴搭成小尖塔，中间的火炭夜里发光，旁边放着一截坐人的原木。",
+      "vary": "石头数量和大小、木柴倾斜角度、旁边原木的位置随变体变化。",
+      "tags": [
+        "camp",
+        "forest",
+        "plains",
+        "desert",
+        "winter"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_campfire_0.glb",
+        "spec_campfire_1.glb",
+        "spec_campfire_2.glb",
+        "spec_campfire_3.glb"
+      ],
+      "footprint": [
+        2.23,
+        2.2
+      ],
+      "height": 0.56,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_desert_rock",
+      "kind": "spec_desert_rock",
+      "name": "红岩石柱",
+      "category": "rocks",
+      "desc": "峡谷和沙漠里风化的红色岩柱：一层层错开的岩块，下宽上窄，脚下散落几块碎石。",
+      "vary": "层数高度、每层的错位和大小、碎石位置随变体变化。",
+      "tags": [
+        "desert",
+        "canyon"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_desert_rock_0.glb",
+        "spec_desert_rock_1.glb",
+        "spec_desert_rock_2.glb",
+        "spec_desert_rock_3.glb"
+      ],
+      "footprint": [
+        3.2,
+        2.38
+      ],
+      "height": 2.46,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_notice_board",
+      "kind": "spec_notice_board",
+      "name": "布告栏",
+      "category": "street",
+      "desc": "小镇广场的木制布告栏：两根立柱撑着木板，钉着几张告示，顶上有一个小双坡雨棚。",
+      "vary": "木板颜色、雨棚瓦色、告示的位置随变体变化。",
+      "tags": [
+        "plaza",
+        "roadside",
+        "town"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_notice_board_0.glb",
+        "spec_notice_board_1.glb",
+        "spec_notice_board_2.glb",
+        "spec_notice_board_3.glb"
+      ],
+      "footprint": [
+        2.14,
+        0.74
+      ],
+      "height": 2.44,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_palm_tree",
+      "kind": "spec_palm_tree",
+      "name": "椰子树",
+      "category": "trees",
+      "desc": "海岛和沙漠绿洲的椰子树：弯曲的分节树干，顶上一圈下垂的长叶子，叶根挂着几个椰子。",
+      "vary": "树干弯曲程度和高度、叶子下垂角度随变体变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "island",
+        "desert",
+        "shore"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_palm_tree_0.glb",
+        "spec_palm_tree_1.glb",
+        "spec_palm_tree_2.glb",
+        "spec_palm_tree_3.glb"
+      ],
+      "footprint": [
+        2.87,
+        2.94
+      ],
+      "height": 3.84,
+      "plant": true
+    },
+    {
+      "id": "bl_spec_snowman",
+      "kind": "spec_snowman",
+      "name": "雪人",
+      "category": "props",
+      "desc": "三个雪球堆成的雪人：煤块眼睛和纽扣、胡萝卜鼻子、树枝手臂、红围巾和小礼帽。",
+      "vary": "雪球大小、手臂角度、帽子颜色（黑 / 蓝）和围巾颜色随变体变化。",
+      "tags": [
+        "winter",
+        "yard",
+        "plaza"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_snowman_0.glb",
+        "spec_snowman_1.glb",
+        "spec_snowman_2.glb",
+        "spec_snowman_3.glb"
+      ],
+      "footprint": [
+        1.71,
+        1.07
+      ],
+      "height": 1.92,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_tent",
+      "kind": "spec_tent",
+      "name": "帐篷",
+      "category": "props",
+      "desc": "营地的条纹帆布帐篷：两根撑杆、斜拉的绳桩，门口的帘子掀开一角。",
+      "vary": "帆布颜色（红 / 青 / 黄条纹）和帐篷大小随变体变化。",
+      "tags": [
+        "camp",
+        "plains",
+        "desert",
+        "island"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_tent_0.glb",
+        "spec_tent_1.glb",
+        "spec_tent_2.glb",
+        "spec_tent_3.glb"
+      ],
+      "footprint": [
+        3.9,
+        2.2
+      ],
+      "height": 1.4,
       "plant": false
     }
   ]

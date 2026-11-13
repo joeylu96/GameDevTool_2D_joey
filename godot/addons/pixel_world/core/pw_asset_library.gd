@@ -37,6 +37,48 @@ static var _blender_meshes := {}  # "文件名" -> ArrayMesh（材质已换成 p
 
 
 ## 读 Blender 资产目录。资产登记到「Blender 资产」分类（semantic 记录它本来属于哪一类，如 buildings）
+## 按标签挑 Blender 资产（场景生成器用）：带有 any_tags 里任意一个标签、且 id 不在 exclude 里的
+static func blender_with_tags(any_tags: Array, exclude: Array = []) -> Array[Dictionary]:
+	if not _blender_loaded:
+		load_blender_catalog()
+	var out: Array[Dictionary] = []
+	for it in _extra:
+		if it.get("cat", "") != "blender" or it.id in exclude:
+			continue
+		for t in it.get("tags", []):
+			if t in any_tags:
+				out.append(it)
+				break
+	return out
+
+
+## 气候标签（winter / desert / island / canyon）：带气候标签的资产只在对应风格里出现（雪人不会出现在夏天的小镇）；
+## 也带了当前风格名（town / forest / plains）标签的除外；没有气候标签的通用资产哪里都能用。
+const CLIMATE_TAGS := {"winter": "snowfield", "desert": "desert", "island": "island", "canyon": "canyon"}
+
+
+static func fits_climate(item: Dictionary, theme: String) -> bool:
+	var tags: Array = item.get("tags", [])
+	var has_climate := false
+	for t in tags:
+		if CLIMATE_TAGS.has(t):
+			has_climate = true
+			if CLIMATE_TAGS[t] == theme:
+				return true
+	return not has_climate or theme in tags
+
+
+## 重新读 Blender 资产目录（资产工坊生成了新资产后调用）
+static func reload_blender_catalog() -> int:
+	_blender_meshes.clear()
+	var keep: Array[Dictionary] = []
+	for it in _extra:
+		if it.get("cat", "") != "blender":
+			keep.append(it)
+	_extra = keep
+	return load_blender_catalog()
+
+
 static func load_blender_catalog() -> int:
 	_blender_loaded = true
 	var path := BLENDER_DIR + "catalog.json"
@@ -57,6 +99,7 @@ static func load_blender_catalog() -> int:
 		var show: Variant = [3, 6] if sem == "trees" else ("styles:%d" % mini(files.size(), 3 if sem == "buildings" else 4))
 		register({
 			"id": a.id, "cat": "blender", "semantic": sem, "name": a.name + "（Blender）", "show": show,
+			"tags": a.get("tags", []), "footprint": fp, "height": float(a.get("height", 2.0)), "source": a.get("source", "generator"),
 			"size": maxf(maxf(fp[0], fp[1]), float(a.get("height", 2.0)) * 0.8),
 			"plant": a.get("plant", false),
 			"desc": a.get("desc", "") + "  来源：%s，%d 个变体。" % [data.get("generator", "Blender"), files.size()],

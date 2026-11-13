@@ -1,0 +1,60 @@
+{
+  "id": "villager_5",
+  "name": "路人 5",
+  "desc": "随机组合的小镇路人（种子 5）。",
+  "hair": "short",
+  "hat": null,
+  "weapon": null,
+  "sleeves": "long",
+  "skirt": 0.21008703013066696,
+  "height": 0.9533061083862672,
+  "build": 0.9254936005434788,
+  "cape": false,
+  "scarf": false,
+  "beard": true,
+  "vest": false,
+  "sleeve_band": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c7a0",
+      "#d9a07e",
+      "#a86e55"
+    ],
+    "hair": [
+      "#7a5434",
+      "#5a3a24",
+      "#3b2618"
+    ],
+    "top": [
+      "#8a8f99",
+      "#6b707c",
+      "#4c505c"
+    ],
+    "bottom": [
+      "#6f92c6",
+      "#4a6fa5",
+      "#34507a"
+    ],
+    "skirt": [
+      "#f3eee3",
+      "#d9d0bf",
+      "#ada28c"
+    ],
+    "trim": [
+      "#6f9c94",
+      "#4f7c78",
+      "#3a5c5c"
+    ],
+    "vest": [
+      "#a8835e",
+      "#7a5a3e",
+      "#5a412e"
+    ],
+    "hat": [
+      "#8a8f99",
+      "#6b707c",
+      "#4c505c"
+    ]
+  }
+}

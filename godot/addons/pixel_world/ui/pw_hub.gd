@@ -572,6 +572,11 @@ func _play_fx() -> void:
 		_fx_actor.rotation.y = atan2(right.x, right.z)
 	if id == "hit":
 		pos += right * 1.2
+	# 像素精灵角色配合出招：斩击 → 攻击动作，法术 / 增益 → 施法动作
+	if id in ["slash", "slash_x"]:
+		_fx_actor.attack()
+	elif id in ["fireball", "lightning", "heal", "magic_circle", "shield", "explosion"]:
+		_fx_actor.cast()
 	PWVFX.spawn(id, _diorama.root, pos, right)
 	_fx_timer = 0.0
 
