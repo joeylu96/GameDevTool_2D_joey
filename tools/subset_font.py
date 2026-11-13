@@ -16,7 +16,7 @@ from pathlib import Path
 from fontTools import subset
 
 ROOT = Path(__file__).resolve().parent.parent
-SCAN = [ROOT / "godot" / "addons", ROOT / "godot" / "demo", ROOT / "godot" / "assets", ROOT / "blender"]
+SCAN = [ROOT / "godot" / "addons", ROOT / "godot" / "demo", ROOT / "godot" / "assets", ROOT / "blender", ROOT / "shared"]
 OUT_DIR = ROOT / "godot" / "addons" / "pixel_world" / "ui" / "fonts"
 OUT = OUT_DIR / "NotoSansSC-PW.otf"
 

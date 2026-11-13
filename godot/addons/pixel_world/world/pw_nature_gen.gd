@@ -10,7 +10,14 @@ extends RefCounted
 ## 5. 小路：A* 连接兴趣点（越陡、林子越密代价越高；湖不能过，河可以——过河处自动架木桥），
 ##    路径平滑成曲线，铺成贴地的带状路面，边缘略有起伏
 ## 6. 植被：树（森林：按湿度成片；平原：零星树丛 + 灌木篱）、灌木、石头、草（PWGrass 规则）
+## 7. Blender 资产（含资产工坊生成的）：按风格参数 blender 里的标签挑选、按地表条件撒放
 ## 太陡的坡（每米升高 > 0.75 米）不可通行。
+##
+## 风格专用参数（PWStyles）：
+##   island（海岛半径占半边地图的比例）：外圈沉进海里，留一圈宽沙滩
+##   desert：绿洲以外全是沙地，只有湖边一圈有草和椰子树
+##   canyon：台地（plateau 抬高）中间蜿蜒一条两级台阶的河谷，谷底有河
+##   sand_h：沙滩的高度范围；terrain_mat：地形材质（terrain / terrain_desert / terrain_canyon）
 
 const MB := preload("res://addons/pixel_world/core/pw_mesh_builder.gd")
 const Mats := preload("res://addons/pixel_world/core/pw_materials.gd")
@@ -76,6 +83,7 @@ func run() -> void:
 		w.homes.append(Vector3(pois[i].x, 0.0, pois[i].y))  # 野外的 NPC 以营地 / 兴趣点为家
 	_connect_paths()
 	_scatter_trees()
+	_scatter_blender()
 	_scatter_small()
 	_scatter_grass()
 	_lake_life()
@@ -115,8 +123,13 @@ func _make_heights() -> void:
 		for i in n + 1:
 			var p := w.vert_xz(i, j)
 			var e := hn.get_noise_2d(p.x, p.y) * 0.5 + 0.5
-			w.set_h(i, j, WATER_Y + LAND_MIN + amp * pow(e, 1.3))
+			w.set_h(i, j, WATER_Y + LAND_MIN + float(prm.get("plateau", 0.0)) + amp * pow(e, 1.3))
 			moisture[idx(i, j)] = mn.get_noise_2d(p.x, p.y) * 0.5 + 0.5
+	if float(prm.get("island", 0.0)) > 0.0:
+		_shape_island(float(prm.island))
+	if prm.get("canyon", false):
+		_carve_canyon()
+		return
 	if not w.with_lake:
 		return
 	# 2) 湖：互不重叠、离地图边缘有余量
@@ -184,21 +197,32 @@ func _carve_river(l: Dictionary) -> void:
 	for k in 4:
 		if dists[k] < dists[best]:
 			best = k
-	var target: Vector2 = dirs[best]
+	_trace_river(c, dirs[best])
+	_carve_channel(rng.randf_range(2.0, 2.9) * clampf(w.size / 128.0, 0.7, 1.0))
+
+
+## 河的中心线：从 start 出发，大致朝 target 方向蜿蜒，直到流出地图
+func _trace_river(start: Vector2, target: Vector2) -> void:
 	var heading := atan2(target.y, target.x) + rng.randf_range(-0.5, 0.5)
-	var p := c
+	var p := start
 	var meander := FastNoiseLite.new()
 	meander.seed = rng.randi()
 	meander.frequency = 0.04
 	river.append(p)
+	var inside := absf(p.x) < H and absf(p.y) < H
 	for step in 400:
 		var want := atan2(target.y, target.x)
 		heading = lerp_angle(heading, want, 0.12) + meander.get_noise_1d(step * 2.0) * 0.55
 		p += Vector2(cos(heading), sin(heading)) * 2.0
 		river.append(p)
-		if absf(p.x) > H + 6.0 or absf(p.y) > H + 6.0:
+		if absf(p.x) < H and absf(p.y) < H:
+			inside = true
+		elif inside and (absf(p.x) > H + 6.0 or absf(p.y) > H + 6.0):
 			break
-	var hw := rng.randf_range(2.0, 2.9) * clampf(w.size / 128.0, 0.7, 1.0)
+
+
+## 沿 river 中心线挖河道（半宽 hw，两岸 3.5 米缓坡），记录流向
+func _carve_channel(hw: float) -> void:
 	var bank := 3.5
 	for j in n + 1:
 		for i in n + 1:
@@ -222,13 +246,13 @@ func _carve_river(l: Dictionary) -> void:
 
 
 ## 返回 [到河道中心线的距离, 该处的流向（单位向量）]
-func _nearest_on_river(q: Vector2) -> Array:
+func _nearest_on_river(q: Vector2, reach := 8.0) -> Array:
 	var best := INF
 	var dir := Vector2.ZERO
 	for k in river.size() - 1:
 		var a := river[k]
 		var b := river[k + 1]
-		if absf(q.x - a.x) > 8.0 and absf(q.y - a.y) > 8.0:
+		if absf(q.x - a.x) > reach and absf(q.y - a.y) > reach:
 			continue
 		var ab := b - a
 		var t := clampf((q - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
@@ -264,10 +288,17 @@ func biome_at(p: Vector2) -> int:
 	var j := _jitter.get_noise_2d(p.x, p.y)
 	if h < WATER_Y:
 		return WATER
-	if h < WATER_Y + SAND_H + j * 0.08:
+	if prm.get("desert", false):
+		if slope(p) > ROCK_SLOPE + j * 0.15:
+			return ROCK
+		var ot := _oasis_t(p) + j * 0.12
+		if ot < float(prm.get("oasis", 1.9)) and h > WATER_Y + 0.12:
+			return FOREST if ot < 1.35 else GRASS
+		return SAND
+	if h < WATER_Y + _sand_h() + j * 0.08:
 		return SAND
 	var amp: float = prm.get("hill_amp", 3.0)
-	if slope(p) > ROCK_SLOPE + j * 0.15 or h > WATER_Y + LAND_MIN + amp * 0.82 + j * 0.3:
+	if slope(p) > ROCK_SLOPE + j * 0.15 or h > WATER_Y + LAND_MIN + float(prm.get("plateau", 0.0)) + amp * 0.82 + j * 0.3:
 		return ROCK
 	return FOREST if _moist(p) + j * 0.05 > float(prm.get("forest_cover", 0.5)) else GRASS
 
@@ -298,11 +329,14 @@ func _build_terrain_mesh() -> void:
 			normals[k] = Vector3(-dx, w.cell, -dz).normalized()
 			uvs[k] = xz
 			var above := h - WATER_Y
-			var sand := 1.0 - smoothstep(SAND_H - 0.1, SAND_H + 0.1, above)
+			var sand := 1.0 - smoothstep(_sand_h() - 0.1, _sand_h() + 0.1, above)
+			if prm.get("desert", false):  # 绿洲以外全是沙
+				sand = maxf(sand, smoothstep(float(prm.get("oasis", 1.9)) - 0.35, float(prm.get("oasis", 1.9)) + 0.05,
+					_oasis_t(xz) + _jitter.get_noise_2d(xz.x, xz.y) * 0.12))
 			var bed := smoothstep(0.45, 0.95, -above)
 			var sl := slope_at(i, j)
 			var rock := maxf(smoothstep(ROCK_SLOPE - 0.12, ROCK_SLOPE + 0.12, sl),
-				smoothstep(LAND_MIN + amp * 0.75, LAND_MIN + amp * 0.9, above))
+				smoothstep(LAND_MIN + float(prm.get("plateau", 0.0)) + amp * 0.75, LAND_MIN + float(prm.get("plateau", 0.0)) + amp * 0.9, above))
 			if above < 0.0:
 				rock = 0.0
 			cols[k] = Color(sand, rock, bed, 1.0)
@@ -326,7 +360,7 @@ func _build_terrain_mesh() -> void:
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	mesh.surface_set_material(0, Mats.get_mat("terrain"))
+	mesh.surface_set_material(0, Mats.get_mat(String(prm.get("terrain_mat", "terrain"))))
 	batch.add_static(mesh, Transform3D.IDENTITY, false)
 	# 水域登记（树、兴趣点、草不进水）
 	for j in range(0, n + 1, 2):
@@ -353,7 +387,7 @@ func gentle(p: Vector2, r: float, max_slope: float) -> bool:
 		var q: Vector2 = p + d
 		if absf(q.x) > H - 1.0 or absf(q.y) > H - 1.0:
 			return false
-		if w.terrain_y(q.x, q.y) < WATER_Y + SAND_H + 0.1 or slope(q) > max_slope:
+		if w.terrain_y(q.x, q.y) < WATER_Y + _sand_h() + 0.1 or slope(q) > max_slope:
 			return false
 	return true
 
@@ -777,10 +811,146 @@ func _scatter_grass() -> void:
 		return 0.0
 	var dry := func(p: Vector2) -> float:
 		var above := w.terrain_y(p.x, p.y) - WATER_Y
-		return clampf(1.0 - (above - SAND_H) / 0.4, 0.0, 1.0) * 0.6 + smoothstep(0.35, 0.55, slope(p)) * 0.4
+		return clampf(1.0 - (above - _sand_h()) / 0.4, 0.0, 1.0) * 0.6 + smoothstep(0.35, 0.55, slope(p)) * 0.4
 	var budget := int(12000.0 * g * (w.size / 128.0) * (w.size / 128.0))
 	w.stats["grass"] = PWGrass.scatter(pl, batch, rng, dens, func(p: Vector2) -> float: return w.ground_y(p.x, p.y), dry,
 		{"half": H - 0.6, "budget": budget, "flowers": prm.get("flowers", 0.1)})
+
+
+# ---------------------------------------------------------------- 风格专用：海岛、峡谷、沙漠
+
+func _sand_h() -> float:
+	return float(prm.get("sand_h", SAND_H))
+
+
+## 海岛：离中心越远越低；外圈先压成平缓的沙滩，再落进海里（海 = 全图水面）。轮廓用噪声扭曲，不是正圆
+func _shape_island(frac: float) -> void:
+	var wob := FastNoiseLite.new()
+	wob.seed = rng.randi()
+	wob.frequency = 0.045
+	for j in n + 1:
+		for i in n + 1:
+			var p := w.vert_xz(i, j)
+			var r := p.length() / (H * frac) * (1.0 + wob.get_noise_2d(p.x, p.y) * 0.2)
+			var m := 1.0 - smoothstep(0.7, 1.0, r)
+			var base := w.get_h(i, j)
+			var beach := lerpf(WATER_Y + 0.22, base, smoothstep(0.25, 0.6, m))
+			w.set_h(i, j, lerpf(WATER_Y - 2.6, beach, smoothstep(0.0, 0.22, m)))
+
+
+## 峡谷：一条从地图一边蜿蜒到另一边的河谷。两侧是抬高的台地，谷壁是两级台阶（陡坎 + 平台），谷底中间是河
+func _carve_canyon() -> void:
+	var horiz := rng.randf() < 0.5
+	var off := rng.randf_range(-H * 0.25, H * 0.25)
+	var start := Vector2(-H - 6.0, off) if horiz else Vector2(off, -H - 6.0)
+	_trace_river(start, Vector2(1, 0) if horiz else Vector2(0, 1))
+	var vw: float = float(prm.get("valley_w", 11.0)) * clampf(w.size / 128.0, 0.7, 1.0)
+	var floor_y := WATER_Y + 0.45
+	var steps := 2.0
+	for j in n + 1:
+		for i in n + 1:
+			var q := w.vert_xz(i, j)
+			var d: float = _nearest_on_river(q, vw * 2.4)[0]
+			if d > vw * 2.2:
+				continue
+			var t := clampf((d - vw * 0.5) / (vw * 1.1), 0.0, 1.0)
+			var k := t * steps
+			var f := floorf(k) + smoothstep(0.62, 0.86, k - floorf(k))  # 每级：大半是平台，最后一小段是陡坎
+			w.set_h(i, j, minf(w.get_h(i, j), lerpf(floor_y, w.get_h(i, j), clampf(f / steps, 0.0, 1.0))))
+	_carve_channel(rng.randf_range(2.0, 2.6))
+
+
+## 沙漠：离最近的湖（绿洲）有多远，以湖半径为单位（1 = 刚好在岸边）
+func _oasis_t(p: Vector2) -> float:
+	var best := 99.0
+	for l in lakes:
+		best = minf(best, p.distance_to(l.c) / maxf(l.r, 1.0))
+	return best
+
+
+## Blender 资产（包括资产工坊生成的）：风格参数 blender = [{tag, density（每千平方米个数）, where, semantic?, max?}]
+## where：land 陆地 / beach 沙滩 / sand 沙地 / oasis 绿洲水边 / any 任何不在水里的地方
+## 地标（灯塔等）每个场景最多一个。资产按 PWAssetLibrary.fits_climate 过滤（雪人只在雪原）
+func _scatter_blender() -> void:
+	var specs: Array = prm.get("blender", [])
+	if specs.is_empty():
+		return
+	var landmark_done := false
+	for e: Dictionary in specs:
+		var items: Array[Dictionary] = []
+		for it in PWAssetLibrary.blender_with_tags([e.tag]):
+			if not PWAssetLibrary.fits_climate(it, w.theme):
+				continue
+			if e.has("semantic") and not (it.get("semantic", "") in e.semantic):
+				continue
+			items.append(it)
+		if items.is_empty():
+			continue
+		var want := int(float(e.get("density", 0.5)) * w.size * w.size / 1000.0)
+		if e.has("max"):
+			want = mini(want, int(e.max))
+		var placed := 0
+		for attempt in want * 60:
+			if placed >= want:
+				break
+			var it: Dictionary = items[rng.randi_range(0, items.size() - 1)]
+			var sem: String = it.get("semantic", "")
+			if sem == "landmarks" and landmark_done:
+				continue
+			var p := Vector2(rng.randf_range(-H + 2.0, H - 2.0), rng.randf_range(-H + 2.0, H - 2.0))
+			if String(e.get("where", "")) == "oasis" and not lakes.is_empty():  # 绿洲：直接在湖边那一圈取点
+				var l: Dictionary = lakes[rng.randi_range(0, lakes.size() - 1)]
+				var ang := rng.randf() * TAU
+				p = (l.c as Vector2) + Vector2(cos(ang), sin(ang)) * float(l.r) * rng.randf_range(1.05, 1.55)
+			if not _where_ok(p, String(e.get("where", "land"))):
+				continue
+			var mesh: Mesh = it.build.call(rng.randi_range(0, 7))
+			var a := mesh.get_aabb()
+			var r := maxf(a.size.x, a.size.z) * 0.5
+			var y := w.ground_y(p.x, p.y) - _sink(p, minf(r, 1.0) * 0.4)
+			var basis := Basis(Vector3.UP, rng.randf() * TAU)
+			if it.get("plant", false):
+				var sc := rng.randf_range(0.85, 1.15)
+				basis = basis.scaled(Vector3(sc, sc * rng.randf_range(0.92, 1.12), sc))
+				r *= sc
+			if sem == "trees":
+				if not pl.can_place(P.TREE, p, 0.3, r, true):
+					continue
+				batch.add_plant(mesh, Transform3D(basis, Vector3(p.x, y, p.y)), _town.tint(0.1))
+				pl.add_circle(P.TREE, p, 0.3, r, true)
+				pl.solid_circles.append(Vector3(p.x, p.y, 0.35))
+			else:
+				var cat := P.LANDMARK if sem == "landmarks" else P.ROCK
+				if not pl.can_place(cat, p, r * 0.8):
+					continue
+				if it.get("plant", false):
+					batch.add_plant(mesh, Transform3D(basis, Vector3(p.x, y, p.y)), _town.tint(0.08))
+				else:
+					batch.add_static(mesh, Transform3D(basis, Vector3(p.x, y, p.y)))
+				pl.add_circle(cat, p, r * 0.8)
+				pl.solid_circles.append(Vector3(p.x, p.y, r * 0.6))
+				landmark_done = landmark_done or sem == "landmarks"
+			placed += 1
+		w.stats["bl:" + String(e.tag)] = int(w.stats.get("bl:" + String(e.tag), 0)) + placed
+
+
+func _where_ok(p: Vector2, where: String) -> bool:
+	var above := w.terrain_y(p.x, p.y) - WATER_Y
+	if above < 0.06:
+		return false
+	var sl := slope(p)
+	match where:
+		"beach":
+			return above < _sand_h() + 0.25 and sl < 0.3
+		"sand":
+			return biome_at(p) == SAND and sl < 0.35
+		"oasis":
+			var ot := _oasis_t(p)
+			return ot > 1.02 and ot < 1.6 and sl < 0.35
+		"land":
+			var b := biome_at(p)
+			return b != SAND and b != WATER and sl < 0.4
+	return sl < 0.45
 
 
 # ---------------------------------------------------------------- 湖里

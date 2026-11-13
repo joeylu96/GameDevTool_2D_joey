@@ -14,6 +14,7 @@ signal enter_scene(config: Dictionary)
 signal generate_in_editor(config: Dictionary)
 
 const T := preload("res://addons/pixel_world/ui/pw_ui_theme.gd")
+const Globals := preload("res://addons/pixel_world/core/pw_globals.gd")
 
 var editor_mode := false
 var _pages := {}
@@ -415,7 +416,11 @@ func _preview_world() -> void:
 	apply_config(w, config())
 	_gen_preview.set_content(w, w.size * 0.42, false)
 	w.generate()
-	_gen_status.text = "%s #%d：%s" % [PWStyles.get_style(w.theme).name, w.seed_value, _stats_text(w.stats)]
+	# 风格自带的天气（雪原 = 积雪）：预览里没有天气系统，直接设全局积雪量
+	var st := PWStyles.get_style(w.theme)
+	Globals.ensure_runtime()
+	Globals.set_param(&"pw_snow_amount", 1.0 if st.get("weather", "") == "snow" else 0.0)
+	_gen_status.text = "%s #%d：%s" % [st.name, w.seed_value, _stats_text(w.stats)]
 
 
 static func _stats_text(s: Dictionary) -> String:

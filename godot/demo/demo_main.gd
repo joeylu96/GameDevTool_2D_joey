@@ -185,8 +185,11 @@ func regenerate(theme := "", new_seed := -1) -> void:
 	_after_generate()
 
 
-## 角色放到出生点，镜头对过去；鱼群认识玩家
+## 角色放到出生点，镜头对过去；鱼群认识玩家；风格自带天气（雪原 = 下雪、积雪）
 func _after_generate() -> void:
+	var st := PWStyles.get_style(world.theme)
+	if st.has("weather") and weather != null:
+		weather.set_weather(st.weather, 0.0, true)
 	player.position = world.spawn_point
 	player.velocity = Vector3.ZERO
 	rig.position = Vector3(player.position.x, 0, player.position.z)

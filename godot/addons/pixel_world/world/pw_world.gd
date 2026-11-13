@@ -20,7 +20,7 @@ const WATER_SHADER := preload("res://addons/pixel_world/shaders/water.gdshader")
 ## 水深贴图里 1.0 对应的深度（米）
 const DEPTH_RANGE := 4.0
 
-@export_enum("town", "forest", "plains") var theme := "town"
+@export_enum("town", "forest", "plains", "snowfield", "island", "desert", "canyon") var theme := "town"
 @export var seed_value := 7
 ## 场景边长（米）。设计规模：小镇约 64~80，野外约 128
 @export_range(32, 192, 8) var size := 80

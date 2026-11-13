@@ -212,6 +212,32 @@
       "plant": false
     },
     {
+      "id": "bl_lighthouse",
+      "kind": "lighthouse",
+      "name": "灯塔",
+      "category": "landmarks",
+      "desc": "Blender 生成的灯塔：石砌底座、红白条纹的塔身、观景平台和玻璃灯室，夜里灯室发光。",
+      "vary": "高度、条纹数量和颜色（红白 / 灰白）、塔身收分、栏杆柱数随种子变化。",
+      "tags": [
+        "shore",
+        "island",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "lighthouse_0.glb",
+        "lighthouse_1.glb",
+        "lighthouse_2.glb",
+        "lighthouse_3.glb"
+      ],
+      "footprint": [
+        3.75,
+        4.75
+      ],
+      "height": 10.17,
+      "plant": false
+    },
+    {
       "id": "bl_spec_cactus",
       "kind": "spec_cactus",
       "name": "仙人掌",
@@ -335,63 +361,36 @@
         "spec_palm_tree_3.glb"
       ],
       "footprint": [
-        2.87,
-        2.94
+        2.89,
+        2.95
       ],
-      "height": 3.84,
+      "height": 3.91,
       "plant": true
     },
     {
-      "id": "bl_spec_tent",
-      "kind": "spec_tent",
-      "name": "帐篷",
+      "id": "bl_spec_rowboat",
+      "kind": "spec_rowboat",
+      "name": "倒扣的渔船",
       "category": "props",
-      "desc": "营地的条纹帆布帐篷：两根撑杆、斜拉的绳桩，门口的帘子掀开一角。",
-      "vary": "帆布颜色（红 / 青 / 黄条纹）和帐篷大小随变体变化。",
-      "tags": [
-        "camp",
-        "plains",
-        "desert",
-        "island"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_tent_0.glb",
-        "spec_tent_1.glb",
-        "spec_tent_2.glb",
-        "spec_tent_3.glb"
-      ],
-      "footprint": [
-        3.9,
-        2.2
-      ],
-      "height": 1.4,
-      "plant": false
-    },
-    {
-      "id": "bl_lighthouse",
-      "kind": "lighthouse",
-      "name": "灯塔",
-      "category": "landmarks",
-      "desc": "Blender 生成的灯塔：石砌底座、红白条纹的塔身、观景平台和玻璃灯室，夜里灯室发光。",
-      "vary": "高度、条纹数量和颜色（红白 / 灰白）、塔身收分、栏杆柱数随种子变化。",
+      "desc": "倒扣在岸边晒着的小木渔船：船底朝天，两支桨斜靠在船边，旁边一卷渔网和几个红白浮球。",
+      "vary": "船身颜色（青 / 红 / 原木）、船的长度、桨和浮球的位置随变体变化。",
       "tags": [
         "shore",
         "island",
         "town"
       ],
-      "source": "generator",
+      "source": "spec",
       "files": [
-        "lighthouse_0.glb",
-        "lighthouse_1.glb",
-        "lighthouse_2.glb",
-        "lighthouse_3.glb"
+        "spec_rowboat_0.glb",
+        "spec_rowboat_1.glb",
+        "spec_rowboat_2.glb",
+        "spec_rowboat_3.glb"
       ],
       "footprint": [
-        3.75,
-        4.75
+        3.13,
+        2.44
       ],
-      "height": 10.17,
+      "height": 0.83,
       "plant": false
     },
     {
@@ -421,29 +420,30 @@
       "plant": false
     },
     {
-      "id": "bl_spec_rowboat",
-      "kind": "spec_rowboat",
-      "name": "倒扣的渔船",
+      "id": "bl_spec_tent",
+      "kind": "spec_tent",
+      "name": "帐篷",
       "category": "props",
-      "desc": "倒扣在岸边晒着的小木渔船：船底朝天，两支桨斜靠在船边，旁边一卷渔网和几个红白浮球。",
-      "vary": "船身颜色（青 / 红 / 原木）、船的长度、桨和浮球的位置随变体变化。",
+      "desc": "营地的条纹帆布帐篷：两根撑杆、斜拉的绳桩，门口的帘子掀开一角。",
+      "vary": "帆布颜色（红 / 青 / 黄条纹）和帐篷大小随变体变化。",
       "tags": [
-        "shore",
-        "island",
-        "town"
+        "camp",
+        "plains",
+        "desert",
+        "island"
       ],
       "source": "spec",
       "files": [
-        "spec_rowboat_0.glb",
-        "spec_rowboat_1.glb",
-        "spec_rowboat_2.glb",
-        "spec_rowboat_3.glb"
+        "spec_tent_0.glb",
+        "spec_tent_1.glb",
+        "spec_tent_2.glb",
+        "spec_tent_3.glb"
       ],
       "footprint": [
-        3.13,
-        2.44
+        3.9,
+        2.2
       ],
-      "height": 0.83,
+      "height": 1.4,
       "plant": false
     }
   ]

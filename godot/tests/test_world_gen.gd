@@ -1,11 +1,12 @@
 extends SceneTree
 ## 场景生成回归测试（无界面）：
 ##   godot --headless --path godot --script res://tests/test_world_gen.gd
-## 对两种主题各跑多个种子，检查：
+## 对每种已实现的风格（PWStyles.ready_ids()）各跑多个种子，检查：
 ##   1. PWPlacement.validate() 没有任何违规
 ##   2. 独立复核：每盏路灯与每棵树之间，地面距离和树冠 / 灯头间距都满足规则（不依赖 validate 的实现）
 ##   3. 出生点能站人
 ##   4. 生成结果能打包成 .tscn
+##   5. 雪原 / 海岛 / 沙漠 / 峡谷：按标签撒放的 Blender 资产（椰子树、仙人掌、雪人……）确实放进去了
 ## 全部通过时打印 "ALL PASSED" 并以 0 退出，否则以 1 退出。
 
 const P := preload("res://addons/pixel_world/world/pw_placement.gd")
@@ -15,7 +16,7 @@ var failures := 0
 
 func _init() -> void:
 	var seeds := [1, 7, 42, 1234, 99999]
-	for theme in ["town", "forest", "plains"]:
+	for theme in PWStyles.ready_ids():
 		for s in seeds:
 			_check(theme, s)
 	print("ALL PASSED" if failures == 0 else "FAILED: %d" % failures)
@@ -74,6 +75,14 @@ func _check(theme: String, s: int) -> void:
 			if area < 60:
 				_fail(label, "有一片只有 %d 平方米的小水坑" % area)
 				break
+	var params: Dictionary = PWStyles.get_style(theme).get("params", {})
+	if not params.get("blender", []).is_empty() and not PWAssetLibrary.in_category("blender").is_empty():
+		var bl := 0
+		for k: String in w.stats:
+			if k.begins_with("bl:"):
+				bl += int(w.stats[k])
+		if bl == 0:
+			_fail(label, "风格要求的 Blender 资产一个都没放进去")
 	var sp := Vector2(w.spawn_point.x, w.spawn_point.z)
 	if not w.can_stand(sp):
 		_fail(label, "出生点 %s 站不住" % sp)

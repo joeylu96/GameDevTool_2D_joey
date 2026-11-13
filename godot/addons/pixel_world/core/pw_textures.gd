@@ -80,6 +80,8 @@ static func _make(key: String) -> Image:
 			return bricks(["dirt_1", "dirt_2", "stone_2", "dirt_2"], 703, 20)
 		"rock":
 			return blotches(["stone_1", "stone_0", "stone_2"], 64, 506)
+		"rock_red":  # 峡谷 / 沙漠的红岩
+			return blotches(["ochre_1", "red_1", "ochre_2"], 64, 509)
 		"plaster_white":
 			return mottle(["frame_0", "frame_1"], 32, 1101, 0.62)
 		"plaster_red":

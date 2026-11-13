@@ -60,7 +60,7 @@ const DEFS := {
 	"coal": {"tex": "metal", "snow_receive": 0.0},
 	"siding_white": {"tex": "plaster_white"},
 	"siding_ochre": {"tex": "wall_ochre"},
-	"rock_red": {"tex": "rock"},
+	"rock_red": {"tex": "rock_red"},
 	"bulb_warm": {"tex": "lamp_glass", "emission_full": 1.0, "emission_energy": 2.2, "snow_receive": 0.0},
 	"weed": {"tex": "weed", "sway": 2.0, "snow_receive": 0.0, "caustics": 1.0},
 	# 草叶：纯白贴图，颜色全靠顶点色（根部深、尖端亮）；从根部开始随风摆
@@ -86,6 +86,12 @@ const DEFS := {
 	# 野外地形：草地 + 沙 / 岩石 / 湖底按顶点权重混合（见 pixel_world.gdshader 的 terrain_mode）
 	"terrain": {"tex": "grass", "terrain_mode": true, "sand_tex": "sand", "rock_tex": "rock",
 		"bed_tex": "lakebed", "puddles": 0.55, "caustics": 1.0},
+	# 沙漠：基底还是草（只有绿洲一圈），沙地靠顶点权重铺满；岩石是红岩
+	"terrain_desert": {"tex": "grass", "terrain_mode": true, "sand_tex": "sand", "rock_tex": "rock_red",
+		"bed_tex": "lakebed", "puddles": 0.2, "caustics": 1.0},
+	# 峡谷：台地是干土，崖壁是红岩
+	"terrain_canyon": {"tex": "dirt", "terrain_mode": true, "sand_tex": "sand", "rock_tex": "rock_red",
+		"bed_tex": "lakebed", "puddles": 0.6, "caustics": 1.0},
 }
 
 static var _cache := {}
