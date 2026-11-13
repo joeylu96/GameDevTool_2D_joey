@@ -84,6 +84,9 @@ func _ready() -> void:
 	for k: String in _pages:
 		host.add_child(_pages[k])
 	show_page("generator")
+	# 一进来就有一个默认预览，而不是一块空草地；换风格时也自动刷新预览
+	if not Engine.is_editor_hint() or editor_mode:
+		_preview_world.call_deferred()
 
 
 # ---------------------------------------------------------------- 左侧导航
@@ -322,7 +325,9 @@ func _style_card(st: Dictionary) -> Control:
 	b.add_theme_stylebox_override("disabled", ds)
 	b.tooltip_text = st.desc
 	var id: String = st.id
-	b.pressed.connect(func(): _select_style(id))
+	b.pressed.connect(func():
+		_select_style(id)
+		_preview_world())
 	_style_cards[id] = b
 	return b
 
