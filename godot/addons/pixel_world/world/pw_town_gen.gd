@@ -66,6 +66,7 @@ func run() -> void:
 	_build_benches()
 	_build_trees()
 	_build_bushes_and_rocks()
+	_build_grass()
 	if w.with_lake:
 		_build_lake_life()
 	var sp := Vector2(_path_x, _path_top + 3.0) if w.with_lake else roads[0].get_center()
@@ -595,6 +596,19 @@ func _build_trees() -> void:
 		var pine := rng.randf() < (0.92 if belt else 0.55)
 		var mesh: ArrayMesh = _pines[rng.randi_range(0, _pines.size() - 1)] if pine else _broads[rng.randi_range(0, _broads.size() - 1)]
 		try_tree(p, mesh, rng.randf_range(0.75, 1.2), pine)
+
+
+## 草坪：密度 0.45，北边林带下 0.25；岸边碎石带和湖里没有；路、房子、门前通道等由 PWPlacement 排除
+func _build_grass() -> void:
+	var dens := func(p: Vector2) -> float:
+		if w.with_lake and p.y > shore(p.x) - 1.2:
+			return 0.0
+		return 0.25 if p.y < -H + 12.0 else 0.45
+	var dry := func(p: Vector2) -> float:
+		return clampf(1.0 - (shore(p.x) - 1.2 - p.y) / 3.0, 0.0, 1.0) * 0.6 if w.with_lake else 0.0
+	var budget := int(2600.0 * (w.size / 80.0) * (w.size / 80.0))
+	w.stats["grass"] = PWGrass.scatter(pl, batch, rng, dens, func(p: Vector2) -> float: return 0.0, dry,
+		{"half": H - 0.6, "budget": budget, "flowers": 0.12})
 
 
 func _build_bushes_and_rocks() -> void:

@@ -27,7 +27,8 @@ uniform vec4 snow_color : source_color = vec4(0.890, 0.914, 0.949, 1.0);
 uniform vec4 snow_color_alt : source_color = vec4(0.835, 0.867, 0.925, 1.0);
 uniform float wet_receive = 1.0;
 uniform float puddles = 0.0;                // >0：下雨时这个表面会出现积水（地面）
-uniform float sway = 0.0;                   // 风动幅度（树）
+uniform float sway = 0.0;                   // 风动幅度（树、草）
+uniform float sway_base = 0.6;              // 从这个高度往上才开始摆（树干不摆；草从根部就摆）
 uniform float caustics = 0.0;               // >0：水下焦散光斑（湖底）
 uniform float water_level = -0.45;
 
@@ -48,7 +49,7 @@ void vertex() {
 	// MultiMesh 实例的自定义数据：rgb = 色调，a = 1 表示启用（每棵树颜色略有不同，避免一模一样）
 	inst_tint = INSTANCE_CUSTOM;
 	if (sway > 0.0) {
-		float h = max(VERTEX.y - 0.6, 0.0);
+		float h = max(VERTEX.y - sway_base, 0.0);
 		// 合批后多棵树在同一个网格里：每棵树的相位存在 UV2.x；没有 UV2 时按物体位置算
 		float seed = UV2.x > 0.0 ? UV2.x : object_origin.x * 0.37 + object_origin.z * 0.29;
 		float phase = TIME * 1.6 + seed;

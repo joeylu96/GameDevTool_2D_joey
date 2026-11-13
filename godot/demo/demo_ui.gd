@@ -32,7 +32,7 @@ func _ready() -> void:
 	var scene_row := HBoxContainer.new()
 	box.add_child(scene_row)
 	scene_row.add_child(_label("Scene"))
-	for th in ["town", "wild"]:
+	for th in ["town", "forest", "plains"]:
 		var tb := Button.new()
 		tb.text = th.capitalize()
 		tb.focus_mode = Control.FOCUS_NONE

@@ -46,7 +46,10 @@ void fragment() {
 	float t = TIME;
 	vec2 duv = (wp.xz - depth_rect.xy) / depth_rect.zw;
 	bool inside = all(greaterThanEqual(duv, vec2(0.0))) && all(lessThanEqual(duv, vec2(1.0)));
-	float depth = inside ? texture(depth_tex, duv).r * depth_range : depth_range;
+	vec4 dt = inside ? texture(depth_tex, duv) : vec4(1.0, 0.5, 0.5, 1.0);
+	float depth = dt.r * depth_range;
+	vec2 flow = dt.gb * 2.0 - 1.0;  // 河水流向 × 流速（静水为 0）
+	float flow_k = clamp(length(flow) * 1.5, 0.0, 1.0);
 	if (depth <= 0.002) {
 		discard;  // 陆地上方
 	}
@@ -63,6 +66,14 @@ void fragment() {
 
 	// 波光（深一些的地方才有）
 	float lit = dashes(cell, vec2(28.0, 12.0), t, 1.0, 0.0, 0.3 + pw_wetness * 0.3) * smoothstep(0.8, 1.6, depth);
+	// 河：沿流向排列、向下游移动的波光短线
+	if (flow_k > 0.01) {
+		vec2 fd = normalize(flow + vec2(1e-5));
+		vec2 local = vec2(dot(wp.xz, fd), dot(wp.xz, vec2(-fd.y, fd.x)));  // x 沿流向，y 横向
+		local.x -= t * 1.4;
+		float fl = dashes(floor(local * texel_density), vec2(30.0, 9.0), 0.0, 0.0, 31.0, 0.55);
+		lit = mix(lit, fl * smoothstep(0.15, 0.5, depth), flow_k);
+	}
 	c = mix(c, highlight.rgb, lit * 0.8);
 	alpha = max(alpha, lit * 0.8);
 

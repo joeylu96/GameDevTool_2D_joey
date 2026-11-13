@@ -15,7 +15,7 @@ var failures := 0
 
 func _init() -> void:
 	var seeds := [1, 7, 42, 1234, 99999]
-	for theme in ["town", "wild"]:
+	for theme in ["town", "forest", "plains"]:
 		for s in seeds:
 			_check(theme, s)
 	print("ALL PASSED" if failures == 0 else "FAILED: %d" % failures)
@@ -27,7 +27,7 @@ func _check(theme: String, s: int) -> void:
 	w.generate_on_ready = false
 	w.theme = theme
 	w.seed_value = s
-	w.size = 128 if theme == "wild" else 80
+	w.size = PWStyles.get_style(theme).size
 	root.add_child(w)
 	w.generate()
 	var label := "%s#%d" % [theme, s]
@@ -65,6 +65,15 @@ func _check(theme: String, s: int) -> void:
 				linked = true
 		if not linked:
 			_fail(label, "通往码头的土路没有接到任何道路上：土路 %s，道路 %s" % [paths[0], roads])
+	# 自然风格：水只能是大湖 / 河，不能有零散的小水坑（每片连通水域至少 60 平方米）
+	if PWStyles.get_style(theme).get("generator", "") == "nature":
+		var sizes := _water_components(w)
+		if sizes.is_empty():
+			_fail(label, "没有湖")
+		for area in sizes:
+			if area < 60:
+				_fail(label, "有一片只有 %d 平方米的小水坑" % area)
+				break
 	var sp := Vector2(w.spawn_point.x, w.spawn_point.z)
 	if not w.can_stand(sp):
 		_fail(label, "出生点 %s 站不住" % sp)
@@ -76,6 +85,33 @@ func _check(theme: String, s: int) -> void:
 	copy.free()
 	print("%s ok  lamps=%d trees=%d stats=%s" % [label, lamps.size(), trees.size(), w.stats])
 	w.free()
+
+
+## 每片连通水域的面积（网格顶点数 ≈ 平方米）
+func _water_components(w: PWWorld) -> Array[int]:
+	var n := w.grid_n + 1
+	var seen := PackedByteArray()
+	seen.resize(n * n)
+	var out: Array[int] = []
+	for j in n:
+		for i in n:
+			if seen[j * n + i] != 0 or w.get_h(i, j) >= w.water_y:
+				continue
+			var count := 0
+			var stack: Array[Vector2i] = [Vector2i(i, j)]
+			seen[j * n + i] = 1
+			while not stack.is_empty():
+				var c: Vector2i = stack.pop_back()
+				count += 1
+				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					var q: Vector2i = c + d
+					if q.x < 0 or q.y < 0 or q.x >= n or q.y >= n or seen[q.y * n + q.x] != 0:
+						continue
+					if w.get_h(q.x, q.y) < w.water_y:
+						seen[q.y * n + q.x] = 1
+						stack.append(q)
+			out.append(count)
+	return out
 
 
 func _own(n: Node, owner_node: Node) -> void:

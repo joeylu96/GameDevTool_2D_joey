@@ -1,12 +1,13 @@
 @tool
 class_name PWWorld
 extends Node3D
-## 场景生成器（P2）：按种子生成小镇或野外场景，可在编辑器里生成并另存为 .tscn，也可在运行时生成。
+## 场景生成器：按风格和种子生成场景，可在编辑器里生成并另存为 .tscn，也可在运行时生成。
 ##
-## 主题：
-##   town — BSP 切分道路网、沿路地块与朝路的房屋、路灯、篱笆、长椅、一侧湖岸（灯塔 + 码头 + 土路）
-##   wild — 阶梯状噪声地形、按「高度 × 湿度」划分湖 / 沙滩 / 草地 / 森林 / 岩石，
-##          营地 / 木屋 / 废墟等兴趣点用 A* 小路连接
+## 风格（theme，见 PWStyles）：
+##   town   — 海边小镇：BSP 道路网、朝路的房屋、路灯、篱笆、长椅、湖岸（灯塔 + 码头 + 土路）
+##   forest — 森林：起伏林地、大湖和河、营地 / 木屋 / 废墟与林间小路
+##   plains — 平原：开阔草原、花丛、大湖和河、树丛与灌木篱、农舍 / 风车
+##   （雪原、海岛、沙漠、峡谷等在 PWStyles 里登记为「即将推出」）
 ## 所有物体经 PWPlacement 规则检查后才放置（见 pw_placement.gd），生成后再整体校验一次。
 ##
 ## 对外查询（角色、鱼群用）：ground_y(x, z)、water_depth(x, z)、can_stand(Vector2)、spawn_point
@@ -14,12 +15,12 @@ extends Node3D
 signal generated
 
 const TownGen := preload("res://addons/pixel_world/world/pw_town_gen.gd")
-const WildGen := preload("res://addons/pixel_world/world/pw_wild_gen.gd")
+const NatureGen := preload("res://addons/pixel_world/world/pw_nature_gen.gd")
 const WATER_SHADER := preload("res://addons/pixel_world/shaders/water.gdshader")
 ## 水深贴图里 1.0 对应的深度（米）
 const DEPTH_RANGE := 4.0
 
-@export_enum("town", "wild") var theme := "town"
+@export_enum("town", "forest", "plains") var theme := "town"
 @export var seed_value := 7
 ## 场景边长（米）。设计规模：小镇约 64~80，野外约 128
 @export_range(32, 192, 8) var size := 80
@@ -57,6 +58,8 @@ var overrides: Array = []
 var wade_depth := 0.65
 ## 不可通行的网格顶点（悬崖边等），与 heights 同尺寸；空数组 = 没有
 var walk_block := PackedByteArray()
+## 水流方向（河道），与 heights 同尺寸；长度 = 流速 0..1。空数组 = 静水
+var flow := PackedVector2Array()
 var _content: Node3D
 
 
@@ -73,11 +76,17 @@ func generate() -> void:
 	_content = Node3D.new()
 	_content.name = "Generated"
 	add_child(_content)
+	if theme == "wild":
+		theme = "forest"  # 旧名字兼容
+	var style := PWStyles.get_style(theme)
+	if not style.get("ready", false):
+		push_warning("PWWorld: 风格 %s 还没有实现，改用小镇" % theme)
+		style = PWStyles.get_style("town")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([seed_value, theme, size])
 	var batcher := PWBatcher.new()
-	if theme == "wild":
-		WildGen.new(self, rng, batcher).run()
+	if style.generator == "nature":
+		NatureGen.new(self, rng, batcher, style.params).run()
 	else:
 		TownGen.new(self, rng, batcher).run()
 	batcher.flush(_content, theme.capitalize())
@@ -104,6 +113,7 @@ func clear() -> void:
 	fish = null
 	overrides.clear()
 	walk_block = PackedByteArray()
+	flow = PackedVector2Array()
 	stats.clear()
 	violations = PackedStringArray()
 
@@ -195,13 +205,16 @@ func can_stand(p: Vector2) -> bool:
 
 # ---------------------------------------------------------------- 水面
 
-## 水深贴图：每个网格顶点一个像素，R = 水深 / DEPTH_RANGE（陆地为 0）。水面 shader 用它算颜色、透明度、浪花和结冰
+## 水深贴图：每个网格顶点一个像素。R = 水深 / DEPTH_RANGE（陆地为 0）；G、B = 水流方向 × 流速（0.5 = 静水）。
+## 水面 shader 用它算颜色、透明度、浪花、结冰，以及河面波光的流动
 func make_depth_texture() -> ImageTexture:
 	var img := Image.create(grid_n + 1, grid_n + 1, false, Image.FORMAT_RGBA8)
+	var has_flow := flow.size() == heights.size()
 	for j in grid_n + 1:
 		for i in grid_n + 1:
 			var d := clampf((water_y - get_h(i, j)) / DEPTH_RANGE, 0.0, 1.0)
-			img.set_pixel(i, j, Color(d, 0, 0, 1))
+			var f := flow[j * (grid_n + 1) + i] if has_flow else Vector2.ZERO
+			img.set_pixel(i, j, Color(d, f.x * 0.5 + 0.5, f.y * 0.5 + 0.5, 1))
 	return ImageTexture.create_from_image(img)
 
 

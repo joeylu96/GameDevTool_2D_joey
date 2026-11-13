@@ -30,9 +30,9 @@ func add_static(mesh: ArrayMesh, xf: Transform3D, shadows := true) -> void:
 		(groups[mat] as SurfaceTool).append_from(mesh, s, xf)
 
 
-## tint.a < 0.5 表示不调色
-func add_plant(mesh: ArrayMesh, xf: Transform3D, tint := Color(1, 1, 1, 0)) -> void:
-	var key := _key(xf.origin)
+## tint.a < 0.5 表示不调色；shadows = false 时不投影（草）
+func add_plant(mesh: ArrayMesh, xf: Transform3D, tint := Color(1, 1, 1, 0), shadows := true) -> void:
+	var key := _key(xf.origin) + ("" if shadows else ",noshadow")
 	if not _plants.has(key):
 		_plants[key] = {}
 	var groups: Dictionary = _plants[key]
@@ -54,9 +54,16 @@ func add_plant(mesh: ArrayMesh, xf: Transform3D, tint := Color(1, 1, 1, 0)) -> v
 		uv2.resize(count)
 		uv2.fill(Vector2(phase, 0.0))
 		g.uv2.append(uv2)
+		# 模型自带顶点色（例如草叶根部深、尖端亮）就乘上色调；没有就直接用色调
 		var cols := PackedColorArray()
-		cols.resize(count)
-		cols.fill(col)
+		var src: Variant = arr[Mesh.ARRAY_COLOR]
+		if src is PackedColorArray and (src as PackedColorArray).size() == count:
+			cols = (src as PackedColorArray).duplicate()
+			for ci in count:
+				cols[ci] = Color(cols[ci].r * col.r, cols[ci].g * col.g, cols[ci].b * col.b, cols[ci].a)
+		else:
+			cols.resize(count)
+			cols.fill(col)
 		g.c.append(cols)
 
 
@@ -101,6 +108,8 @@ func flush(parent: Node3D, name_prefix := "Batch") -> void:
 		var mi := MeshInstance3D.new()
 		mi.name = "%s_Plants_%s" % [name_prefix, key.replace(",", "_")]
 		mi.mesh = mesh
+		if key.ends_with("noshadow"):
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(mi)
 	_static.clear()
 	_plants.clear()

@@ -140,6 +140,69 @@ static func build_fish(mat: String) -> ArrayMesh:
 	return mb.commit()
 
 
+## 风车塔身：石砌八边形锥塔 + 白色腰线 + 门窗 + 木质锥形顶 + 朝 +Z 伸出的轮轴。叶片另外建（会转）。
+## 叶片的轮轴中心在 windmill_hub() 处。
+static func build_windmill_tower() -> ArrayMesh:
+	var mb := MB.new()
+	var rot := PI / 8.0
+	mb.ngon_frustum("stone", Vector3.ZERO, -0.2, 0.4, 2.4, 2.3, 8, rot, true)
+	mb.ngon_frustum("plaster_white", Vector3.ZERO, 0.4, 6.4, 2.0, 1.45, 8, rot, false)
+	mb.ngon_frustum("trim", Vector3.ZERO, 3.3, 3.5, 1.82, 1.8, 8, rot, false)
+	mb.ngon_frustum("roof_cap", Vector3.ZERO, 6.4, 6.6, 1.65, 1.6, 8, rot, false, true)
+	mb.ngon_frustum("roof_red", Vector3.ZERO, 6.6, 8.6, 1.6, 0.0, 8, rot, false)
+	var ap := 2.0 * cos(PI / 8.0) + 0.01
+	Parts.door(mb, Vector3(0, 0.4, ap - 0.06), Vector3.BACK, {"w": 0.9, "h": 1.8, "mat": "door_wood", "glass_top": false})
+	for y in [3.9]:
+		var r := lerpf(2.0, 1.45, (y - 0.4) / 6.0) * cos(PI / 8.0) + 0.01
+		Parts.window(mb, Vector3(0, y, r), Vector3.BACK, 0.25, 0.6, {"panes_x": 2, "panes_y": 2, "rnd": 0.8})
+	mb.tube("trunk", Vector3(0, 6.9, 0.6), windmill_hub() + Vector3(0, 0, 0.25), 0.18, 0.16, 8)
+	return mb.commit()
+
+
+static func windmill_hub() -> Vector3:
+	return Vector3(0, 6.9, 1.85)
+
+
+## 风车叶片：四片格栅叶片，中心在原点，在 XY 平面内（绕 Z 轴转）
+static func build_windmill_blades() -> ArrayMesh:
+	var mb := MB.new()
+	mb.ngon_frustum("roof_cap", Vector3.ZERO, -0.05, 0.05, 0.3, 0.3, 8, 0.0, true, true)
+	for k in 4:
+		var a := TAU * k / 4.0 + 0.3
+		var dir := Vector3(cos(a), sin(a), 0)
+		var side := Vector3(-sin(a), cos(a), 0)
+		mb.tube("trunk", Vector3.ZERO, dir * 5.2, 0.07, 0.05, 4)
+		# 格栅：沿叶片的两根边框 + 若干横档，再铺一片白帆布
+		for s in [0.15, 0.85]:
+			mb.tube("wall_wood", dir * 1.0 + side * s, dir * 5.0 + side * s, 0.03, 0.03, 4)
+		for t in range(0, 9):
+			var d := 1.0 + t * 0.5
+			mb.tube("wall_wood", dir * d + side * 0.15, dir * d + side * 0.85, 0.025, 0.025, 4)
+		var c0 := dir * 1.05 + side * 0.18
+		var c1 := dir * 4.95 + side * 0.18
+		var c2 := dir * 4.95 + side * 0.82
+		var c3 := dir * 1.05 + side * 0.82
+		mb.face("plaster_white", [c0 + Vector3(0, 0, -0.02), c1 + Vector3(0, 0, -0.02), c2 + Vector3(0, 0, -0.02), c3 + Vector3(0, 0, -0.02)], Vector3.BACK)
+		mb.face("plaster_white", [c0 + Vector3(0, 0, -0.03), c3 + Vector3(0, 0, -0.03), c2 + Vector3(0, 0, -0.03), c1 + Vector3(0, 0, -0.03)], Vector3.FORWARD)
+	return mb.commit()
+
+
+## 草垛：圆柱形的干草卷（躺倒）或圆锥形的草堆
+static func build_haystack(seed_value: int) -> ArrayMesh:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var mb := MB.new()
+	if rng.randf() < 0.5:
+		var r := rng.randf_range(0.6, 0.75)
+		var l := rng.randf_range(1.0, 1.3)
+		mb.tube("hay", Vector3(-l * 0.5, r, 0), Vector3(l * 0.5, r, 0), r, r, 10, 0.0, true, true)
+	else:
+		var r := rng.randf_range(1.1, 1.5)
+		mb.ngon_frustum("hay", Vector3.ZERO, 0.0, r * 0.9, r, r * 0.8, 9, rng.randf(), false)
+		mb.ngon_frustum("hay", Vector3.ZERO, r * 0.9, r * 1.9, r * 0.8, 0.12, 9, rng.randf(), false)
+	return mb.commit()
+
+
 ## 灯塔：八边形石台 + 红白相间的锥形塔身 + 门窗 + 环形走廊和栏杆 + 发光灯室 + 深色圆顶。
 ## 门朝 +Z。总高约 13.5 米。灯室用 "beacon" 材质，夜里自动发光。
 static func build_lighthouse() -> ArrayMesh:

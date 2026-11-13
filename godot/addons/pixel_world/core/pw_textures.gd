@@ -146,6 +146,8 @@ static func _make(key: String) -> Image:
 			return _rot(planks(["wood_0", "wood_1", "wood_2", "wood_3"], 1206, 16, 2))
 		"boots":
 			return mottle(["wood_3", "ink"], 16, 1207, 0.6)
+		"hay":
+			return _rot(bark_cols([Pal.mix("ochre_0", "light_0", 0.3), Pal.c("ochre_0"), Pal.c("ochre_1")], 1301))
 	var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
 	img.fill(Color.MAGENTA)
 	return img
@@ -347,14 +349,18 @@ static func birch(seed_value: int, size := 64) -> Image:
 
 ## 树皮：竖向深沟 + 亮脊
 static func bark(seed_value: int, size := 32) -> Image:
+	return bark_cols(_cols(["wood_1", "wood_2", "wood_3"]), seed_value, size)
+
+
+## 竖向纤维纹理：cols = [亮, 主, 暗]（树皮、干草）
+static func bark_cols(cols: Array, seed_value: int, size := 32) -> Image:
 	var rng := _rng(seed_value)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var cols := _cols(["wood_1", "wood_2", "wood_3"])
 	for x in size:
 		var s := rng.randf() * 50.0
 		for y in size:
 			var v := _n1(y * 0.18, s) * 0.6 + _n1(x * 0.7, 3.0) * 0.4
-			var col := cols[1]
+			var col: Color = cols[1]
 			if v > 0.62:
 				col = cols[0]
 			elif v < 0.32:

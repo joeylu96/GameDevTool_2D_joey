@@ -26,6 +26,7 @@ const PROP := &"prop"       # 木箱、木桶、营火等
 const LANDMARK := &"landmark"
 const DOOR := &"door"       # 门前通道（保留区，什么都不能放）
 const WATER := &"water"
+const GRASS := &"grass"     # 草丛：只检查不登记（见 PWGrass）
 
 ## 类别之间额外的间距（米），按字母顺序的「a|b」查表；没列出的用 DEFAULT_GAP
 const DEFAULT_GAP := 0.3
@@ -62,6 +63,20 @@ const GAP := {
 	"door|door": -99.0,
 	"door|house": 0.0,         # 门前通道紧贴自家正门（相接可以，压进去不行）
 	"landmark|path": -99.0,    # 小路通进兴趣点
+	# 草丛（半径约 0.12 米）：不长在路、水、建筑、设施底下；树干和灌木旁边可以长
+	"grass|road": 0.15,
+	"grass|path": 0.05,
+	"grass|door": 0.1,
+	"grass|house": 0.15,
+	"grass|water": 0.25,
+	"grass|tree": 0.05,
+	"grass|bush": -0.25,
+	"grass|rock": 0.0,
+	"grass|fence": 0.05,
+	"grass|lamp": 0.05,
+	"grass|bench": 0.1,
+	"grass|prop": 0.1,
+	"grass|landmark": 0.2,
 }
 ## 两棵树的树干之间至少这么远（树冠可以交叠，但树干不能贴在一起）
 const TRUNK_GAP := 1.6

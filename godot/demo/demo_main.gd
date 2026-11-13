@@ -4,7 +4,7 @@ extends Control
 ##
 ## 命令行截图（用于自动验证）：
 ##   godot --path godot -- --weather=snow --hour=20 --screenshot=/tmp/a.png
-## 其它参数：--theme=town|wild --seed=N --size=米（场景生成）
+## 其它参数：--theme=town|forest|plains --seed=N --size=米（场景生成）
 ##           --snap（积雪/潮湿立刻到位） --frames=N（截图前等待帧数） --pixel（像素模式）
 ##           --distance=米 --yaw=度 --focus=x,z（镜头对准的地面位置，并关闭走路模式）
 ##           --player=x,z（角色位置） --walk=x,z（截图前让角色朝这个方向走）
@@ -47,7 +47,7 @@ func _ready() -> void:
 	world.generate_on_ready = false
 	world.theme = args.get("theme", "town")
 	world.seed_value = int(args.get("seed", "7"))
-	world.size = int(args.get("size", "128" if world.theme == "wild" else "80"))
+	world.size = int(args.get("size", str(PWStyles.get_style(world.theme).size)))
 	vp.add_child(world)
 	world.generate()
 
@@ -94,7 +94,7 @@ func _args() -> Dictionary:
 func regenerate(theme := "", new_seed := -1) -> void:
 	if theme != "":
 		world.theme = theme
-		world.size = 128 if theme == "wild" else 80
+		world.size = PWStyles.get_style(theme).size
 	if new_seed >= 0:
 		world.seed_value = new_seed
 	world.generate()

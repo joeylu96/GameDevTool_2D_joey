@@ -12,7 +12,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame  # 等场景树开始运行，节点才算「在树里」
-	for theme in ["town", "wild"]:
+	for theme in ["town", "forest", "plains"]:
 		for s in [1, 7, 42]:
 			_check(theme, s)
 	print("ALL PASSED" if failures == 0 else "FAILED: %d" % failures)
@@ -24,7 +24,7 @@ func _check(theme: String, s: int) -> void:
 	w.generate_on_ready = false
 	w.theme = theme
 	w.seed_value = s
-	w.size = 128 if theme == "wild" else 80
+	w.size = PWStyles.get_style(theme).size
 	root.add_child(w)
 	w.generate()
 	var label := "%s#%d" % [theme, s]

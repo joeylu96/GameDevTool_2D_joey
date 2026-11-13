@@ -23,9 +23,10 @@ func _ready() -> void:
 	add_child(title)
 
 	_theme = OptionButton.new()
-	_theme.add_item("小镇 town")
-	_theme.add_item("野外 wild")
-	_theme.item_selected.connect(func(i): _size.value = 128 if i == 1 else 80)
+	for id in PWStyles.ready_ids():
+		var st := PWStyles.get_style(id)
+		_theme.add_item("%s %s" % [st.name, id])
+	_theme.item_selected.connect(func(i): _size.value = PWStyles.get_style(PWStyles.ready_ids()[i]).size)
 	_row("主题", _theme)
 	_seed = _spin(0, 999999, 1, 7)
 	_row("种子", _seed)
@@ -129,7 +130,7 @@ func _generate() -> void:
 	var w := _target()
 	if w == null:
 		return
-	w.theme = "wild" if _theme.selected == 1 else "town"
+	w.theme = PWStyles.ready_ids()[_theme.selected]
 	w.seed_value = int(_seed.value)
 	w.size = int(_size.value)
 	w.tree_density = _trees.value
