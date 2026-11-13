@@ -34,6 +34,12 @@ _TEX = {
     "fruit_red": lambda: pixtex.mottle(["red_0", "red_1"], 606, size=16),
     "fruit_yellow": lambda: pixtex.mottle(["cloth_yellow", "ochre_0"], 607, size=16),
     "fruit_green": lambda: pixtex.mottle(["grass_0", "grass_1"], 608, size=16),
+    "leaf": lambda: pixtex.foliage(["grass_1", "grass_0", "grass_2"], 511),
+    "leaf_dark": lambda: pixtex.foliage(["grass_2", "grass_1", "pine_1"], 512, droop=True),
+    "metal_green": lambda: pixtex.mottle(["teal_2", "teal_3"], 611),
+    "bulb": lambda: pixtex.mottle(["light_0", "light_1"], 612, size=16),
+    "hay": lambda: pixtex.stripes(["cloth_yellow", "ochre_0"], 613, width=3),
+    "crate": lambda: pixtex.planks(["ochre_1", "ochre_2", "ochre_2", "ochre_3"], 614, size=32, plank_w=6),
 }
 # 整张贴图铺满一个面（UV 0..1）而不是按米平铺的材质
 _STRETCH = {"glass"}
@@ -145,6 +151,41 @@ class MeshBuilder:
             self.face(key, t, (0, 0, 1))
         if bottom:
             self.face(key, b[::-1], (0, 0, -1))
+
+    def tube(self, key, p0, p1, r0, r1, sides=6, rot=0.0, caps=True):
+        """任意方向的 N 边形棱台：从 p0（半径 r0）到 p1（半径 r1）。树枝、车轮、灯臂都用它。"""
+        p0 = np.asarray(p0, dtype=float)
+        p1 = np.asarray(p1, dtype=float)
+        ax = p1 - p0
+        ln = np.linalg.norm(ax)
+        if ln < 1e-6:
+            return
+        ax /= ln
+        ref = np.array([0.0, 0.0, 1.0]) if abs(ax[2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+        u = np.cross(ax, ref)
+        u /= np.linalg.norm(u)
+        v = np.cross(ax, u)
+        ring = [math.cos(rot + 2 * math.pi * i / sides) * u + math.sin(rot + 2 * math.pi * i / sides) * v for i in range(sides)]
+        a = [p0 + d * r0 for d in ring]
+        b = [p1 + d * r1 for d in ring]
+        for i in range(sides):
+            j = (i + 1) % sides
+            out = (ring[i] + ring[j]) * 0.5
+            if r1 <= 1e-4:
+                self.face(key, [a[i], a[j], p1], out)
+            else:
+                self.face(key, [a[i], a[j], b[j], b[i]], out)
+        if caps:
+            self.face(key, a[::-1], -ax)
+            if r1 > 1e-4:
+                self.face(key, b, ax)
+
+    def blob(self, key, cx, cy, cz, r, h, sides=8, rot=0.0):
+        """低多边形的团块（阔叶树冠的一簇）：下收的碗底 + 鼓起的腰 + 圆顶，三段棱台叠成。"""
+        z0, z1, z2, z3 = cz - h * 0.5, cz - h * 0.1, cz + h * 0.2, cz + h * 0.5
+        self.frustum(key, cx, cy, z0, z1, r * 0.55, r, sides, rot, top=False, bottom=True)
+        self.frustum(key, cx, cy, z1, z2, r, r * 0.9, sides, rot, top=False)
+        self.frustum(key, cx, cy, z2, z3, r * 0.9, r * 0.35, sides, rot, top=True)
 
     def build(self, name, collection=None):
         me = bpy.data.meshes.new(name)

@@ -52,8 +52,11 @@ static func load_blender_catalog() -> int:
 		if files.is_empty():
 			continue
 		var fp: Array = a.get("footprint", [2, 2])
+		# 展示规则：树随机撒几棵；建筑排 3 个变体；其余把导出的变体排成一排
+		var sem: String = a.get("category", "")
+		var show: Variant = [3, 6] if sem == "trees" else ("styles:%d" % mini(files.size(), 3 if sem == "buildings" else 4))
 		register({
-			"id": a.id, "cat": "blender", "semantic": a.get("category", ""), "name": a.name + "（Blender）",
+			"id": a.id, "cat": "blender", "semantic": sem, "name": a.name + "（Blender）", "show": show,
 			"size": maxf(maxf(fp[0], fp[1]), float(a.get("height", 2.0)) * 0.8),
 			"plant": a.get("plant", false),
 			"desc": a.get("desc", "") + "  来源：%s，%d 个变体。" % [data.get("generator", "Blender"), files.size()],

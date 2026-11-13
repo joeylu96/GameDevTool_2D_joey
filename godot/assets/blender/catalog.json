@@ -3,7 +3,7 @@
   "generator": "pixel_world_blender 0.1.0",
   "blender": "5.2.4 LTS",
   "texel_density": 32.0,
-  "style": "/Users/lujunjie/Projects/GameDevTool_2D_joey/.claude/worktrees/styles-hub-p3/shared/style/style.json",
+  "style": "shared/style/style.json",
   "assets": [
     {
       "id": "bl_cottage",
@@ -83,6 +83,86 @@
         1.9
       ],
       "height": 2.7,
+      "plant": false
+    },
+    {
+      "id": "bl_oak",
+      "kind": "oak",
+      "name": "阔叶树",
+      "category": "trees",
+      "desc": "Blender 生成的阔叶树：树干分叉成几根主枝，每根枝头一簇树冠，下层深上层浅。",
+      "vary": "主枝数量和方向、树冠簇的大小和数量、树干高度和粗细随种子变化；放进场景时再随机朝向、比例、色调。",
+      "files": [
+        "oak_0.glb",
+        "oak_1.glb",
+        "oak_2.glb",
+        "oak_3.glb"
+      ],
+      "footprint": [
+        4.43,
+        4.43
+      ],
+      "height": 4.4,
+      "plant": true
+    },
+    {
+      "id": "bl_street_lamp",
+      "kind": "street_lamp",
+      "name": "铸铁路灯",
+      "category": "street",
+      "desc": "Blender 生成的铸铁路灯：石墩、装饰灯杆、弯臂和四面玻璃灯笼，夜里灯笼自动发光。",
+      "vary": "单臂 / 双臂、灯杆高度、颜色（墨绿 / 铁灰）、灯笼大小随种子变化。",
+      "files": [
+        "street_lamp_0.glb",
+        "street_lamp_1.glb",
+        "street_lamp_2.glb",
+        "street_lamp_3.glb"
+      ],
+      "footprint": [
+        1.71,
+        0.6
+      ],
+      "height": 3.48,
+      "plant": false
+    },
+    {
+      "id": "bl_handcart",
+      "kind": "handcart",
+      "name": "手推车",
+      "category": "props",
+      "desc": "Blender 生成的手推车：木车斗、辐条木轮、车把和支腿，车上随机装干草、木箱或木桶。",
+      "vary": "车斗长宽、轮子大小和辐条数、装载的货物随种子变化。",
+      "files": [
+        "handcart_0.glb",
+        "handcart_1.glb",
+        "handcart_2.glb",
+        "handcart_3.glb"
+      ],
+      "footprint": [
+        2.29,
+        1.27
+      ],
+      "height": 1.39,
+      "plant": false
+    },
+    {
+      "id": "bl_signpost",
+      "kind": "signpost",
+      "name": "路牌",
+      "category": "street",
+      "desc": "Blender 生成的路口指示牌：木柱上钉着几块朝向不同的箭头牌，柱脚压着石块。",
+      "vary": "指示牌数量、朝向、长度和颜色，柱子高度随种子变化。",
+      "files": [
+        "signpost_0.glb",
+        "signpost_1.glb",
+        "signpost_2.glb",
+        "signpost_3.glb"
+      ],
+      "footprint": [
+        1.44,
+        1.44
+      ],
+      "height": 2.29,
       "plant": false
     }
   ]
