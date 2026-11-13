@@ -70,6 +70,9 @@ const DEFS := {
 	"skin": {"tex": "skin", "snow_receive": 0.0, "roughness_base": 0.7},
 	"hair": {"tex": "hair", "snow_receive": 0.0},
 	"boots": {"tex": "boots", "snow_receive": 0.0},
+	# 野外地形：草地 + 沙 / 岩石 / 湖底按顶点权重混合（见 pixel_world.gdshader 的 terrain_mode）
+	"terrain": {"tex": "grass", "terrain_mode": true, "sand_tex": "sand", "rock_tex": "rock",
+		"bed_tex": "lakebed", "puddles": 0.55, "caustics": 1.0},
 }
 
 static var _cache := {}
@@ -86,10 +89,12 @@ static func get_mat(key: String) -> Material:
 		match p:
 			"tex":
 				m.set_shader_parameter("albedo_tex", Tex.get_tex(v))
-			"emission_tex":
-				m.set_shader_parameter("emission_tex", Tex.get_tex(v))
 			_:
-				m.set_shader_parameter(p, v)
+				# 以 _tex 结尾、值是字符串的参数都是贴图键
+				if p.ends_with("_tex") and v is String:
+					m.set_shader_parameter(p, Tex.get_tex(v))
+				else:
+					m.set_shader_parameter(p, v)
 	if key.begins_with("flat_") or key in ["skin", "cloth_red", "cloth_blue", "cloth_dark", "knit", "hair", "boots"]:
 		m.set_shader_parameter("snow_receive", 0.0)
 	_cache[key] = m

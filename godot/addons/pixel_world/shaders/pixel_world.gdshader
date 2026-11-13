@@ -31,6 +31,13 @@ uniform float sway = 0.0;                   // 风动幅度（树）
 uniform float caustics = 0.0;               // >0：水下焦散光斑（湖底）
 uniform float water_level = -0.45;
 
+// 地形混合模式（野外地形）：albedo_tex 是草地；顶点色 R / G / B = 沙 / 岩石 / 湖底的权重（0..1），
+// 交界用噪声打乱，得到清晰但不规则的边（不是沿三角形走的锯齿）。此模式下顶点色不当色调用。
+uniform bool terrain_mode = false;
+uniform sampler2D sand_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
+uniform sampler2D rock_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
+uniform sampler2D bed_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
+
 varying vec3 world_pos;
 varying vec3 world_normal;
 varying vec3 object_origin;
@@ -55,6 +62,24 @@ void vertex() {
 	world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
 
+// 按米为单位的 UV 对任意贴图做「锐利双线性」采样（见 fragment 里的说明）
+vec3 sample_m(sampler2D t, vec2 uv_m, float density) {
+	vec2 ts = vec2(textureSize(t, 0));
+	vec2 uv = uv_m * density / ts;
+	vec2 px = uv * ts;
+	vec2 fw = max(abs(dFdx(px)) + abs(dFdy(px)), vec2(1e-4));
+	vec2 seam = floor(px + 0.5);
+	vec2 sharp = seam + clamp((px - seam) / fw, -0.5, 0.5);
+	sharp = mix(sharp, px, smoothstep(0.75, 1.25, max(fw.x, fw.y)));
+	return textureGrad(t, sharp / ts, dFdx(uv), dFdy(uv)).rgb;
+}
+
+// 权重 w 加噪声后在 0.5 附近做窄过渡：边界清晰、形状不规则
+float blend_edge(float w, vec2 p, float seed) {
+	float n = vnoise(p * 2.2 + seed) * 0.6 + vnoise(p * 6.0 + seed * 3.0) * 0.4;
+	return smoothstep(0.46, 0.54, w + (n - 0.5) * 0.45);
+}
+
 void fragment() {
 	vec2 tex_size = vec2(textureSize(albedo_tex, 0));
 	vec2 uv = uv_in_meters ? UV * texel_density / tex_size : UV;
@@ -73,6 +98,13 @@ void fragment() {
 	vec3 col = tex.rgb * COLOR.rgb;
 	if (inst_tint.a > 0.5) {
 		col *= inst_tint.rgb;
+	}
+	if (terrain_mode) {
+		col = tex.rgb;
+		vec2 wp2 = world_pos.xz;
+		col = mix(col, sample_m(sand_tex, UV, texel_density), blend_edge(COLOR.r, wp2, 1.0));
+		col = mix(col, sample_m(bed_tex, UV, texel_density), blend_edge(COLOR.b, wp2, 7.0));
+		col = mix(col, sample_m(rock_tex, UV, texel_density), blend_edge(COLOR.g, wp2, 13.0));
 	}
 
 	// 以「贴图像素」为单位的格子坐标：积雪颗粒与贴图像素对齐
