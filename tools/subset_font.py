@@ -16,7 +16,7 @@ from pathlib import Path
 from fontTools import subset
 
 ROOT = Path(__file__).resolve().parent.parent
-SCAN = [ROOT / "godot" / "addons", ROOT / "godot" / "demo"]
+SCAN = [ROOT / "godot" / "addons", ROOT / "godot" / "demo", ROOT / "godot" / "assets", ROOT / "blender"]
 OUT_DIR = ROOT / "godot" / "addons" / "pixel_world" / "ui" / "fonts"
 OUT = OUT_DIR / "NotoSansSC-PW.otf"
 
@@ -30,7 +30,7 @@ def collect() -> str:
     chars = set(BASE)
     for d in SCAN:
         for p in d.rglob("*"):
-            if p.suffix in (".gd", ".tscn", ".tres", ".json") and p.is_file():
+            if p.suffix in (".gd", ".tscn", ".tres", ".json", ".py") and p.is_file():
                 text = p.read_text(encoding="utf-8", errors="ignore")
                 chars.update(ch for ch in text if ord(ch) > 0x7F)
     return "".join(sorted(chars))

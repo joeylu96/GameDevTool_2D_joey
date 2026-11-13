@@ -64,12 +64,18 @@ func run() -> void:
 	_build_houses()
 	_build_lamps()
 	_build_benches()
+	_build_blender_props()
 	_build_trees()
 	_build_bushes_and_rocks()
 	_build_grass()
 	if w.with_lake:
 		_build_lake_life()
 	var sp := Vector2(_path_x, _path_top + 3.0) if w.with_lake else roads[0].get_center()
+	# 出生点必须能站人：沿土路（或主街）往前找第一个空地
+	for k in 40:
+		if w.can_stand(sp):
+			break
+		sp += Vector2(0, 0.5) if w.with_lake else Vector2(0.5, 0)
 	w.spawn_point = Vector3(sp.x, w.ground_y(sp.x, sp.y), sp.y)
 	for c in [P.HOUSE, P.LAMP, P.TREE, P.BUSH, P.ROCK, P.FENCE, P.BENCH, P.ROAD]:
 		w.stats[String(c)] = pl.count(c)
@@ -598,6 +604,50 @@ func _build_trees() -> void:
 		var pine := rng.randf() < (0.92 if belt else 0.55)
 		var mesh: ArrayMesh = _pines[rng.randi_range(0, _pines.size() - 1)] if pine else _broads[rng.randi_range(0, _broads.size() - 1)]
 		try_tree(p, mesh, rng.randf_range(0.75, 1.2), pine)
+
+
+## Blender 资产（P3）：有资产目录时，在路边放一口石井和几个集市摊位（正面朝路），同样经过摆放规则检查
+func _build_blender_props() -> void:
+	if not PWAssetLibrary._blender_loaded:
+		PWAssetLibrary.load_blender_catalog()
+	var specs := [["bl_well", 1, 2.6], ["bl_market_stall", 3, 2.0]]
+	for spec: Array in specs:
+		var item: Dictionary = {}
+		for it in PWAssetLibrary.in_category("blender"):
+			if it.id == spec[0]:
+				item = it
+		if item.is_empty():
+			continue
+		var placed := 0
+		for attempt in 60:
+			if placed >= spec[1]:
+				break
+			var r: Rect2 = roads[rng.randi_range(0, roads.size() - 1)]
+			var horiz := r.size.x >= r.size.y
+			var side := -1 if rng.randf() < 0.5 else 1
+			var depth: float = spec[2]
+			var p: Vector2
+			var to_road: Vector2
+			if horiz:
+				p = Vector2(rng.randf_range(r.position.x + 3.0, r.end.x - 3.0), (r.position.y - depth) if side < 0 else (r.end.y + depth))
+				to_road = Vector2(0, 1) if side < 0 else Vector2(0, -1)
+			else:
+				p = Vector2((r.position.x - depth) if side < 0 else (r.end.x + depth), rng.randf_range(r.position.y + 3.0, r.end.y - 3.0))
+				to_road = Vector2(1, 0) if side < 0 else Vector2(-1, 0)
+			var mesh: Mesh = item.build.call(rng.randi_range(0, 7))
+			var a := mesh.get_aabb()
+			var half := Vector2(maxf(absf(a.position.x), absf(a.end.x)), maxf(absf(a.position.z), absf(a.end.z)))
+			var ext := half if horiz else Vector2(half.y, half.x)
+			var rect := Rect2(p - ext, ext * 2.0)
+			if not on_land(rect, 1.5) or not pl.can_place_rect(P.PROP, rect, 0.0, true):
+				continue
+			# 模型正面朝 +Z：转到朝向道路
+			var yaw := atan2(to_road.x, to_road.y)
+			batch.add_static(mesh, Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, 0, p.y)))
+			pl.add_rect(P.PROP, rect, 0.0, true)
+			pl.solid_rects.append(rect)
+			placed += 1
+		w.stats[String(spec[0])] = placed
 
 
 ## 草坪：密度 0.45，北边林带下 0.25；岸边碎石带和湖里没有；路、房子、门前通道等由 PWPlacement 排除

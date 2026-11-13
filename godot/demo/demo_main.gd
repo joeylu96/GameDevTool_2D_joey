@@ -72,8 +72,12 @@ func _show_hub(page := "generator") -> void:
 
 
 func _hub_screenshot(args: Dictionary) -> void:
+	if args.has("hubstyle"):  # --hubstyle=forest：场景生成器选中某个风格
+		hub._select_style(args["hubstyle"])
 	if args.get("hubpage", "") == "generator" and args.has("hubpreview"):
 		await hub._preview_world()
+	if args.has("hubcat"):  # --hubcat=N：资源库选第 N 个分类（9 = Blender 资产）
+		hub._select_category(int(args["hubcat"]))
 	for i in int(args.get("frames", "90")):
 		await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_png(args["screenshot"])

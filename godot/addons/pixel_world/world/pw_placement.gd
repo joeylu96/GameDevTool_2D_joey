@@ -51,6 +51,9 @@ const GAP := {
 	"house|house": 1.5,
 	"house|road": 1.2,
 	"bench|lamp": 0.6,
+	"path|prop": 0.4,
+	"prop|road": 0.3,
+	"door|prop": 0.6,
 	# 本来就伸进水里的东西
 	"landmark|water": -99.0,
 	"path|water": -99.0,
@@ -62,7 +65,7 @@ const GAP := {
 	"road|water": -99.0,
 	"door|door": -99.0,
 	"door|house": 0.0,         # 门前通道紧贴自家正门（相接可以，压进去不行）
-	"landmark|path": -99.0,    # 小路通进兴趣点
+	"landmark|path": -99.0,    # 小路通进兴趣点（自然场景）；小镇里的摆件另用 PROP 类别，不能挡路
 	# 草丛（半径约 0.12 米）：不长在路、水、建筑、设施底下；树干和灌木旁边可以长
 	"grass|road": 0.15,
 	"grass|path": 0.05,

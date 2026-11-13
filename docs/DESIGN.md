@@ -117,10 +117,26 @@ GameDevTool_2D_joey/
   - 房屋：长、宽、层数；屋顶类型（双坡、四坡）；老虎窗数量；烟囱；墙面材质（竖木板、横木板、石墙）和主色。
   - 其他：灯塔、松树（体素锥体层叠）、阔叶树、路灯、篱笆、码头、雪人、木箱等。
 - **像素贴图**
-  1. 按 16 texel/米 自动展 UV。
+  1. 按 32 texel/米 自动展 UV。
   2. 程序化绘制像素图案（木板缝、窗框、砖缝）。
   3. 量化到共享调色板，用 Nearest 过滤导出。
 - **导出**：批量导出 glTF，同时写入 Godot 资产目录（类型、占地格数、标签），Godot 端自动识别。
+
+**P3 实现情况（进行中，第一批已打通）**
+
+| 文件 | 内容 |
+|---|---|
+| `blender/pixel_world_blender/style.py` | 读取 `shared/style/style.json`（调色板、像素密度），与 Godot 端同一来源 |
+| `blender/pixel_world_blender/pixtex.py` | numpy 程序化像素贴图：木板、瓦片、砖石、针叶、斑驳、帆布条纹、窗户（与 `pw_textures.gd` 同一套规则） |
+| `blender/pixel_world_blender/builder.py` | 网格构建：按材质分组的面、米制 UV 投影、最近邻像素材质（材质名 `pw_<键>`） |
+| `blender/pixel_world_blender/generators/` | 农舍、松树、石井、集市摊位（按种子随机、参数可覆盖） |
+| `blender/pixel_world_blender/export.py` | 批量生成变体、导出 .glb、写 `catalog.json` |
+| `blender/pixel_world_blender/__init__.py` | Blender 插件：3D 视图侧边栏面板（生成 / 导出全部到 Godot） |
+| `tools/blender_build_assets.py` | 命令行无界面批量生成 |
+| `PWAssetLibrary.load_blender_catalog()` | Godot 端读 `catalog.json`，资产进资源库「Blender 资产」分类；材质按 `pw_<键>` 换成统一的 `pixel_world` 材质 |
+
+已验证：Blender 5.2.4 无界面生成 4 种资产 × 4 个变体，Godot 4.7.2 导入、在资源库预览、小镇路边自动摆放（石井 1 口、集市摊位 3 个，经摆放规则检查）。
+下一步：把灯塔、阔叶树、路灯等迁到 Blender；四坡屋顶、横木板 / 石墙墙面；雪人等季节性摆件；资产目录增加「占地格数、标签」供生成器按需挑选。
 
 ## 7. 模块 D：NPC 生成（Blender + Godot）
 
@@ -177,7 +193,8 @@ P1 和 P2 不依赖 Blender，可以先做，最快看到效果。
 - [x] **画质提升**：32 texel/米贴图 + Mipmap、门窗部件化、雨天积水与涟漪、随机成簇的积雪、透明分层的湖（湖底、水草、鱼群）、可操控的小镇居民（`PWCharacter`）
 - [x] **定稿与优化**：锐利双线性采样（移动不闪烁）、太阳连续转动、树 / 路灯 / 篱笆 / 长椅多样化、码头改为独立甲板、静态与植被合批（帧率约 +20%），参数记录在 `docs/VISUAL_SPEC.md`
 - [x] **P2**：小镇 / 野外生成器（`PWWorld`）+ 摆放规则（`PWPlacement`）+ 编辑器面板 + 回归测试；阴影改为小步更新太阳方向 + 级联跟随镜头（细阴影不再闪），规则见 `docs/VISUAL_SPEC.md`
-- [ ] **P3**：Blender 资产生成器
+- [x] **场景风格与主界面**：风格表（小镇、森林、平原 + 4 种规划中）；自然风格的大湖 + 河流、平滑小路、木桥；草（`PWGrass` 规则）；主界面 `PWHub`（资源库 / 场景生成器 / 特效库 / 天气光照）；中文界面
+- [ ] **P3**：Blender 资产生成器（进行中：插件骨架、4 种生成器、批量导出、Godot 资源库接入已完成）
 - [ ] **P4**：NPC 流水线
 - [ ] **P5**：打磨
 

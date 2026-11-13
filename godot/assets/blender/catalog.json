@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "generator": "pixel_world_blender 0.1.0",
+  "blender": "5.2.4 LTS",
+  "texel_density": 32.0,
+  "style": "/Users/lujunjie/Projects/GameDevTool_2D_joey/.claude/worktrees/styles-hub-p3/shared/style/style.json",
+  "assets": [
+    {
+      "id": "bl_cottage",
+      "kind": "cottage",
+      "name": "农舍",
+      "category": "buildings",
+      "desc": "Blender 生成的农舍：石基、木板墙、双坡瓦顶、门窗和烟囱。",
+      "vary": "宽度、进深、墙色（红 / 赭 / 青 / 木）、屋顶（灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。",
+      "files": [
+        "cottage_0.glb",
+        "cottage_1.glb",
+        "cottage_2.glb",
+        "cottage_3.glb"
+      ],
+      "footprint": [
+        6.9,
+        5.65
+      ],
+      "height": 6.0,
+      "plant": false
+    },
+    {
+      "id": "bl_pine",
+      "kind": "pine",
+      "name": "松树",
+      "category": "trees",
+      "desc": "Blender 生成的松树：八边形分层树冠，裙边深、顶盖浅，下雪时每层顶盖积白。",
+      "vary": "层数、底部粗细、收分、坡度、扭转角随种子变化；放进场景时再随机朝向、比例、色调。",
+      "files": [
+        "pine_0.glb",
+        "pine_1.glb",
+        "pine_2.glb",
+        "pine_3.glb"
+      ],
+      "footprint": [
+        2.21,
+        2.21
+      ],
+      "height": 4.25,
+      "plant": true
+    },
+    {
+      "id": "bl_well",
+      "kind": "well",
+      "name": "石井",
+      "category": "props",
+      "desc": "Blender 生成的石井：石砌井圈、木柱小屋顶、辘轳和吊桶，适合放在小镇广场或农舍旁。",
+      "vary": "井圈粗细、屋顶颜色（灰 / 红）、屋顶坡度随种子变化。",
+      "files": [
+        "well_0.glb",
+        "well_1.glb",
+        "well_2.glb",
+        "well_3.glb"
+      ],
+      "footprint": [
+        2.49,
+        1.59
+      ],
+      "height": 2.76,
+      "plant": false
+    },
+    {
+      "id": "bl_market_stall",
+      "kind": "market_stall",
+      "name": "集市摊位",
+      "category": "street",
+      "desc": "Blender 生成的集市摊位：木柜台、条纹帆布顶棚、水果筐和木箱，适合小镇广场。",
+      "vary": "顶棚颜色（红 / 青 / 黄条纹）、摊位宽度、水果种类和数量随种子变化。",
+      "files": [
+        "market_stall_0.glb",
+        "market_stall_1.glb",
+        "market_stall_2.glb",
+        "market_stall_3.glb"
+      ],
+      "footprint": [
+        3.59,
+        1.9
+      ],
+      "height": 2.7,
+      "plant": false
+    }
+  ]
+}

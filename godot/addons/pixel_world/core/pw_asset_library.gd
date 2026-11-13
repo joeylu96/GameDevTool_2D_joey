@@ -27,11 +27,88 @@ const CATEGORIES := [
 	{"id": "blender", "name": "Blender 资产"},
 ]
 
-## Blender 生成的资产（P3）由 PWBlenderCatalog 在运行时追加进来
+## Blender 生成的资产（P3）：读 res://assets/blender/catalog.json 追加进来；也可以用 register() 手动登记
+const BLENDER_DIR := "res://assets/blender/"
+const Mats := preload("res://addons/pixel_world/core/pw_materials.gd")
+const SHADER := preload("res://addons/pixel_world/shaders/pixel_world.gdshader")
 static var _extra: Array[Dictionary] = []
+static var _blender_loaded := false
+static var _blender_meshes := {}  # "文件名" -> ArrayMesh（材质已换成 pixel_world）
+
+
+## 读 Blender 资产目录。资产登记到「Blender 资产」分类（semantic 记录它本来属于哪一类，如 buildings）
+static func load_blender_catalog() -> int:
+	_blender_loaded = true
+	var path := BLENDER_DIR + "catalog.json"
+	if not FileAccess.file_exists(path):
+		return 0
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not (data is Dictionary):
+		push_warning("PWAssetLibrary: %s 格式不对" % path)
+		return 0
+	var n := 0
+	for a: Dictionary in data.get("assets", []):
+		var files: Array = a.get("files", [])
+		if files.is_empty():
+			continue
+		var fp: Array = a.get("footprint", [2, 2])
+		register({
+			"id": a.id, "cat": "blender", "semantic": a.get("category", ""), "name": a.name + "（Blender）",
+			"size": maxf(maxf(fp[0], fp[1]), float(a.get("height", 2.0)) * 0.8),
+			"plant": a.get("plant", false),
+			"desc": a.get("desc", "") + "  来源：%s，%d 个变体。" % [data.get("generator", "Blender"), files.size()],
+			"vary": a.get("vary", ""),
+			"build": func(s: int) -> Mesh: return blender_mesh(files[s % files.size()]),
+		})
+		n += 1
+	return n
+
+
+## 加载一个 Blender 导出的 .glb，合并成一个 ArrayMesh，并把每个材质换成统一的 pixel_world 材质：
+## 贴图沿用导出的像素贴图；其余参数按材质名（pw_<键>）从 PWMaterials.DEFS 取，所以积雪、潮湿、
+## 夜间发光（窗玻璃）等效果和代码生成的资产完全一样。
+static func blender_mesh(file: String) -> Mesh:
+	if _blender_meshes.has(file):
+		return _blender_meshes[file]
+	var res: Variant = load(BLENDER_DIR + file) if ResourceLoader.exists(BLENDER_DIR + file) else null
+	var out := ArrayMesh.new()
+	if res is PackedScene:
+		var inst := (res as PackedScene).instantiate()
+		for mi: MeshInstance3D in inst.find_children("*", "MeshInstance3D", true, false):
+			var xf := mi.transform
+			for s in mi.mesh.get_surface_count():
+				var st := SurfaceTool.new()
+				st.append_from(mi.mesh, s, xf)
+				out = st.commit(out)
+				out.surface_set_material(out.get_surface_count() - 1, _convert_material(mi.get_active_material(s)))
+		inst.free()
+	_blender_meshes[file] = out
+	return out
+
+
+static func _convert_material(src: Material) -> Material:
+	var key := ""
+	if src != null:
+		key = src.resource_name.trim_prefix("pw_")
+	var m := ShaderMaterial.new()
+	m.shader = SHADER
+	m.set_shader_parameter("uv_in_meters", false)  # Blender 端已经按 32 texel/米 算好了 UV
+	if src is BaseMaterial3D and (src as BaseMaterial3D).albedo_texture != null:
+		m.set_shader_parameter("albedo_tex", (src as BaseMaterial3D).albedo_texture)
+	var def: Dictionary = Mats.DEFS.get(key, {})
+	for p: String in def:
+		if p == "tex" or p == "uv_in_meters" or (p.ends_with("_tex") and def[p] is String):
+			continue
+		m.set_shader_parameter(p, def[p])
+	if key == "glass":
+		m.set_shader_parameter("emission_full", 1.0)
+		m.set_shader_parameter("emission_random_off", 0.3)
+	return m
 
 
 static func items() -> Array[Dictionary]:
+	if not _blender_loaded:
+		load_blender_catalog()
 	var out: Array[Dictionary] = [
 		{"id": "pine", "cat": "trees", "name": "松树 / 冷杉", "size": 6.0, "plant": true,
 			"desc": "八边形层层叠起的针叶树，深色裙边 + 浅色顶盖，下雪时每层顶盖整块积白。",

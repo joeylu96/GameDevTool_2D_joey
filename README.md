@@ -30,41 +30,64 @@
 |---|---|
 | `shared/style/` | 风格规范：调色板、像素密度、相机参数。全工具链只有这一份来源 |
 | `godot/addons/pixel_world/` | Godot 4.7 插件 |
-| `godot/addons/pixel_world/world/` | 场景生成（P2）：`PWWorld`、小镇 / 野外生成器、摆放规则、合批 |
+| `godot/addons/pixel_world/world/` | 场景生成：`PWWorld`、风格表 `PWStyles`、小镇 / 自然（森林、平原）生成器、草、摆放规则、合批 |
+| `godot/addons/pixel_world/ui/` | 主界面 `PWHub`（资源库 / 场景生成器 / 特效库 / 天气光照）、3D 预览、界面主题、中文字体 |
+| `godot/assets/blender/` | Blender 生成的资产（.glb + `catalog.json`），由 `tools/blender_build_assets.py` 产出 |
 | `godot/demo/` | 演示场景 |
 | `godot/tests/` | 无界面回归测试和画面闪烁统计脚本 |
+| `blender/pixel_world_blender/` | Blender 5.2 插件（P3）：参数化资产生成器、像素贴图、glTF 导出 |
 | `tools/sync_style.py` | 把 `style.json` 同步成 Godot 可用的常量文件 |
-| `blender/` | Blender 插件（P3 阶段开始） |
+| `tools/blender_build_assets.py` | 命令行批量生成 Blender 资产 |
+| `tools/subset_font.py` | 裁剪中文界面字体（思源黑体，OFL 许可） |
 
 ## 运行 Demo
 
-用 Godot 4.7 打开 `godot/project.godot`，按 F5 运行。
+用 Godot 4.7 打开 `godot/project.godot`，按 F5 运行。启动后先看到**主界面**：
 
-- 操作：WASD / 方向键控制小人走动（镜头跟随），Q/E 旋转镜头，滚轮缩放。可以走进湖边浅水，雨天踩进水洼会有波纹，靠近鱼群鱼会游开。
-- 左上角面板：「Scene」切换小镇 / 野外，「New」换一个随机种子重新生成；切换天气、调整时间；「Walk」关闭后 WASD 和鼠标拖动改为平移镜头；「Pixel」「Tilt-shift」可开启复古像素渲染和移轴效果（默认关闭）。
+- **场景生成器**：选风格（海边小镇、森林、平原；雪原、海岛、沙漠绿洲、峡谷即将推出），设种子 / 尺寸 / 密度，「预览」后「进入场景」。
+- **资源库**：按分类浏览所有资源，3D 预览可拖动旋转、滚轮缩放，「换一批」看同一资源放进场景时的不同变化；「Blender 资产」分类是 P3 生成的模型。
+- **特效库**：天气、积水涟漪、积雪、夜间灯光、水面，在演示小场景里实时查看。
+- **天气光照**：拖动时间看一天的光线，查看昼夜关键帧。
+
+进入场景后：WASD / 方向键走动（镜头跟随），Q/E 旋转镜头，滚轮缩放；左上角面板可回到主界面、换一个场景、切换天气和时间、开关像素风和移轴。
+在 Godot 编辑器里，插件会在顶部多一个「Pixel World」主屏幕（与 2D / 3D / 脚本 并列），内容相同，按钮是「生成到当前场景」。
 
 也可以用命令行截图，方便验证效果：
 
 ```bash
 /Applications/Godot.app/Contents/MacOS/Godot --path godot --rendering-driver opengl3 -- \
-  --theme=wild --seed=42 --weather=snow --snap --hour=21 --screenshot=/tmp/shot.png
+  --theme=forest --seed=42 --weather=snow --snap --hour=21 --screenshot=/tmp/shot.png
 ```
 
-## 生成场景（P2）
+## 生成场景
 
-- **编辑器里**：打开或新建一个 3D 场景，右侧停靠面板「Pixel World」里选主题（小镇 / 野外）、种子、尺寸和各类密度，点「生成」；不满意点「重新随机」；满意后「另存为 .tscn」，得到可以手工修改的静态场景。
+- **编辑器里**：打开或新建一个 3D 场景，在「Pixel World」主屏幕的场景生成器里点「生成到当前场景」；或用右侧停靠面板「Pixel World」快速生成，满意后「另存为 .tscn」，得到可以手工修改的静态场景。
 - **代码里**：
 
 ```gdscript
 var world := PWWorld.new()
-world.theme = "town"        # 或 "wild"
+world.theme = "town"        # 或 "forest"、"plains"（见 PWStyles）
 world.seed_value = 42
-world.size = 80             # 野外建议 128
+world.size = 80             # 森林 / 平原建议 128
 add_child(world)            # generate_on_ready 默认为 true，加入场景树时自动生成
 # 查询：world.ground_y(x, z)、world.water_depth(x, z)、world.can_stand(Vector2(x, z))、world.spawn_point
 ```
 
-摆放规则（树、路灯、房屋、门前通道之间的间距等）和阴影规则见 [docs/VISUAL_SPEC.md](docs/VISUAL_SPEC.md)。
+摆放规则、草的规则、水系规则和阴影规则见 [docs/VISUAL_SPEC.md](docs/VISUAL_SPEC.md)。
+
+## Blender 资产（P3）
+
+需要 Blender 5.2 LTS。两种用法：
+
+- **命令行批量生成**（推荐，Windows / macOS 一样）：在仓库根目录运行
+  `blender -b -P tools/blender_build_assets.py`（可加 `-- --variants 6 --only cottage,well`），
+  输出到 `godot/assets/blender/`；然后打开 Godot 编辑器（或 `godot --headless --path godot --import`）导入。
+- **在 Blender 里交互使用**：把 `blender/pixel_world_blender` 文件夹安装为插件（编辑 → 偏好设置 → 插件 → 从磁盘安装，选这个文件夹打包的 zip，或直接复制到 Blender 的 addons 目录），
+  3D 视图侧边栏（N）出现「Pixel World」标签页：选资产和种子「生成」，或「导出全部到 Godot」。
+
+目前的生成器：农舍、松树、石井、集市摊位（`blender/pixel_world_blender/generators/`）。它们读取同一份 `shared/style/style.json`，
+像素密度 32 texel/米、只用调色板颜色；导入 Godot 后材质自动换成统一的 `pixel_world` 材质，所以积雪、潮湿、夜间窗户发光和代码生成的资产完全一样。
+小镇会把石井和集市摊位摆在路边（同样经过摆放规则检查）。
 回归测试：`godot --headless --path godot --script res://tests/test_world_gen.gd`。
 
 ## 在自己的场景里使用
