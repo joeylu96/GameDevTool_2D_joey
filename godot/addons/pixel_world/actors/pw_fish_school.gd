@@ -1,3 +1,4 @@
+@tool
 class_name PWFishSchool
 extends Node3D
 ## 一群在浅水区游动的小鱼（MultiMesh，一种颜色一个）。随机漫游；快出界或水太浅时掉头；

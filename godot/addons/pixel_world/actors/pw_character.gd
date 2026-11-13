@@ -1,3 +1,4 @@
+@tool
 class_name PWCharacter
 extends Node3D
 ## 简单的小镇居民：Q 版低模身体（约 1.6 米），程序化走路动画。

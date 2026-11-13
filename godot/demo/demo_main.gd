@@ -1,5 +1,5 @@
 extends Control
-## Demo 入口：渲染容器 + 生成的场景（PWWorld：小镇 / 野外）+ 昼夜 + 天气 + 相机 + 后期 + 角色 + 控制面板。
+## Demo 入口：先显示主界面（PWHub），进入场景后是渲染容器 + 生成的场景（PWWorld）+ 昼夜 + 天气 + 相机 + 后期 + 角色 + 控制面板。
 ## 默认「走路模式」：WASD / 方向键控制角色，镜头跟随；关闭后 WASD 平移镜头。
 ##
 ## 命令行截图（用于自动验证）：
@@ -35,19 +35,78 @@ var _dragging := false
 var _auto_walk := Vector3.ZERO
 
 
+var hub: PWHub
+var ui: Node
+
+
+## 启动：默认先显示主界面（PWHub）；命令行带了场景参数（自动化截图 / 跑分）时直接进场景。
+## --hub 强制显示主界面，--hubpage=generator|assets|effects|lighting|about 选页（截图用）。
 func _ready() -> void:
 	Globals.ensure_runtime()
+	var args := _args()
+	var direct := false
+	for k in ["theme", "seed", "weather", "hour", "player", "focus", "bench", "seq", "diffshot", "walk"]:
+		if args.has(k):
+			direct = true
+	if args.has("hub"):
+		direct = false
+	if direct:
+		_start_scene({"theme": args.get("theme", "town"), "seed": int(args.get("seed", "7")),
+			"size": int(args.get("size", str(PWStyles.get_style(args.get("theme", "town")).size)))})
+		_apply_cmdline()
+	else:
+		_show_hub(args.get("hubpage", "generator"))
+		if args.has("screenshot"):
+			_hub_screenshot(args)
+
+
+func _show_hub(page := "generator") -> void:
+	hub = PWHub.new()
+	hub.name = "Hub"
+	add_child(hub)
+	hub.enter_scene.connect(func(cfg: Dictionary):
+		hub.queue_free()
+		hub = null
+		_start_scene(cfg))
+	hub.show_page(page)
+
+
+func _hub_screenshot(args: Dictionary) -> void:
+	if args.get("hubpage", "") == "generator" and args.has("hubpreview"):
+		await hub._preview_world()
+	for i in int(args.get("frames", "90")):
+		await get_tree().process_frame
+	get_viewport().get_texture().get_image().save_png(args["screenshot"])
+	print("screenshot saved: ", args["screenshot"])
+	get_tree().quit()
+
+
+## 回到主界面：拆掉整个场景
+func back_to_hub() -> void:
+	if display != null:
+		display.queue_free()
+	if ui != null:
+		ui.queue_free()
+	display = null
+	ui = null
+	world = null
+	player = null
+	tod = null
+	weather = null
+	rig = null
+	post = null
+	_show_hub()
+
+
+func _start_scene(cfg: Dictionary) -> void:
 	display = PixelDisplay.new()
 	add_child(display)
 	var vp := display.viewport
 
-	var args := _args()
 	world = PWWorld.new()
 	world.name = "World"
 	world.generate_on_ready = false
-	world.theme = args.get("theme", "town")
-	world.seed_value = int(args.get("seed", "7"))
-	world.size = int(args.get("size", str(PWStyles.get_style(world.theme).size)))
+	PWHub.apply_config(world, cfg)
 	vp.add_child(world)
 	world.generate()
 
@@ -75,11 +134,9 @@ func _ready() -> void:
 	vp.add_child(post)
 	_after_generate()
 
-	var ui := DemoUI.new()
+	ui = DemoUI.new()
 	ui.setup(self)
 	add_child(ui)
-
-	_apply_cmdline()
 
 
 func _args() -> Dictionary:
@@ -293,6 +350,8 @@ func _diff_shot(path: String, frames: int, gap: int, pan := Vector3.ZERO) -> voi
 
 ## 走路模式：WASD / 方向键按镜头方向移动角色，镜头平滑跟随
 func _process(delta: float) -> void:
+	if player == null or rig == null:
+		return  # 在主界面
 	var dir := Vector3.ZERO
 	if walk_mode:
 		var mv := Vector2.ZERO
@@ -318,6 +377,8 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if rig == null:
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:

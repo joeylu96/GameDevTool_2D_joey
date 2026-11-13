@@ -167,6 +167,8 @@ func _build_roads() -> void:
 	var land_bottom := (shore_base - 7.0) if w.with_lake else H - 3.0
 	var main_z := rng.randf_range(-H * 0.15, H * 0.15) if w.with_lake else rng.randf_range(-H * 0.2, H * 0.2)
 	main_z = minf(main_z, land_bottom - MIN_BLOCK - ROAD_W)
+	# 小地图（如主界面的演示场景）放不下完整街区时，主街仍要留在地图里、离北边至少 8 米
+	main_z = clampf(main_z, -H + 8.0, maxf(land_bottom - ROAD_W, -H + 8.0))
 	var main := Rect2(-H, main_z - ROAD_W * 0.5, H * 2.0, ROAD_W)
 	roads.append(main)
 	_split(Rect2(-H, -H, H * 2.0, main.position.y + H), 0)
@@ -183,7 +185,7 @@ func _build_roads() -> void:
 ## BSP：把区域切成街区，切线就是支路。只有足够大的区域才继续切
 func _split(region: Rect2, depth: int) -> void:
 	var max_depth := 2 if w.size <= 96 else 3
-	if depth >= max_depth:
+	if depth >= max_depth or region.size.x <= 0.0 or region.size.y <= 0.0:
 		return
 	var horiz := region.size.y > region.size.x  # 区域偏高 → 横着切（横向的路）
 	var span := region.size.y if horiz else region.size.x
