@@ -78,8 +78,22 @@ func _hub_screenshot(args: Dictionary) -> void:
 		await hub._preview_world()
 	if args.has("hubcat"):  # --hubcat=N：资源库选第 N 个分类（9 = Blender 资产）
 		hub._select_category(int(args["hubcat"]))
+	if args.has("hubitem"):  # --hubitem=N：资源库选当前分类的第 N 个资源
+		hub._item_list.select(int(args["hubitem"]))
+		hub._select_item(hub._asset_items[int(args["hubitem"])])
+	if args.has("hubfx"):  # --hubfx=分类:序号,分类:序号…：特效库依次切换（每次间隔 40 帧），检查切换是否正常
+		for step: String in (args["hubfx"] as String).split(","):
+			var kv := step.split(":")
+			hub._select_fx_category(kv[0])
+			hub._fx_list.select(int(kv[1]))
+			hub._select_fx(hub._fx_items[int(kv[1])])
+			for i in 40:
+				await get_tree().process_frame
 	for i in int(args.get("frames", "90")):
 		await get_tree().process_frame
+	if args.has("fxt"):  # --fxt=秒：重新播放当前动作特效，过这么多秒后截图（看特效某一时刻）
+		hub._play_fx()
+		await get_tree().create_timer(float(args["fxt"])).timeout
 	get_viewport().get_texture().get_image().save_png(args["screenshot"])
 	print("screenshot saved: ", args["screenshot"])
 	get_tree().quit()

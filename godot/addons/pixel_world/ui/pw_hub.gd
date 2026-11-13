@@ -33,7 +33,6 @@ var _asset_vary: Label
 var _asset_items: Array[Dictionary] = []
 var _asset_item: Dictionary = {}
 var _asset_batch := 0
-var _asset_single := false
 
 # 场景生成器
 var _style_id := "town"
@@ -133,8 +132,12 @@ func show_page(id: String) -> void:
 				_select_category(0)
 		"effects":
 			_attach_diorama(_fx_host)
+			_apply_fx()
 		"lighting":
 			_attach_diorama(_light_host)
+			if _fx_actor != null:
+				_fx_actor.visible = false
+			_diorama.reset_view()
 
 
 func _page(title: String, subtitle: String) -> VBoxContainer:
@@ -184,9 +187,6 @@ func _build_assets_page() -> Control:
 	head.add_child(T.button("换一批", func():
 		_asset_batch += 1
 		_show_asset()))
-	head.add_child(T.button("单个 / 多个", func():
-		_asset_single = not _asset_single
-		_show_asset()))
 	_asset_desc = T.label("", 14)
 	_asset_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	iv.add_child(_asset_desc)
@@ -220,25 +220,59 @@ func _select_item(it: Dictionary) -> void:
 	_show_asset()
 
 
+## 展示数量按资源本身决定（PWAssetLibrary 的 show）：
+##   [最少, 最多] —— 场景里成片出现的（树、草、石头……）：每次随机一个数量，自然散开，每个都不一样
+##   "styles:N"   —— 有固定款式的（路灯、篱笆、长椅）：每种款式一个，排成一排
+##   1            —— 独一个的（角色、房屋、地标）：只放一个，「换一批」换一个变体
 func _show_asset() -> void:
 	var it := _asset_item
 	if it.is_empty():
 		return
 	_asset_title.text = it.name
 	_asset_desc.text = it.desc
-	_asset_vary.text = "变化：" + it.vary
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([it.id, _asset_batch])
 	var holder := Node3D.new()
 	var sz: float = it.get("size", 2.0)
-	var count := 1 if _asset_single else 6
-	var gap := sz * 1.25
+	var show: Variant = it.get("show", 1)
+	var count := 1
+	var mode := "single"
+	if show is Array:
+		mode = "random"
+		count = rng.randi_range(show[0], show[1])
+	elif show is String and (show as String).begins_with("styles:"):
+		mode = "styles"
+		count = int((show as String).trim_prefix("styles:"))
+	var mode_text := {"single": "单个展示（换一批 = 换一个变体）", "random": "随机 %d 个（场景里会成片出现，每个都不一样）" % count,
+		"styles": "全部 %d 种款式" % count}
+	_asset_vary.text = "变化：%s\n展示：%s" % [it.vary, mode_text[mode]]
+	var placed: Array[Vector2] = []
+	var radius := sz * (0.6 + sqrt(float(count)) * 0.75)
 	for k in count:
-		var node := PWAssetLibrary.instantiate(it, _asset_batch * 6 + k, rng)
-		if count > 1:
-			node.position = Vector3((k % 3 - 1) * gap, 0, (k / 3 - 0.5) * gap)
+		var variant := k if mode == "styles" else _asset_batch * 16 + k
+		var node := PWAssetLibrary.instantiate(it, variant, rng)
+		if mode == "styles":
+			node.position = Vector3((k - (count - 1) * 0.5) * sz * 1.3, 0, 0)
+		elif mode == "random":
+			# 泊松式随机散布：彼此保持一点距离
+			var p := Vector2.ZERO
+			for attempt in 30:
+				p = Vector2(rng.randf_range(-radius, radius), rng.randf_range(-radius, radius))
+				var ok := true
+				for q in placed:
+					if q.distance_to(p) < sz * 0.8:
+						ok = false
+				if ok:
+					break
+			placed.append(p)
+			node.position = Vector3(p.x, 0, p.y)
 		holder.add_child(node)
-	_asset_preview.set_content(holder, sz * (0.8 if count == 1 else 1.7))
+	var frame := sz * 0.8
+	if mode == "styles":
+		frame = sz * (0.5 + count * 0.55)
+	elif mode == "random":
+		frame = radius * 1.1
+	_asset_preview.set_content(holder, frame)
 
 
 # ---------------------------------------------------------------- 场景生成器
@@ -365,7 +399,7 @@ func _preview_world() -> void:
 	var w := PWWorld.new()
 	w.generate_on_ready = false
 	apply_config(w, config())
-	_gen_preview.set_content(w, w.size * 0.42)
+	_gen_preview.set_content(w, w.size * 0.42, false)
 	w.generate()
 	_gen_status.text = "%s #%d：%s" % [PWStyles.get_style(w.theme).name, w.seed_value, _stats_text(w.stats)]
 
@@ -390,47 +424,155 @@ func _enter() -> void:
 
 # ---------------------------------------------------------------- 特效库 / 天气光照（共用一个演示小场景）
 
+## 特效分类：天气（天气系统）、环境（时间 / 水面）、动作（PWVFX：攻击、受击、法术、增益、移动）
+const FX_CATEGORIES := ["天气", "环境", "动作"]
 const EFFECTS := [
-	{"name": "晴天", "weather": "clear", "hour": 11.0, "info": "直射阳光、清晰的阴影（太阳方向每游戏分钟更新一次，阴影稳定不闪）。"},
-	{"name": "多云", "weather": "cloudy", "hour": 11.0, "info": "直射光减弱，阴影变淡，画面整体发灰。"},
-	{"name": "雨：积水与涟漪", "weather": "rain", "hour": 14.0, "info": "地面变暗变亮滑，平地上长出反射天空的水洼，雨滴打出一圈圈涟漪；水面也有雨点。"},
-	{"name": "雷暴：闪电", "weather": "storm", "hour": 17.0, "info": "大雨 + 强风，随机间隔的闪电让画面瞬间变亮。"},
-	{"name": "雪：积雪", "weather": "snow", "hour": 12.0, "info": "朝上的面一簇簇积起雪，积满后成块；路面斑驳；湖面从浅处开始结冰。"},
-	{"name": "暴风雪", "weather": "blizzard", "hour": 12.0, "info": "密集的雪和大风，雾更浓。"},
-	{"name": "雾", "weather": "fog", "hour": 8.0, "info": "距离雾 + 去饱和，远处逐渐看不清。"},
-	{"name": "夜晚：灯光", "weather": "clear", "hour": 21.0, "info": "窗户随机亮灯，路灯灯头发光，地面有平滑渐变的光斑。"},
-	{"name": "水面", "weather": "clear", "hour": 15.0, "info": "浅滩透明能看到沙底和鱼，越深越蓝；岸边浪花、波光短线；河水的波光顺着流向移动。"},
+	{"cat": "天气", "name": "晴天", "weather": "clear", "hour": 11.0, "info": "直射阳光、清晰的阴影（太阳方向每游戏分钟更新一次，阴影稳定不闪）。积雪、积水立刻清除。"},
+	{"cat": "天气", "name": "多云", "weather": "cloudy", "hour": 11.0, "info": "直射光减弱，阴影变淡，画面整体发灰。"},
+	{"cat": "天气", "name": "雨：积水与涟漪", "weather": "rain", "hour": 14.0, "info": "地面变暗变亮滑，平地上长出反射天空的水洼，雨滴打出一圈圈涟漪；水面也有雨点。"},
+	{"cat": "天气", "name": "雷暴：闪电", "weather": "storm", "hour": 17.0, "info": "大雨 + 强风，随机间隔的闪电让画面瞬间变亮。"},
+	{"cat": "天气", "name": "雪：积雪", "weather": "snow", "hour": 12.0, "info": "朝上的面一簇簇积起雪，积满后成块；路面斑驳；湖面从浅处开始结冰。"},
+	{"cat": "天气", "name": "暴风雪", "weather": "blizzard", "hour": 12.0, "info": "密集的雪和大风，雾更浓。"},
+	{"cat": "天气", "name": "雾", "weather": "fog", "hour": 8.0, "info": "距离雾 + 去饱和，远处逐渐看不清。"},
+	{"cat": "环境", "name": "白天", "weather": "clear", "hour": 11.0, "info": "正午的光照，作为对比基准。"},
+	{"cat": "环境", "name": "黄昏", "weather": "clear", "hour": 18.0, "info": "低角度的暖色阳光，长长的影子，天空泛橙。"},
+	{"cat": "环境", "name": "夜晚：灯光", "weather": "clear", "hour": 21.0, "info": "窗户随机亮灯，路灯灯头发光，地面有平滑渐变的光斑。"},
+	{"cat": "环境", "name": "雨夜", "weather": "rain", "hour": 21.0, "info": "夜晚的灯光映在湿漉漉的地面和水洼上。"},
+	{"cat": "环境", "name": "水面", "weather": "clear", "hour": 15.0, "info": "浅滩透明能看到沙底和鱼，越深越蓝；岸边浪花、波光短线；河水的波光顺着流向移动。"},
 ]
+
+var _fx_cat := "天气"
+var _fx_list: ItemList
+var _fx_items: Array[Dictionary] = []
+var _fx_cat_btns := {}
+var _fx_actor: Node3D
+var _fx_loop: CheckBox
+var _fx_play: Button
+var _fx_current: Dictionary = {}
+var _fx_timer := 0.0
 
 
 func _build_effects_page() -> Control:
-	var page := _page("特效库", "工具链内置的效果。点左边的条目，在下面的演示小场景里实时查看（可拖动旋转、滚轮缩放）。")
+	var page := _page("特效库", "工具链内置的效果，分为天气、环境和动作三类。点条目在右边的演示小场景里实时查看。")
 	var row := HBoxContainer.new()
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 12)
 	page.add_child(row)
 	var left := VBoxContainer.new()
-	left.custom_minimum_size.x = 230
+	left.custom_minimum_size.x = 250
+	left.add_theme_constant_override("separation", 8)
 	row.add_child(left)
-	var list := ItemList.new()
-	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	for e: Dictionary in EFFECTS:
-		list.add_item(e.name)
-	left.add_child(list)
+	var tabs := HBoxContainer.new()
+	left.add_child(tabs)
+	for c: String in FX_CATEGORIES:
+		var b := T.button(c, func(): _select_fx_category(c))
+		b.toggle_mode = true
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tabs.add_child(b)
+		_fx_cat_btns[c] = b
+	_fx_list = ItemList.new()
+	_fx_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_fx_list.item_selected.connect(func(i): _select_fx(_fx_items[i]))
+	left.add_child(_fx_list)
+	var prow := HBoxContainer.new()
+	left.add_child(prow)
+	_fx_play = T.button("播放", func(): _play_fx(), true)
+	prow.add_child(_fx_play)
+	_fx_loop = CheckBox.new()
+	_fx_loop.text = "循环播放"
+	_fx_loop.button_pressed = true
+	_fx_loop.focus_mode = Control.FOCUS_NONE
+	prow.add_child(_fx_loop)
 	_fx_info = T.label("", 14)
 	_fx_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_fx_info.custom_minimum_size.y = 90
 	left.add_child(_fx_info)
-	list.item_selected.connect(func(i):
-		var e: Dictionary = EFFECTS[i]
-		_fx_info.text = e.info
-		_ensure_diorama()
-		_diorama.tod.hour = e.hour
-		_diorama.weather.set_weather(e.weather, 1.5, true))
 	_fx_host = VBoxContainer.new()
 	_fx_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(_fx_host)
+	_select_fx_category("天气")
 	return page
+
+
+func _select_fx_category(cat: String) -> void:
+	_fx_cat = cat
+	for k: String in _fx_cat_btns:
+		(_fx_cat_btns[k] as Button).set_pressed_no_signal(k == cat)
+	_fx_items.clear()
+	_fx_list.clear()
+	if cat == "动作":
+		for e: Dictionary in PWVFX.CATALOG:
+			_fx_items.append({"cat": "动作", "vfx": e.id, "name": e.name, "group": e.cat, "info": e.desc})
+			_fx_list.add_item("%s · %s" % [e.cat, e.name])
+	else:
+		for e: Dictionary in EFFECTS:
+			if e.cat == cat:
+				_fx_items.append(e)
+				_fx_list.add_item(e.name)
+	var is_action := cat == "动作"
+	_fx_play.visible = is_action
+	_fx_loop.visible = is_action
+	if not _fx_items.is_empty():
+		_fx_list.select(0)
+		_select_fx(_fx_items[0])
+
+
+func _select_fx(e: Dictionary) -> void:
+	_fx_current = e
+	_fx_info.text = e.info
+	if _current == "effects":
+		_apply_fx()
+
+
+## 在演示小场景里应用当前选中的特效（只在特效页可见时调用，避免主界面一启动就生成演示场景）
+func _apply_fx() -> void:
+	var e := _fx_current
+	if e.is_empty():
+		return
+	_ensure_diorama()
+	if e.has("vfx"):
+		# 动作特效：晴天白天，场景中间站一个角色，镜头拉近
+		_diorama.weather.set_weather("clear", 0.0, true)
+		_diorama.tod.hour = 11.0
+		_ensure_fx_actor()
+		_diorama.distance = 9.0
+		_diorama.pitch = 24.0
+		_diorama.pivot.position = _fx_actor.position + Vector3(0, 0.9, 0)
+		_diorama._update_camera()
+		_play_fx()
+	else:
+		if _fx_actor != null:
+			_fx_actor.visible = false
+		_diorama.tod.hour = e.hour
+		_diorama.weather.set_weather(e.weather, 0.0, true)
+		_diorama.reset_view()
+
+
+func _ensure_fx_actor() -> void:
+	if _fx_actor == null:
+		var c := PWCharacter.new()
+		c.name = "FxActor"
+		var p := _diorama_world.spawn_point
+		c.position = p
+		_diorama.root.add_child(c)
+		_fx_actor = c
+	_fx_actor.visible = true
+
+
+func _play_fx() -> void:
+	if not _fx_current.has("vfx") or _fx_actor == null:
+		return
+	# 特效朝向镜头的右手边，弧线和飞行轨迹从侧面看最清楚
+	var y := deg_to_rad(_diorama.yaw)
+	var right := Vector3(cos(y), 0, -sin(y))
+	var pos := _fx_actor.position
+	var id: String = _fx_current.vfx
+	if id in ["slash", "slash_x", "fireball", "dust"]:
+		_fx_actor.rotation.y = atan2(right.x, right.z)
+	if id == "hit":
+		pos += right * 1.2
+	PWVFX.spawn(id, _diorama.root, pos, right)
+	_fx_timer = 0.0
 
 
 func _build_lighting_page() -> Control:
@@ -509,7 +651,11 @@ func _attach_diorama(host: Control) -> void:
 		host.add_child(_diorama)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _current == "effects" and _fx_current.has("vfx") and _fx_loop != null and _fx_loop.button_pressed:
+		_fx_timer += delta
+		if _fx_timer > 2.2:
+			_play_fx()
 	if _diorama != null and _diorama.tod != null and _clock != null and _current == "lighting":
 		_clock.text = "时间 " + _diorama.tod.get_clock_text()
 		if _auto_time.button_pressed:

@@ -9,6 +9,7 @@ extends RefCounted
 ## 每一步都先 can_place，通过才 add，所以后放的东西不可能压到先放的东西（规则见 PWPlacement）。
 
 const MB := preload("res://addons/pixel_world/core/pw_mesh_builder.gd")
+const Mats := preload("res://addons/pixel_world/core/pw_materials.gd")
 const House := preload("res://addons/pixel_world/assets/placeholder/pw_house_builder.gd")
 const Trees := preload("res://addons/pixel_world/assets/placeholder/pw_tree_builder.gd")
 const Props := preload("res://addons/pixel_world/assets/placeholder/pw_props_builder.gd")
@@ -133,22 +134,52 @@ func _build_terrain() -> void:
 
 
 func _build_lake_bed() -> void:
-	var bed := MB.new()
-	var lr := RandomNumberGenerator.new()
-	lr.seed = rng.randi()
-	for j in w.grid_n:
-		for i in w.grid_n:
+	# 整片湖底一个网格（顶点共享、法线平滑），用 terrain 材质按顶点权重混合沙 / 泥底：
+	# 近岸是沙，往深处逐渐变成泥底，交界是不规则的弯曲边——不再是一格一格随机的方块
+	var n := w.grid_n + 1
+	var idx := {}  # Vector2i -> 顶点序号
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var cols := PackedColorArray()
+	var indices := PackedInt32Array()
+	var vid := func(i: int, j: int) -> int:
+		var key := Vector2i(i, j)
+		if idx.has(key):
+			return idx[key]
+		var xz := w.vert_xz(i, j)
+		var h := w.get_h(i, j) - 0.01
+		var dx := (w.get_h(i + 1, j) - w.get_h(i - 1, j)) * 0.5
+		var dz := (w.get_h(i, j + 1) - w.get_h(i, j - 1)) * 0.5
+		var depth := WATER_Y - h
+		idx[key] = verts.size()
+		verts.append(Vector3(xz.x, h, xz.y))
+		normals.append(Vector3(-dx, w.cell, -dz).normalized())
+		uvs.append(xz)
+		# R = 沙，B = 泥底（与 nature 生成器的 terrain 顶点权重约定一致）
+		cols.append(Color(1.0 - smoothstep(0.9, 1.5, depth), 0.0, smoothstep(0.9, 1.5, depth), 1.0))
+		return idx[key]
+	for j in n - 1:
+		for i in n - 1:
 			var hs := [w.get_h(i, j), w.get_h(i + 1, j), w.get_h(i + 1, j + 1), w.get_h(i, j + 1)]
-			if hs.max() >= -0.001:
-				# 跨越岸线的格子：只要有一个角在水下，也要画（否则岸边会漏缝）
-				if hs.min() >= -0.001:
-					continue
-			var a := w.vert_xz(i, j)
-			var pts := [Vector3(a.x, hs[0] - 0.01, a.y), Vector3(a.x + 1, hs[1] - 0.01, a.y),
-				Vector3(a.x + 1, hs[2] - 0.01, a.y + 1), Vector3(a.x, hs[3] - 0.01, a.y + 1)]
-			var d := a.y + 0.5 - shore(a.x + 0.5)
-			bed.face("sand" if d < 4.5 + lr.randf_range(-1.6, 1.6) else "lakebed", pts, Vector3.UP)
-	batch.add_static(bed.commit(), Transform3D.IDENTITY, false)
+			if hs.min() >= -0.001:
+				continue  # 整格都在岸上（跨岸线的格子要画，否则岸边会漏缝）
+			var a: int = vid.call(i, j)
+			var b: int = vid.call(i + 1, j)
+			var c: int = vid.call(i + 1, j + 1)
+			var d: int = vid.call(i, j + 1)
+			indices.append_array([a, b, c, a, c, d])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_COLOR] = cols
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	mesh.surface_set_material(0, Mats.get_mat("terrain"))
+	batch.add_static(mesh, Transform3D.IDENTITY, false)
 	# 整条湖岸登记为水域（防止树和房子长进水里）
 	var x := -H
 	while x < H:

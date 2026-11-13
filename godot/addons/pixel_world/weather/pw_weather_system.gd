@@ -98,9 +98,20 @@ func set_weather(id: String, duration := -1.0, snap := false) -> void:
 	_next_duration = duration
 	weather = id
 	if snap and _to != null:
-		if _to.snow_target >= 0.0:
-			snow_amount = _to.snow_target
+		# 「立刻到位」= 直接跳到这种天气的稳定状态。snow_target < 0 表示「不下雪、慢慢融化」，
+		# 稳定状态就是没有雪（以前这里保持原值，导致从雪天切回晴天时积雪一直不消失）
+		snow_amount = maxf(_to.snow_target, 0.0)
 		wetness = 0.0 if snow_amount > 0.5 else _to.wet_target
+		_t = 1.0
+		_cur = _values_of(_to)
+		# 空中残留的雨雪也一起清掉：不下的那种直接隐藏，下的那种从头开始飘
+		if _snow != null:
+			_snow.visible = _to.snow > 0.01
+			_rain.visible = _to.rain > 0.01
+			if _snow.visible:
+				_snow.restart()
+			if _rain.visible:
+				_rain.restart()
 
 
 func get_preset_ids() -> Array:
@@ -282,6 +293,10 @@ func _update_particles() -> void:
 		_snow.emitting = snow_i > 0.01
 	if _rain.emitting != (rain_i > 0.01):
 		_rain.emitting = rain_i > 0.01
+	if snow_i > 0.01:
+		_snow.visible = true
+	if rain_i > 0.01:
+		_rain.visible = true
 
 	var wind: Vector2 = _cur["wind"]
 	if wind.distance_to(_last_wind) > 0.02:
