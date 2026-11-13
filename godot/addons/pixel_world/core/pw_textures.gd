@@ -110,10 +110,6 @@ static func _make(key: String) -> Image:
 			return leaves([Pal.mix("grass_0", "cloth_yellow", 0.15), Pal.mix("grass_0", "light_0", 0.35), Pal.c("grass_1")], 510)
 		"leaf_birch_dark":
 			return leaves([Pal.c("grass_1"), Pal.c("grass_0"), Pal.c("grass_2")], 511)
-		"leaf_autumn":
-			return leaves([Pal.c("ochre_0"), Pal.mix("ochre_0", "light_0", 0.4), Pal.c("ochre_1")], 512)
-		"leaf_autumn_dark":
-			return leaves([Pal.c("red_1"), Pal.c("red_0"), Pal.c("red_2")], 513)
 		"flowers":
 			return flowers(507)
 		"weed":
@@ -304,20 +300,48 @@ static func grain(names: Array, seed_value: int, size := 64) -> Image:
 	return img
 
 
-## 白桦树皮：白色底 + 不规则的黑色横向皮孔
-static func birch(seed_value: int, size := 32) -> Image:
+## 白桦树皮 64px（2 米一循环）：象牙白底 + 淡灰的竖向明暗 + 长短不一的横向皮孔（中间黑、两端灰、
+## 上方一道浅高光）+ 少量大块深色疤痕（枝条脱落处）。皮孔是成簇的，不是满屏均匀的小短线。
+static func birch(seed_value: int, size := 64) -> Image:
 	var rng := _rng(seed_value)
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var n := tile_noise(size, 4, rng)
+	var n := fbm(size, 4, rng)
+	var white := Pal.c("frame_0")
+	var shade := Pal.mix("frame_1", "snow_3", 0.5)
 	for y in size:
 		for x in size:
-			img.set_pixel(x, y, Pal.c("frame_0").lerp(Pal.c("snow_3"), n[y * size + x] * 0.5))
-	for i in 14:
-		var x := rng.randi_range(0, size - 1)
-		var y := rng.randi_range(0, size - 1)
-		var w := rng.randi_range(2, 6)
-		for dx in w:
-			_px(img, x + dx, y, Pal.c("ink") if dx > 0 and dx < w - 1 else Pal.c("stone_2"))
+			var v := n[y * size + x]
+			var col := white
+			if v < 0.38:
+				col = white.lerp(shade, 0.6)
+			elif v < 0.5:
+				col = white.lerp(shade, 0.25)
+			img.set_pixel(x, y, col)
+	var ink := Pal.c("ink")
+	var grey := Pal.c("stone_2")
+	var hi := Pal.c("snow_0")
+	# 皮孔：成簇出现，每簇 2~4 条，上下相隔 2~4 像素
+	for c in 9:
+		var cx := rng.randi_range(0, size - 1)
+		var cy := rng.randi_range(0, size - 1)
+		for k in rng.randi_range(2, 4):
+			var w := rng.randi_range(4, 13)
+			var x0 := cx + rng.randi_range(-4, 4)
+			var y0 := cy + k * rng.randi_range(2, 4)
+			for dx in w:
+				var edge := dx < 1 or dx >= w - 1
+				_px(img, x0 + dx, y0, grey if edge else ink)
+				_px(img, x0 + dx, y0 - 1, hi)
+				if not edge and w > 8 and dx > 2 and dx < w - 3:
+					_px(img, x0 + dx, y0 + 1, grey)
+	# 疤痕：深色三角 / 菱形块
+	for i in 3:
+		var sx := rng.randi_range(0, size - 1)
+		var sy := rng.randi_range(0, size - 1)
+		for dy in 5:
+			var half := 3 - absi(dy - 2)
+			for dx in range(-half, half + 1):
+				_px(img, sx + dx, sy + dy, ink if absi(dx) < half else grey)
 	return img
 
 

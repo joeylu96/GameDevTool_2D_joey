@@ -66,7 +66,7 @@ func _ready() -> void:
 	sun.directional_shadow_max_distance = 80.0
 	sun.directional_shadow_split_1 = 0.35
 	sun.directional_shadow_blend_splits = true
-	sun.shadow_blur = 1.0
+	sun.shadow_blur = 2.0  # 配合 5 级软阴影：边缘过渡更宽，太阳转动时边缘平滑移动而不是逐像素跳
 	add_child(sun)
 
 	environment = Environment.new()

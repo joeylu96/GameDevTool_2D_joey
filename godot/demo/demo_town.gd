@@ -462,7 +462,7 @@ func _build_trees() -> void:
 	var pines: Array[Mesh] = []
 	for i in 10:
 		pines.append(Trees.build_pine(1000 + i))
-	var broad_styles := ["oak", "oak", "birch", "poplar", "autumn", "oak", "birch", "poplar", "oak", "autumn", "birch", "poplar"]
+	var broad_styles := ["oak", "oak", "birch", "poplar", "oak", "birch", "poplar", "oak", "oak", "birch", "poplar", "oak"]
 	var broads: Array[Mesh] = []
 	for i in broad_styles.size():
 		broads.append(Trees.build_broadleaf(2000 + i, broad_styles[i]))
@@ -494,7 +494,7 @@ func _build_trees() -> void:
 		var sy := s * _deco.randf_range(0.88, 1.2)
 		var b := Basis(Vector3.UP, yaw).scaled(Vector3(sxz, sy, sxz))
 		_push(xforms, mesh, Transform3D(b, Vector3(p.x, 0, p.y)), _tint(0.1))
-		_solid_circles.append(Vector3(p.x, p.y, 0.35 if is_broad else 0.9 * sxz))
+		_solid_circles.append(Vector3(p.x, p.y, 0.35 if is_broad else 0.55 * sxz))
 	# 灌木：房门两侧 + 空地上零星几丛
 	for spot in _bush_spots:
 		_push(xforms, bushes[_deco.randi_range(0, bushes.size() - 1)], _rand_xf(spot, 0.8, 1.15), _tint(0.1))

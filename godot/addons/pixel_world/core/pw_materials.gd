@@ -52,8 +52,6 @@ const DEFS := {
 	"leaf_dark": {"tex": "leaf_dark", "sway": 0.6},
 	"leaf_birch": {"tex": "leaf_birch", "sway": 0.8},
 	"leaf_birch_dark": {"tex": "leaf_birch_dark", "sway": 0.8},
-	"leaf_autumn": {"tex": "leaf_autumn", "sway": 0.6},
-	"leaf_autumn_dark": {"tex": "leaf_autumn_dark", "sway": 0.6},
 	"weed": {"tex": "weed", "sway": 2.0, "snow_receive": 0.0, "caustics": 1.0},
 	# 地面：puddles = 下雨时积水的程度
 	"grass": {"tex": "grass", "puddles": 0.55},
