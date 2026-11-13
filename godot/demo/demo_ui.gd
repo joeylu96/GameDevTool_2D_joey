@@ -6,6 +6,7 @@ var _clock: Label
 var _hour_slider: HSlider
 var _auto: CheckBox
 var _info: Label
+var _seed: Label
 var _syncing := false
 
 
@@ -26,6 +27,24 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
+
+	# 场景：主题切换 + 换一个种子
+	var scene_row := HBoxContainer.new()
+	box.add_child(scene_row)
+	scene_row.add_child(_label("Scene"))
+	for th in ["town", "wild"]:
+		var tb := Button.new()
+		tb.text = th.capitalize()
+		tb.focus_mode = Control.FOCUS_NONE
+		tb.pressed.connect(func(): main.regenerate(th))
+		scene_row.add_child(tb)
+	var nb := Button.new()
+	nb.text = "New"
+	nb.focus_mode = Control.FOCUS_NONE
+	nb.pressed.connect(func(): main.regenerate("", randi() % 100000))
+	scene_row.add_child(nb)
+	_seed = _label("")
+	scene_row.add_child(_seed)
 
 	box.add_child(_label("Weather"))
 	var grid := GridContainer.new()
@@ -89,6 +108,7 @@ func _process(_delta: float) -> void:
 	_syncing = false
 	_auto.set_pressed_no_signal(main.tod.running)
 	_clock.text = "Time  %s   (%s)" % [main.tod.get_clock_text(), main.weather.weather.capitalize()]
+	_seed.text = "#%d" % main.world.seed_value
 	var keys := "WASD walk  Q/E rotate  wheel zoom" if main.walk_mode else "WASD pan  Q/E rotate  wheel zoom  drag pan"
 	_info.text = "snow %.2f  wet %.2f  night %.2f  render %dx%d\n%s" % [
 		main.weather.snow_amount, main.weather.wetness, main.tod.night_factor,

@@ -1,7 +1,7 @@
 // 湖面：按水深从「透明的浅滩」过渡到「不透明的深水」；天空反射、细碎波光、雨滴 / 脚步涟漪、
-// 岸边浪花；积雪量高时从岸边向外结冰（冰面不透明）。
-// 水深由 shore_z + 湖底剖面参数解析计算（与 Demo 里生成湖底网格的公式一致），不依赖深度缓冲，
-// 因此在 Compatibility / Web 渲染器上也能用。
+// 岸边浪花；积雪量高时从浅处向深处结冰（冰面不透明）。
+// 水深来自水深贴图 depth_tex（R = 水深 / depth_range，由 PWWorld 根据地形生成），
+// 所以任意形状的湖岸都适用；不依赖深度缓冲，Compatibility / Web 渲染器也能用。
 shader_type spatial;
 render_mode blend_mix, cull_back, diffuse_lambert, specular_schlick_ggx;
 
@@ -16,30 +16,11 @@ uniform vec4 ice : source_color = vec4(0.780, 0.863, 0.925, 1.0);
 uniform vec4 ice_crack : source_color = vec4(0.651, 0.765, 0.859, 1.0);
 uniform float texel_density = 32.0;
 uniform float freeze_start = 0.4;
-// 岸线（世界 Z，水在 +Z 一侧）与湖底剖面：d = 离岸距离
-//   d < bend1：bed = -slope1 * d；bend1..bend2：再以 slope2 下降；之后近乎平坦
-// 默认 shore_z 很远 = 没有岸，整片当深水处理。
-uniform float shore_z = 100000.0;
-uniform float slope1 = 0.35;
-uniform float bend1 = 3.0;
-uniform float slope2 = 0.4;
-uniform float bend2 = 9.0;
+uniform sampler2D depth_tex : filter_linear, repeat_disable, hint_default_white;
+uniform vec4 depth_rect = vec4(-50.0, -50.0, 100.0, 100.0);  // 贴图覆盖的世界 XZ 范围：x0, z0, 宽, 高
+uniform float depth_range = 4.0;
 
 varying vec3 wp;
-
-float bed_y(float d) {
-	if (d <= 0.0) {
-		return 0.0;
-	}
-	if (d < bend1) {
-		return -slope1 * d;
-	}
-	float y1 = -slope1 * bend1;
-	if (d < bend2) {
-		return y1 - slope2 * (d - bend1);
-	}
-	return y1 - slope2 * (bend2 - bend1) - 0.05 * min(d - bend2, 6.0);
-}
 
 // 波光短线：每格随机位置一条横线，按行左右漂移、随时间明灭
 float dashes(vec2 cell, vec2 cs, float t, float speed, float seed, float density) {
@@ -63,9 +44,12 @@ void vertex() {
 void fragment() {
 	vec2 cell = floor(wp.xz * texel_density);
 	float t = TIME;
-	bool has_shore = shore_z < 50000.0;
-	float d = has_shore ? wp.z - shore_z : 100.0;
-	float depth = max(wp.y - bed_y(d), 0.0);
+	vec2 duv = (wp.xz - depth_rect.xy) / depth_rect.zw;
+	bool inside = all(greaterThanEqual(duv, vec2(0.0))) && all(lessThanEqual(duv, vec2(1.0)));
+	float depth = inside ? texture(depth_tex, duv).r * depth_range : depth_range;
+	if (depth <= 0.002) {
+		discard;  // 陆地上方
+	}
 
 	// 颜色和透明度随水深变化：浅滩几乎透明（看得见沙底、水草和鱼），越深越蓝越不透明
 	vec3 c = mix(shallow.rgb, mid.rgb, smoothstep(0.0, 1.3, depth));
@@ -83,22 +67,18 @@ void fragment() {
 	alpha = max(alpha, lit * 0.8);
 
 	// 雨滴 / 脚步涟漪
-	float rip = rain_ripples(wp.xz, t, pw_rain) + step_ripples(wp.xz);
-	rip = clamp(rip, 0.0, 1.0);
+	float rip = clamp(rain_ripples(wp.xz, t, pw_rain) + step_ripples(wp.xz), 0.0, 1.0);
 	c = mix(c, foam.rgb, rip * 0.55);
 	alpha = max(alpha, rip * 0.75);
 
 	// 岸边浪花：水深接近 0 的一圈起伏白边 + 一道向岸推进的断续浪线
-	if (has_shore) {
-		float x = wp.x;
-		float edge = 0.05 + 0.035 * sin(x * 1.3 + t * 1.3) + 0.02 * sin(x * 0.45 - t * 0.7);
-		float foam1 = 1.0 - smoothstep(edge, edge + 0.02, depth);
-		float wave_d = 0.12 + 0.18 * fract(t * 0.12);
-		float foam2 = (1.0 - smoothstep(0.0, 0.015, abs(depth - wave_d))) * step(0.45, fract(x * 0.35 + sin(x * 1.1) * 0.15));
-		float f = max(foam1, foam2 * 0.8);
-		c = mix(c, foam.rgb, f);
-		alpha = max(alpha, f * 0.9);
-	}
+	float wob = 0.035 * sin(wp.x * 1.3 + wp.z * 0.7 + t * 1.3) + 0.02 * sin(wp.x * 0.45 - wp.z * 0.9 - t * 0.7);
+	float foam1 = 1.0 - smoothstep(0.05 + wob, 0.07 + wob, depth);
+	float wave_d = 0.12 + 0.18 * fract(t * 0.12);
+	float foam2 = (1.0 - smoothstep(0.0, 0.015, abs(depth - wave_d))) * step(0.45, fract((wp.x + wp.z) * 0.35 + sin(wp.x * 1.1) * 0.15));
+	float f = max(foam1, foam2 * 0.8);
+	c = mix(c, foam.rgb, f);
+	alpha = max(alpha, f * 0.9);
 
 	// 细碎起伏：让阳光在水面上闪烁
 	vec2 q = wp.xz * 1.6 + vec2(t * 0.35, t * 0.22);
@@ -108,16 +88,11 @@ void fragment() {
 	float hz = vnoise(q + vec2(0.0, e));
 	NORMAL_MAP = normalize(vec3((h0 - hx) / e * 0.12, (h0 - hz) / e * 0.12, 1.0)) * 0.5 + 0.5;
 
-	// 结冰：有岸时从岸边向外推进，冰面不透明，两种色调成片分布，带细裂纹
+	// 结冰：从浅处向深处推进（冰缘有序抖动），冰面不透明，两种色调成片分布，带细裂纹
 	float freeze = smoothstep(freeze_start, 1.0, pw_snow_amount);
 	float b = bayer4(cell);
-	float frozen;
-	if (has_shore) {
-		float front = freeze * 40.0 - d + (vnoise(cell * 0.03) - 0.5) * 4.0;
-		frozen = step(0.001, freeze) * step((b - 0.5) * 1.2, front);
-	} else {
-		frozen = step(hash12(cell) * 0.5 + 0.25, freeze);
-	}
+	float front = freeze * 4.5 - depth + (vnoise(cell * 0.03) - 0.5) * 0.5;
+	float frozen = step(0.001, freeze) * step((b - 0.5) * 0.15, front);
 	vec3 ic = mix(ice.rgb, ice_crack.rgb, step(0.58, vnoise(cell * 0.025)));
 	float crack = step(abs(vnoise(cell * 0.0125 + 3.0) - 0.5), 0.01);
 	ic = mix(ic, mid.rgb, crack);

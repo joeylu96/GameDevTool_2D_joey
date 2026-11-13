@@ -1,10 +1,11 @@
 extends Control
-## Demo 入口：渲染容器 + 小镇 + 昼夜 + 天气 + 相机 + 后期 + 角色 + 控制面板。
+## Demo 入口：渲染容器 + 生成的场景（PWWorld：小镇 / 野外）+ 昼夜 + 天气 + 相机 + 后期 + 角色 + 控制面板。
 ## 默认「走路模式」：WASD / 方向键控制角色，镜头跟随；关闭后 WASD 平移镜头。
 ##
 ## 命令行截图（用于自动验证）：
 ##   godot --path godot -- --weather=snow --hour=20 --screenshot=/tmp/a.png
-## 其它参数：--snap（积雪/潮湿立刻到位） --frames=N（截图前等待帧数） --pixel（像素模式）
+## 其它参数：--theme=town|wild --seed=N --size=米（场景生成）
+##           --snap（积雪/潮湿立刻到位） --frames=N（截图前等待帧数） --pixel（像素模式）
 ##           --distance=米 --yaw=度 --focus=x,z（镜头对准的地面位置，并关闭走路模式）
 ##           --player=x,z（角色位置） --walk=x,z（截图前让角色朝这个方向走）
 
@@ -15,7 +16,6 @@ const TimeOfDay := preload("res://addons/pixel_world/weather/pw_time_of_day.gd")
 const Weather := preload("res://addons/pixel_world/weather/pw_weather_system.gd")
 const CameraRig := preload("res://addons/pixel_world/render/pw_camera_rig.gd")
 const PostFX := preload("res://addons/pixel_world/render/pw_post_fx.gd")
-const DemoTown := preload("res://demo/demo_town.gd")
 const DemoUI := preload("res://demo/demo_ui.gd")
 
 var display: PWPixelDisplay
@@ -23,7 +23,7 @@ var tod: PWTimeOfDay
 var weather: PWWeatherSystem
 var rig: PWCameraRig
 var post: PWPostFX
-var town: DemoTown
+var world: PWWorld
 var player: PWCharacter
 ## 走路模式：WASD 控制角色、镜头跟随
 var walk_mode := true:
@@ -41,19 +41,22 @@ func _ready() -> void:
 	add_child(display)
 	var vp := display.viewport
 
-	town = DemoTown.new()
-	town.name = "Town"
-	vp.add_child(town)
-	town.build()
+	var args := _args()
+	world = PWWorld.new()
+	world.name = "World"
+	world.generate_on_ready = false
+	world.theme = args.get("theme", "town")
+	world.seed_value = int(args.get("seed", "7"))
+	world.size = int(args.get("size", "128" if world.theme == "wild" else "80"))
+	vp.add_child(world)
+	world.generate()
 
 	player = PWCharacter.new()
 	player.name = "Player"
-	player.position = Vector3(5.0, 0.0, 9.0)  # 码头土路上
-	player.ground_height = town.ground_y
-	player.can_stand = town.can_stand
-	player.water_depth = town.water_depth
+	player.ground_height = world.ground_y
+	player.can_stand = world.can_stand
+	player.water_depth = world.water_depth
 	vp.add_child(player)
-	town.fish.threat = player
 
 	tod = TimeOfDay.new()
 	tod.name = "TimeOfDay"
@@ -64,13 +67,13 @@ func _ready() -> void:
 	vp.add_child(weather)
 	rig = CameraRig.new()
 	rig.name = "CameraRig"
-	rig.position = player.position
 	rig.min_distance = 6.0
 	rig.distance = 22.0
 	rig.keyboard_pan = not walk_mode
 	vp.add_child(rig)
 	post = PostFX.new()
 	vp.add_child(post)
+	_after_generate()
 
 	var ui := DemoUI.new()
 	ui.setup(self)
@@ -79,11 +82,37 @@ func _ready() -> void:
 	_apply_cmdline()
 
 
-func _apply_cmdline() -> void:
+func _args() -> Dictionary:
 	var args := {}
 	for a in OS.get_cmdline_user_args():
 		var kv := a.trim_prefix("--").split("=", true, 1)
 		args[kv[0]] = kv[1] if kv.size() > 1 else ""
+	return args
+
+
+## 换主题 / 换种子重新生成（控制面板调用）
+func regenerate(theme := "", new_seed := -1) -> void:
+	if theme != "":
+		world.theme = theme
+		world.size = 128 if theme == "wild" else 80
+	if new_seed >= 0:
+		world.seed_value = new_seed
+	world.generate()
+	_after_generate()
+
+
+## 角色放到出生点，镜头对过去；鱼群认识玩家
+func _after_generate() -> void:
+	player.position = world.spawn_point
+	player.velocity = Vector3.ZERO
+	rig.position = Vector3(player.position.x, 0, player.position.z)
+	rig.bounds = Rect2(-world.size * 0.5, -world.size * 0.5, world.size, world.size)
+	if world.fish != null:
+		world.fish.threat = player
+
+
+func _apply_cmdline() -> void:
+	var args := _args()
 	if args.has("hour"):
 		tod.hour = float(args["hour"])
 		tod.running = false
@@ -103,16 +132,20 @@ func _apply_cmdline() -> void:
 		tod.environment.glow_enabled = false
 	if args.has("nomsaa"):
 		display.viewport.msaa_3d = Viewport.MSAA_DISABLED
+	if args.has("shadowstep"):  # 调试：太阳方向更新间隔（游戏分钟），0 = 每帧连续转动
+		tod.shadow_step_minutes = float(args["shadowstep"])
+	if args.has("shadownear"):  # 调试：第一级阴影覆盖到镜头距离的多少倍
+		tod.shadow_near_factor = float(args["shadownear"])
 	if args.has("noshadow"):  # 调试：关闭太阳阴影
 		tod.sun.shadow_enabled = false
 	if args.has("shadowmode"):  # 调试：ortho / 2 / 4
 		var m: String = args["shadowmode"]
 		tod.sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if m == "ortho" \
 			else (DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS if m == "4" else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
-	if args.has("shadowsoft"):  # 调试：软阴影质量 0..5
-		RenderingServer.directional_soft_shadow_filter_set_quality(int(args["shadowsoft"]))
 	if args.has("shadowblur"):
 		tod.sun.shadow_blur = float(args["shadowblur"])
+	if args.has("shadowsoft"):  # 调试：软阴影质量 0..5
+		RenderingServer.directional_soft_shadow_filter_set_quality(int(args["shadowsoft"]))
 	if args.has("pixel"):
 		display.pixel_mode = true
 	if args.has("tilt"):
@@ -123,7 +156,7 @@ func _apply_cmdline() -> void:
 		rig.distance = float(args["distance"])
 	if args.has("player"):
 		var pz: PackedStringArray = args["player"].split(",")
-		player.position = Vector3(float(pz[0]), town.ground_y(float(pz[0]), float(pz[1])), float(pz[1]))
+		player.position = Vector3(float(pz[0]), world.ground_y(float(pz[0]), float(pz[1])), float(pz[1]))
 		rig.position = player.position
 	if args.has("walk"):
 		var wz: PackedStringArray = args["walk"].split(",")
@@ -148,9 +181,17 @@ func _apply_cmdline() -> void:
 				c.visible = false
 		for i in int(args.get("frames", "90")):
 			await get_tree().process_frame
+		var t0 := tod.hour
+		var fixed := args.has("seqfixed")  # 按真实 60 FPS 的时间步长推进游戏时间（不受存图快慢影响）
+		if fixed:
+			tod.running = false
 		for i in int(args.get("seqn", "6")):
-			await get_tree().process_frame
+			for g in int(args.get("seqgap", "1")):  # --seqgap=N：每隔 N 帧截一张
+				if fixed:
+					tod.hour += (1.0 / 60.0) * 24.0 / tod.day_length_seconds
+				await get_tree().process_frame
 			get_viewport().get_texture().get_image().save_png("%s_%02d.png" % [args["seq"], i])
+		print("seq game-minutes elapsed: %.2f" % ((tod.hour - t0) * 60.0))
 		print("seq saved: ", args["seq"])
 		get_tree().quit()
 		return
@@ -272,8 +313,8 @@ func _process(delta: float) -> void:
 	player.walk(dir, delta)
 	if walk_mode:
 		rig.position = rig.position.lerp(Vector3(player.position.x, 0.0, player.position.z), 1.0 - exp(-delta * 4.0))
-	# 阴影只算到画面能看到的距离：镜头拉近时少画阴影投射物、近处阴影也更清晰（性能 + 画质）
-	tod.sun.directional_shadow_max_distance = clampf(rig.distance * 1.9 + 12.0, 40.0, 120.0)
+	# 阴影范围和级联跟着镜头距离走：画面主体落在高精度的第一级（性能 + 画质 + 细阴影稳定）
+	tod.fit_shadows(rig.distance)
 
 
 func _unhandled_input(event: InputEvent) -> void:

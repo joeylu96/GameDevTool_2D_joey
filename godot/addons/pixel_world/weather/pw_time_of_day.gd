@@ -22,10 +22,13 @@ const Globals := preload("res://addons/pixel_world/core/pw_globals.gd")
 @export var min_sun_elevation := 14.0
 @export var sun_azimuth := -30.0
 @export var shadows := true
-## 太阳方向每隔多少游戏分钟更新一次。0（默认）= 每帧连续转动，阴影平滑移动。
-## 只在低分辨率像素模式下才建议设成 10~30：那时连续转动会让阴影边缘逐像素爬动、看起来在闪；
-## 分步后阴影大部分时间静止，只在整步时整体挪一下。光色和亮度始终连续变化。
-@export_range(0.0, 120.0, 1.0) var sun_step_minutes := 0.0
+## 太阳方向每隔多少游戏分钟更新一次（默认 1 分钟 ≈ 一天 300 秒时的 0.2 秒现实时间）。
+## 每次只挪约 0.17°，影子边缘最多动 1 个像素，看起来仍是连续移动；
+## 但阴影贴图不再每帧重新光栅化，细物体（栏杆、灯杆）的影子和树影锯齿不会每帧闪动。
+## 0 = 每帧连续转动（不推荐：细阴影会像电流一样抖）。
+## 注：不能用两盏光交叉淡入来做平滑过渡——兼容渲染器（含 Web）对带阴影的平行光逐盏叠加，
+## 叠加不是线性的，两盏各一半亮度时画面会明显发亮（实测平均差异 69 vs 0.87）。
+@export_range(0.0, 30.0, 0.5) var shadow_step_minutes := 1.0
 ## 辉光（bloom）只在用得到时开启：夜晚（灯光、窗户）、闪电、有积雪（阳光下的雪会发亮）。
 ## 晴天白天没有超过阈值的像素，关掉画面不变，省掉一组全屏模糊 pass（性能）。
 @export var auto_glow := true
@@ -58,16 +61,7 @@ const KEYS := [
 
 func _ready() -> void:
 	Globals.ensure_runtime()
-	sun = DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.shadow_enabled = shadows
-	# 两级级联：近处阴影更清晰，远处覆盖整个画面
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_max_distance = 80.0
-	sun.directional_shadow_split_1 = 0.35
-	sun.directional_shadow_blend_splits = true
-	sun.shadow_blur = 2.0  # 配合 5 级软阴影：边缘过渡更宽，太阳转动时边缘平滑移动而不是逐像素跳
-	add_child(sun)
+	sun = _make_sun("Sun")
 
 	environment = Environment.new()
 	environment.background_mode = Environment.BG_COLOR
@@ -84,6 +78,51 @@ func _ready() -> void:
 	we.environment = environment
 	add_child(we)
 	_apply()
+
+
+func _make_sun(n: String) -> DirectionalLight3D:
+	var l := DirectionalLight3D.new()
+	l.name = n
+	l.shadow_enabled = shadows
+	# 阴影范围和级联由 fit_shadows() 按镜头距离调整
+	l.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	l.directional_shadow_max_distance = 80.0
+	l.directional_shadow_split_1 = 0.35
+	l.directional_shadow_blend_splits = true
+	l.shadow_blur = 1.0
+	add_child(l)
+	return l
+
+
+## 第一级阴影覆盖到镜头距离的多少倍。默认 1.35：俯角 40°、FOV 30° 时，画面里的地面离镜头约
+## 0.8~1.5 倍镜头距离，所以画面主体都落在精度最高的第一级里。（之前 split 固定 0.35 时，
+## 第一级只到 18.8 米，镜头离地 22 米——画面里所有东西都落在粗糙的第二级，细阴影因此抖得厉害。）
+var shadow_near_factor := 1.35
+var _fit_distance := -1.0
+
+
+## 按镜头到注视点的距离调整阴影范围和级联分割。镜头距离不变时不做任何事（改动会让阴影重新对齐）。
+func fit_shadows(camera_distance: float) -> void:
+	if sun == null or absf(camera_distance - _fit_distance) < 0.01:
+		return
+	_fit_distance = camera_distance
+	var max_d := clampf(camera_distance * 1.9 + 12.0, 40.0, 120.0)
+	sun.directional_shadow_max_distance = max_d
+	sun.directional_shadow_split_1 = clampf(camera_distance * shadow_near_factor / max_d, 0.2, 0.8)
+
+
+## 某个时刻的太阳（或月亮）方向，返回 rotation_degrees。
+## 太阳 5:00-19:00，其余时间同一盏灯当月光（在最暗时切换）
+func _sun_rotation(h: float) -> Vector3:
+	h = fposmod(h, 24.0)
+	var t: float
+	if h >= 5.0 and h < 19.0:
+		t = (h - 5.0) / 14.0
+	else:
+		t = fposmod(h - 19.0, 24.0) / 10.0
+	var elev := lerpf(min_sun_elevation, max_sun_elevation, sin(t * PI))
+	var az := sun_azimuth + lerpf(-70.0, 70.0, t)
+	return Vector3(-elev, az, 0.0)
 
 
 func _process(delta: float) -> void:
@@ -125,25 +164,18 @@ func _apply() -> void:
 	var amb_e: float = s[3]
 	var sky: Color = s[4]
 
-	# 太阳 5:00-19:00，其余时间同一盏灯当月光（在最暗时切换，避免阴影跳变）。
-	# 方向按 sun_step_minutes 分步，避免阴影每帧爬动。
+	# 方向按 shadow_step_minutes 小步更新（见该参数说明）
 	var hs := hour
-	if sun_step_minutes > 0.0:
-		hs = floorf(hour * 60.0 / sun_step_minutes) * sun_step_minutes / 60.0
-	var t: float
-	if hs >= 5.0 and hs < 19.0:
-		t = (hs - 5.0) / 14.0
-	else:
-		t = fposmod(hs - 19.0, 24.0) / 10.0
-	var elev := lerpf(min_sun_elevation, max_sun_elevation, sin(t * PI))
-	var az := sun_azimuth + lerpf(-70.0, 70.0, t)
-	sun.rotation_degrees = Vector3(-elev, az, 0.0)
+	if shadow_step_minutes > 0.0:
+		hs = floorf(hour * 60.0 / shadow_step_minutes) * shadow_step_minutes / 60.0
+	sun.rotation_degrees = _sun_rotation(hs)
 
 	# 云量：削弱直射光、阴影变淡、整体发灰；闪电：瞬间提亮
 	var cloud := clampf(cloud_cover, 0.0, 1.0)
+	var energy := sun_e * (1.0 - 0.75 * cloud) + flash * 1.6
 	sun.light_color = _grey(sun_col, cloud * 0.6)
-	sun.light_energy = sun_e * (1.0 - 0.75 * cloud) + flash * 1.6
 	sun.shadow_opacity = lerpf(1.0, 0.3, cloud)
+	sun.light_energy = energy
 	environment.ambient_light_color = _grey(amb, cloud * 0.5)
 	environment.ambient_light_energy = amb_e * (1.0 + 0.25 * cloud) + flash * 0.8
 	var bg := _grey(sky, cloud * 0.6)
@@ -157,7 +189,7 @@ func _apply() -> void:
 	if auto_glow:
 		environment.glow_enabled = night_factor > 0.005 or flash > 0.001 \
 			or float(Globals.get_param(&"pw_snow_amount", 0.0)) > 0.05
-	var ll := sun.light_color * sun.light_energy * 0.5 + environment.ambient_light_color * environment.ambient_light_energy
+	var ll := sun.light_color * energy * 0.5 + environment.ambient_light_color * environment.ambient_light_energy
 	light_level = Color(minf(ll.r, 1.0), minf(ll.g, 1.0), minf(ll.b, 1.0))
 	Globals.set_param(&"pw_light_color", light_level)
 	Globals.set_param(&"pw_sky_color", bg)
