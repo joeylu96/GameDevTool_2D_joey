@@ -142,6 +142,18 @@ func _apply_cmdline() -> void:
 		await _diff_shot(args["diffshot"], int(args.get("frames", "90")), int(args.get("gap", "20")), pan)
 		get_tree().quit()
 		return
+	if args.has("seq"):  # --seq=前缀 --seqn=N：连续截 N 帧（隐藏 UI），逐帧检查闪烁
+		for c in get_children():
+			if c is CanvasLayer or (c is Control and c != display):
+				c.visible = false
+		for i in int(args.get("frames", "90")):
+			await get_tree().process_frame
+		for i in int(args.get("seqn", "6")):
+			await get_tree().process_frame
+			get_viewport().get_texture().get_image().save_png("%s_%02d.png" % [args["seq"], i])
+		print("seq saved: ", args["seq"])
+		get_tree().quit()
+		return
 	if args.has("bench"):
 		await _bench(int(args["bench"]))
 		get_tree().quit()

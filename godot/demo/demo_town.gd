@@ -42,6 +42,9 @@ var fish: PWFishSchool
 ## 几百个物体的绘制调用降到几十个（性能）。区块边长 CHUNK 米，保留一定的视锥剔除。
 const CHUNK := 40.0
 var _batches := {}  # "ix,iz,shadow" -> {Material: SurfaceTool}
+## 接地阴影（细物体不投实时阴影，改用地面上的固定柔和暗影）：[Rect2（世界 XZ）, 强度]
+const CONTACT_SHADER := preload("res://addons/pixel_world/shaders/contact_shadow.gdshader")
+var _contacts: Array = []
 
 
 func build(seed_value := 7) -> void:
@@ -96,6 +99,41 @@ func _flush_static() -> void:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 	_batches.clear()
+	_flush_contacts()
+
+
+## 细物体下方的接地阴影：rect 为世界 XZ 矩形（会向外扩出柔边宽度），strength 为最深处的不透明度
+func _contact(rect: Rect2, strength := 0.3) -> void:
+	_contacts.append([rect.grow(0.22), strength])
+
+
+func _flush_contacts() -> void:
+	if _contacts.is_empty():
+		return
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for c: Array in _contacts:
+		var r: Rect2 = c[0]
+		var a := Color(1, 1, 1, c[1])
+		var y := 0.035
+		var p := [Vector3(r.position.x, y, r.position.y), Vector3(r.end.x, y, r.position.y),
+			Vector3(r.end.x, y, r.end.y), Vector3(r.position.x, y, r.end.y)]
+		var uv := [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+		for i in [0, 1, 2, 0, 2, 3]:
+			st.set_normal(Vector3.UP)
+			st.set_color(a)
+			st.set_uv(uv[i])
+			st.set_uv2(r.size)
+			st.add_vertex(p[i])
+	var mat := ShaderMaterial.new()
+	mat.shader = CONTACT_SHADER
+	var mi := MeshInstance3D.new()
+	mi.name = "ContactShadows"
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	_contacts.clear()
 
 
 # ---------------------------------------------------------------- 查询
@@ -370,7 +408,9 @@ func _build_lamps() -> void:
 			else:
 				yaw = PI * 0.5     # 主街南侧：伸向 -Z
 		var basis := Basis(Vector3.UP, yaw)
-		_add_mesh(lamp_meshes[key], Transform3D(basis, s))
+		# 灯杆太细，实时阴影会随太阳转动抖动：不投影，底座下方放一块接地阴影
+		_add_mesh(lamp_meshes[key], Transform3D(basis, s), false)
+		_contact(Rect2(s.x - 0.2, s.z - 0.2, 0.4, 0.4), 0.35)
 		pools.set_instance_transform(i, Transform3D(Basis(), s + basis * Trees.lamp_light_offset(style) + Vector3(0, 0.04, 0)))
 		_solid_circles.append(Vector3(s.x, s.z, 0.25))
 	var pmi := MultiMeshInstance3D.new()
@@ -379,6 +419,16 @@ func _build_lamps() -> void:
 	pmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(pmi)
 	_lamp_spots = spots
+
+
+## 放一段篱笆。细栏杆（尖头栅栏、木栏）不投实时阴影，改用接地阴影；矮石墙够厚，照常投影。
+## runs：沿 +X 的各段 [起点, 终点]（相对 x0）
+func _add_fence(mesh: ArrayMesh, style: String, x0: float, z: float, runs: Array) -> void:
+	var thin := style != "stone"
+	_add_mesh(mesh, Transform3D(Basis(), Vector3(x0, 0, z)), not thin)
+	if thin:
+		for r: Vector2 in runs:
+			_contact(Rect2(x0 + r.x, z - 0.12, r.y - r.x, 0.24), 0.32)
 
 
 ## 房屋篱笆：北侧房屋在门前围一道（门口留缺口），南侧房屋在后院（朝海一侧）围一道
@@ -391,14 +441,14 @@ func _build_house_fence(side: int, rect: Rect2, door_x: float) -> void:
 			return
 		var z := rect.end.y + 1.15  # 灌木和路灯之间
 		var gap := [door_x - x0 - 0.8, door_x - x0 + 0.8]
-		_add_mesh(Props.build_fence(length, [gap], style), Transform3D(Basis(), Vector3(x0, 0, z)))
+		_add_fence(Props.build_fence(length, [gap], style), style, x0, z, [Vector2(0.0, gap[0]), Vector2(gap[1], length)])
 		_solid_rects.append(Rect2(x0, z - 0.15, gap[0], 0.3))
 		_solid_rects.append(Rect2(x0 + gap[1], z - 0.15, length - gap[1], 0.3))
 	else:
 		var z := rect.end.y + 1.0
 		if z > SHORE_Z - 2.2 or _deco.randf() > 0.7:
 			return
-		_add_mesh(Props.build_fence(length, [], style), Transform3D(Basis(), Vector3(x0, 0, z)))
+		_add_fence(Props.build_fence(length, [], style), style, x0, z, [Vector2(0.0, length)])
 		_blocked.append(Rect2(x0, z - 0.6, length, 1.2))
 		_solid_rects.append(Rect2(x0, z - 0.15, length, 0.3))
 
@@ -432,7 +482,8 @@ func _build_props() -> void:
 		var bstyle: String = Props.BENCH_STYLES[_deco.randi_range(0, Props.BENCH_STYLES.size() - 1)]
 		if not benches.has(bstyle):
 			benches[bstyle] = Props.build_bench(bstyle)
-		_add_mesh(benches[bstyle], Transform3D(Basis(Vector3.UP, PI), p))
+		_add_mesh(benches[bstyle], Transform3D(Basis(Vector3.UP, PI), p), false)
+		_contact(Rect2(p.x - 0.85, p.z - 0.3, 1.7, 0.6), 0.34)
 		_blocked.append(Rect2(p.x - 1.0, p.z - 0.5, 2.0, 1.0))
 		_solid_rects.append(Rect2(p.x - 0.85, p.z - 0.3, 1.7, 0.6))
 	var crate := Props.build_crate()
