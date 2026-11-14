@@ -144,14 +144,15 @@ npc.hour = func() -> float: return tod.hour
 
 ```bash
 pip install -r tools/requirements.txt      # 用 Claude 时需要（anthropic SDK）
-python tools/pw_asset_server.py            # 打开 http://127.0.0.1:8777
+python tools/pw_asset_server.py            # 打开 http://127.0.0.1:8777：顶部「PixelWorld 工具箱 / AI 资产工坊」两个标签
 python tools/workshop_selftest.py          # 自检（模拟模型，不花钱）
 ```
 
 - 支持 **Anthropic Claude**（官方 SDK，默认 `claude-opus-5-5`，官方地址开启拒答自动换模型重试）和任何 **OpenAI 兼容接口**。
 - Key 只保存在本机 `~/.pixelworld/workshop.json`，不进仓库。
 - 也可以不调模型、直接粘贴规格 JSON 生成；规格都存在 `shared/asset_specs/`，可以手改后重新生成。
-- Godot 主界面「AI 资产工坊」页可以启动工坊、打开网页、生成后刷新资源库。
+- 工具箱（Godot 网页版）和工坊在同一个网址里；工坊生成完会自动重新导出网页版，切回工具箱标签就能看到新资产。
+- Godot 编辑器 / 桌面版的「AI 资产工坊」页可以启动工坊、打开网页、生成后刷新资源库。
 
 详细说明（规格格式、标签、接口、接其他模型）见 [docs/ASSET_WORKSHOP.md](docs/ASSET_WORKSHOP.md)。
 

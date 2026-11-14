@@ -716,26 +716,31 @@ func _build_workshop_page() -> Control:
 	_ws_port.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	row.add_child(_labeled("端口", _ws_port))
-	var start := T.button("启动工坊", func(): _ws_start(), true)
-	start.disabled = OS.has_feature("web")  # 网页版不能启动本机进程，只能打开已经在跑的工坊
-	row.add_child(start)
-	row.add_child(T.button("在浏览器打开", func(): OS.shell_open("http://127.0.0.1:%d/" % int(_ws_port.value))))
-	row.add_child(T.button("刷新资源库", func(): _ws_reload()))
+	if OS.has_feature("web"):
+		# 网页版：工具箱和工坊在同一个页面里（顶部两个标签），这里的按钮直接切过去 / 重新载入工具箱
+		row.add_child(T.button("切换到资产工坊", func(): _js_parent("show-workshop"), true))
+		row.add_child(T.button("刷新工具箱（载入新资产）", func(): _js_parent("reload-game")))
+	else:
+		row.add_child(_labeled("端口", _ws_port))
+		row.add_child(T.button("启动工坊", func(): _ws_start(), true))
+		row.add_child(T.button("在浏览器打开", func(): OS.shell_open("http://127.0.0.1:%d/#workshop" % int(_ws_port.value))))
+		row.add_child(T.button("刷新资源库", func(): _ws_reload()))
 	v.add_child(row)
 	_ws_counts = T.label("", 14, T.TEXT_DIM)
 	v.add_child(_ws_counts)
 	var txt := T.label("", 14)
 	txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	txt.text = """怎么用
-  1. 点「启动工坊」（或在仓库根目录运行 python tools/pw_asset_server.py），再点「在浏览器打开」。
+  1. 运行 python tools/pw_asset_server.py（或在 Godot 里点「启动工坊」），浏览器打开 http://127.0.0.1:8777 ——
+     同一个页面顶部有两个标签：「PixelWorld 工具箱」（就是这个界面）和「AI 资产工坊」。
   2. 在网页的「模型设置」里填接口类型、Host、API Key、模型：
        Anthropic Claude —— Host 留空用官方地址，模型默认 claude-opus-5-5；
        OpenAI 兼容接口 —— Host 填到 /v1 为止，可以接任何兼容的模型。
      Key 只保存在本机 ~/.pixelworld/workshop.json，不进仓库。
   3. 选「像素角色 / 角色动作 / 3D 摆件」，写一句描述（角色可以上传原画），点「让模型生成」。
      也可以不调模型，直接粘贴规格 JSON 生成。
-  4. 生成完回到这里点「刷新资源库」，新资源就出现在资源库里；带 plaza / roadside / yard 标签的摆件会自动摆进小镇。
+  4. 生成完工坊会自动更新网页版，切回工具箱标签（或点「刷新工具箱」）新资源就出现在资源库里；
+     带 plaza / roadside / yard 标签的摆件自动摆进小镇，带 winter / desert / island / canyon 的出现在对应风格。
 
 背后发生了什么
   大模型只负责写 JSON 规格（角色的发型衣服配色、动作的关键帧、摆件的零件组合），
@@ -750,19 +755,35 @@ func _build_workshop_page() -> Control:
 	return page
 
 
+func _ws_base() -> String:
+	# 网页版由工坊服务一起提供（/game/），工坊就在同一个地址
+	if OS.has_feature("web"):
+		var origin: Variant = JavaScriptBridge.eval("window.location.origin", true)
+		if origin is String and (origin as String).begins_with("http"):
+			return origin
+	return "http://127.0.0.1:%d" % int(_ws_port.value)
+
+
+## 给外层合并页面（tools/workshop/app.html）发消息：切标签、重新载入工具箱
+func _js_parent(msg: String) -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.parent && window.parent.postMessage({pw: '%s'}, '*')" % msg, true)
+
+
 func _ws_check() -> void:
 	if _ws_http == null or not _ws_http.is_inside_tree():
 		return
 	_ws_http.cancel_request()
-	_ws_http.request("http://127.0.0.1:%d/api/ping" % int(_ws_port.value))
+	_ws_http.request(_ws_base() + "/api/ping")
 
 
 func _ws_ping_done(result: int, code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
 	if result == HTTPRequest.RESULT_SUCCESS and code == 200:
-		_ws_status.text = "● 工坊服务在运行：http://127.0.0.1:%d/" % int(_ws_port.value)
+		_ws_status.text = "● 工坊服务在运行：%s/" % _ws_base()
 		_ws_status.add_theme_color_override("font_color", Color("7fc77a"))
 	else:
-		_ws_status.text = "○ 工坊服务没有运行（点「启动工坊」）"
+		_ws_status.text = "○ 工坊服务没有运行（%s）" % ("用 python tools/pw_asset_server.py 打开的网页才能连上工坊"
+			if OS.has_feature("web") else "点「启动工坊」")
 		_ws_status.add_theme_color_override("font_color", T.TEXT_DIM)
 
 

@@ -118,6 +118,10 @@
     <div class="status" id="jobstatus">还没有任务</div>
     <div id="log"></div>
     <div id="jobwarn" class="hint"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="togame" style="display:none">在工具箱里查看</button>
+      <button id="exportweb" title="重新导出 Godot 网页版（工具箱标签里看到最新资产）">更新网页版</button>
+    </div>
   </section>
 </div>
 
@@ -156,6 +160,9 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
+const embedded = window.parent !== window;   // 在合并入口（app.html）里打开
+if (embedded) document.querySelector("header").style.display = "none";
+function tellParent(msg) { if (embedded) window.parent.postMessage({pw: msg}, "*"); }
 let kind = "character", assets = null, image = null, poll = null, cur = null, dir = 1, animName = "idle", animTimer = null;
 const PROMPTS = {
   character: ["描述角色的外形、服装、配色和武器", "例如：一个在港口卖鱼的大婶，系着蓝白条纹围裙，扎着发髻，手里拿着一根扁担"],
@@ -247,6 +254,10 @@ function watch(id) {
     $("jobwarn").textContent = j.warnings.length ? "提示：" + j.warnings.join("；") : "";
     if (j.state !== "running") {
       clearInterval(poll);
+      if (j.state === "done" && j.result && j.result.web_updated) {
+        tellParent("game-updated");
+        $("togame").style.display = embedded ? "inline-block" : "none";
+      }
       $("gen").disabled = $("buildspec").disabled = false;
       await loadAssets();
       if (j.state === "done" && j.spec) {
@@ -348,6 +359,12 @@ $("editspec").onclick = () => {
   $("manual").style.display = "block";
   $("specjson").value = $("dspec").textContent;
   window.scrollTo({top: 0, behavior: "smooth"});
+};
+
+$("togame").onclick = () => { tellParent("reload-game"); tellParent("show-game"); };
+$("exportweb").onclick = async () => {
+  const r = await api("/api/export_web", {});
+  if (r.job) watch(r.job);
 };
 
 setKind("character");

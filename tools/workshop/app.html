@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelWorld</title>
+<style>
+  :root { --bg:#0d0f16; --bar:#14161f; --line:#262a3d; --text:#e6e8ef; --dim:#9aa0b4; --accent:#f0a040; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
+    font:14px/1.5 "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; overflow:hidden; }
+  nav { height:46px; display:flex; align-items:center; gap:6px; padding:0 16px; background:var(--bar); border-bottom:1px solid var(--line); }
+  nav .brand { color:var(--accent); font-weight:600; font-size:17px; margin-right:18px; }
+  nav button { background:none; border:none; color:var(--dim); font:inherit; font-size:15px; padding:12px 16px; cursor:pointer;
+    border-bottom:2px solid transparent; position:relative; }
+  nav button:hover { color:var(--text); }
+  nav button.on { color:var(--text); border-bottom-color:var(--accent); }
+  nav .badge { display:none; position:absolute; top:6px; right:0; background:var(--accent); color:#1d1408; font-size:11px;
+    border-radius:8px; padding:0 6px; }
+  nav .spacer { flex:1; }
+  nav .hint { color:var(--dim); font-size:12px; }
+  nav .tool { font-size:13px; padding:6px 12px; border:1px solid var(--line); border-radius:6px; }
+  main { position:absolute; top:46px; left:0; right:0; bottom:0; }
+  iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--bg); visibility:hidden; }
+  iframe.on { visibility:visible; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">PixelWorld</span>
+  <button id="t-game" class="on">PixelWorld 工具箱<span class="badge" id="badge">有新资产</span></button>
+  <button id="t-ws">AI 资产工坊</button>
+  <span class="spacer"></span>
+  <span class="hint" id="hint">场景生成器 · 资源库 · 特效 · 天气光照（点画面后可以用键盘）</span>
+  <button class="tool" id="reload" title="重新载入工具箱（看到工坊新生成的资产）">刷新工具箱</button>
+</nav>
+<main>
+  <iframe id="game" class="on" src="/game/" allow="autoplay; fullscreen; gamepad"></iframe>
+  <iframe id="ws" src="/workshop"></iframe>
+</main>
+<script>
+const game = document.getElementById("game"), ws = document.getElementById("ws");
+let pending = false;   // 工坊生成过新资产、工具箱还没刷新
+function show(which) {
+  const g = which === "game";
+  game.classList.toggle("on", g); ws.classList.toggle("on", !g);
+  document.getElementById("t-game").classList.toggle("on", g);
+  document.getElementById("t-ws").classList.toggle("on", !g);
+  document.getElementById("hint").textContent = g ? "场景生成器 · 资源库 · 特效 · 天气光照（点画面后可以用键盘）"
+                                                  : "配置大模型 → 生成角色 / 动作 / 3D 摆件 → 自动更新到工具箱";
+  if (g && pending) reloadGame();
+  if (g) setTimeout(() => game.focus(), 50);
+  history.replaceState(null, "", g ? "#" : "#workshop");
+}
+function reloadGame() {
+  pending = false;
+  document.getElementById("badge").style.display = "none";
+  game.src = "/game/?t=" + Date.now();
+}
+document.getElementById("t-game").onclick = () => show("game");
+document.getElementById("t-ws").onclick = () => show("ws");
+document.getElementById("reload").onclick = reloadGame;
+// 工具箱（Godot）和工坊页发来的消息
+window.addEventListener("message", (e) => {
+  const m = e.data && e.data.pw;
+  if (m === "show-workshop") show("ws");
+  else if (m === "show-game") show("game");
+  else if (m === "reload-game") reloadGame();
+  else if (m === "game-updated") {
+    pending = true;
+    document.getElementById("badge").style.display = "inline";
+  }
+});
+if (location.hash === "#workshop") show("ws");
+</script>
+</body>
+</html>

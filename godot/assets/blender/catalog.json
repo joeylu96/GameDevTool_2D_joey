@@ -394,32 +394,6 @@
       "plant": false
     },
     {
-      "id": "bl_spec_snowman",
-      "kind": "spec_snowman",
-      "name": "雪人",
-      "category": "props",
-      "desc": "三个雪球堆成的雪人：煤块眼睛和纽扣、胡萝卜鼻子、树枝手臂、红围巾和小礼帽。",
-      "vary": "雪球大小、手臂角度、帽子颜色（黑 / 蓝）和围巾颜色随变体变化。",
-      "tags": [
-        "winter",
-        "yard",
-        "plaza"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_snowman_0.glb",
-        "spec_snowman_1.glb",
-        "spec_snowman_2.glb",
-        "spec_snowman_3.glb"
-      ],
-      "footprint": [
-        1.71,
-        1.07
-      ],
-      "height": 1.92,
-      "plant": false
-    },
-    {
       "id": "bl_spec_tent",
       "kind": "spec_tent",
       "name": "帐篷",
@@ -444,6 +418,32 @@
         2.2
       ],
       "height": 1.4,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_snowman",
+      "kind": "spec_snowman",
+      "name": "雪人",
+      "category": "props",
+      "desc": "三个雪球堆成的雪人：煤块眼睛和纽扣、胡萝卜鼻子、树枝手臂、红围巾和小礼帽。",
+      "vary": "雪球大小、手臂角度、帽子颜色（黑 / 蓝）和围巾颜色随变体变化。",
+      "tags": [
+        "winter",
+        "yard",
+        "plaza"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_snowman_0.glb",
+        "spec_snowman_1.glb",
+        "spec_snowman_2.glb",
+        "spec_snowman_3.glb"
+      ],
+      "footprint": [
+        1.71,
+        1.07
+      ],
+      "height": 1.92,
       "plant": false
     }
   ]

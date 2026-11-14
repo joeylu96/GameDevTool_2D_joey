@@ -5,6 +5,8 @@
 启动（Windows / macOS 一样，需要 Python 3.10+）：
     pip install -r tools/requirements.txt      # 用 Claude 时需要（anthropic SDK）；只用 OpenAI 兼容接口可以不装
     python tools/pw_asset_server.py            # 然后浏览器打开 http://127.0.0.1:8777
+一个网址就是全部：顶部两个标签——「PixelWorld 工具箱」（Godot 网页版：场景生成器、资源库、特效、天气）和「AI 资产工坊」。
+工坊生成新资产后会自动重新导出网页版（build/web），工具箱标签刷新一下就能看到。
     python tools/pw_asset_server.py --port 8778
 
 流程：网页提交 → 调用大模型得到规格 JSON → 校验（不合格把错误发回模型改一次）→ 存到 shared/asset_specs/
@@ -45,6 +47,7 @@ SPECS = ROOT / "shared" / "asset_specs"
 SPRITES = ROOT / "godot" / "assets" / "sprites"
 BLENDER_ASSETS = ROOT / "godot" / "assets" / "blender"
 WEB = Path(__file__).resolve().parent / "workshop"
+BUILD_WEB = ROOT / "build" / "web"   # Godot 网页版（导出预设 "Web"）
 
 DEFAULTS = {
     "provider": "anthropic",     # anthropic / openai
@@ -56,6 +59,7 @@ DEFAULTS = {
     "max_tokens": 16000,
     "blender": "",               # 留空 = 自动查找
     "godot": "",
+    "sync_web": True,            # 生成完自动重新导出网页版，工具箱标签里就能看到新资产
 }
 # 支持服务端拒答兜底（fallbacks="default"）的模型
 FALLBACK_MODELS = {"claude-fable-5-2", "claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"}
@@ -327,6 +331,8 @@ def run_job(job):
         with _build_lock:
             _build(job, cfg, kind, spec)
             _import_godot(job, cfg)
+            if cfg.get("sync_web", True):
+                job.result["web_updated"] = _export_web(job, cfg)
         job.status = "完成"
         job.state = "done"
         job.log("完成，用时 %.0f 秒" % (time.time() - job.started))
@@ -381,6 +387,37 @@ def _build(job, cfg, kind, spec):
         job.status = "Blender 搭模型、导出（%d 个变体）" % spec.get("variants", 4)
         _run(job, [b, "-b", "--factory-startup", "-P", "tools/blender_build_assets.py", "--", "--only", "spec_" + spec["id"]])
         job.result = {"prop": "bl_spec_" + spec["id"], "preview": "/files/previews/prop_spec_%s.png" % spec["id"]}
+
+
+def _export_web(job, cfg):
+    """重新导出 Godot 网页版（build/web），新资产才会出现在「PixelWorld 工具箱」标签里。返回是否导出成功"""
+    g = find_godot(cfg)
+    if not g:
+        job.log("没找到 Godot，跳过网页版导出")
+        return False
+    BUILD_WEB.mkdir(parents=True, exist_ok=True)
+    job.status = "更新网页版（约 30 秒）"
+    try:
+        _run(job, [g, "--headless", "--path", "godot", "--export-release", "Web", str(BUILD_WEB / "index.html")], timeout=900)
+    except RuntimeError as e:
+        job.log("网页版导出失败：%s（资产本身已经生成好了）" % e)
+        return False
+    job.log("网页版已更新：刷新「PixelWorld 工具箱」标签就能看到新资产")
+    return True
+
+
+def run_export_job(job):
+    cfg = load_config()
+    try:
+        with _build_lock:
+            ok = _export_web(job, cfg)
+        job.status = "完成" if ok else "失败：网页版没有导出"
+        job.state = "done" if ok else "error"
+        job.result = {"web_updated": ok}
+    except Exception as e:  # noqa: BLE001
+        job.status = "出错：%s" % e
+        job.state = "error"
+        job.log(traceback.format_exc())
 
 
 def _import_godot(job, cfg):
@@ -480,6 +517,7 @@ class Handler(BaseHTTPRequestHandler):
         if not str(p).startswith(str(base.resolve())) or not p.is_file():
             return self._send(404, {"error": "没有这个文件"})
         ctype = {".png": "image/png", ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
+                 ".wasm": "application/wasm", ".pck": "application/octet-stream", ".ico": "image/x-icon",
                  ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8"}.get(p.suffix, "application/octet-stream")
         self._send(200, p.read_bytes(), ctype)
 
@@ -499,7 +537,21 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         if path in ("/", "/index.html"):
+            return self._file(WEB, "app.html")  # 合在一起的入口：工具箱 + 资产工坊
+        if path in ("/workshop", "/workshop/"):
             return self._file(WEB, "index.html")
+        if path == "/game" or path == "/game/":
+            if not (BUILD_WEB / "index.html").exists():
+                return self._send(200, ("<body style='background:#14161f;color:#e6e8ef;font:15px sans-serif;padding:40px'>"
+                                        "还没有网页版：在「AI 资产工坊」标签里点「更新网页版」，或运行 "
+                                        "godot --headless --path godot --export-release Web ../build/web/index.html</body>").encode("utf-8"),
+                                  "text/html; charset=utf-8")
+            return self._file(BUILD_WEB, "index.html")
+        if path.startswith("/game/"):
+            return self._file(BUILD_WEB, path[len("/game/"):])
+        if path == "/api/web":
+            f = BUILD_WEB / "index.pck"
+            return self._send(200, {"exists": f.exists(), "mtime": f.stat().st_mtime if f.exists() else 0})
         if path == "/api/ping":
             return self._send(200, {"ok": True, "name": "PixelWorld 资产工坊"})
         if path == "/api/config":
@@ -538,6 +590,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, {"ok": True, "reply": text.strip()[:60], "usage": usage})
             except LLMError as e:
                 return self._send(200, {"ok": False, "error": str(e)})
+        if path == "/api/export_web":
+            job = Job("web", body)
+            JOBS[job.id] = job
+            threading.Thread(target=run_export_job, args=(job,), daemon=True).start()
+            return self._send(200, {"job": job.id})
         if path == "/api/generate":
             kind = body.get("kind")
             if kind not in VALIDATORS:
