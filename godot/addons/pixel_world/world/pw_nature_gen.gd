@@ -295,7 +295,7 @@ func biome_at(p: Vector2) -> int:
 		if ot < float(prm.get("oasis", 1.9)) and h > WATER_Y + 0.12:
 			return FOREST if ot < 1.35 else GRASS
 		return SAND
-	if h < WATER_Y + _sand_h() + j * 0.08:
+	if h < WATER_Y + _sand_h() + j * 0.08 or (float(prm.get("island", 0.0)) > 0.0 and h < WATER_Y + _sand_h() + 0.35):
 		return SAND
 	var amp: float = prm.get("hill_amp", 3.0)
 	if slope(p) > ROCK_SLOPE + j * 0.15 or h > WATER_Y + LAND_MIN + float(prm.get("plateau", 0.0)) + amp * 0.82 + j * 0.3:
@@ -337,8 +337,8 @@ func _build_terrain_mesh() -> void:
 			var sl := slope_at(i, j)
 			var rock := maxf(smoothstep(ROCK_SLOPE - 0.12, ROCK_SLOPE + 0.12, sl),
 				smoothstep(LAND_MIN + float(prm.get("plateau", 0.0)) + amp * 0.75, LAND_MIN + float(prm.get("plateau", 0.0)) + amp * 0.9, above))
-			if above < 0.0:
-				rock = 0.0
+			if above < 0.0 or (float(prm.get("island", 0.0)) > 0.0 and above < _sand_h() + 0.35):
+				rock = 0.0  # 海岛的海岸是沙滩落进海里，不露岩石
 			cols[k] = Color(sand, rock, bed, 1.0)
 	var indices := PackedInt32Array()
 	for j in n:
@@ -697,7 +697,7 @@ func _sink(p: Vector2, r: float) -> float:
 	return slope(p) * r + 0.03
 
 
-func _tree_at(p: Vector2, mesh: ArrayMesh, s: float, pine: bool) -> bool:
+func _tree_at(p: Vector2, mesh: Mesh, s: float, pine: bool) -> bool:
 	var y := w.ground_y(p.x, p.y) - _sink(p, 0.3 * s)
 	var canopy: float = _town._canopy[mesh] * s
 	if not pl.can_place(P.TREE, p, 0.3 * s, canopy, true):
@@ -711,7 +711,7 @@ func _tree_at(p: Vector2, mesh: ArrayMesh, s: float, pine: bool) -> bool:
 
 func _random_tree(prefer_broad := false) -> Array:
 	var pine := rng.randf() < (0.15 if prefer_broad else float(prm.get("pine_ratio", 0.6)))
-	var mesh: ArrayMesh = _town._pines[rng.randi_range(0, _town._pines.size() - 1)] if pine \
+	var mesh: Mesh = _town._pines[rng.randi_range(0, _town._pines.size() - 1)] if pine \
 		else _town._broads[rng.randi_range(0, _town._broads.size() - 1)]
 	return [mesh, pine]
 
@@ -832,13 +832,14 @@ func _shape_island(frac: float) -> void:
 		for i in n + 1:
 			var p := w.vert_xz(i, j)
 			var r := p.length() / (H * frac) * (1.0 + wob.get_noise_2d(p.x, p.y) * 0.2)
-			var m := 1.0 - smoothstep(0.7, 1.0, r)
+			var m := 1.0 - smoothstep(0.55, 1.0, r)   # 1 = 岛中心，0 = 外海
 			var base := w.get_h(i, j)
-			var beach := lerpf(WATER_Y + 0.22, base, smoothstep(0.25, 0.6, m))
-			w.set_h(i, j, lerpf(WATER_Y - 2.6, beach, smoothstep(0.0, 0.22, m)))
+			# 丘陵越靠近海越矮：起伏按 m 逐渐压平，沙滩到内陆是缓坡（不再出现一圈灰色陡坎）
+			var land := WATER_Y + 0.24 + (base - (WATER_Y + 0.24)) * smoothstep(0.18, 0.9, m)
+			w.set_h(i, j, lerpf(WATER_Y - 2.6, land, smoothstep(0.0, 0.18, m)))
 
 
-## 峡谷：一条从地图一边蜿蜒到另一边的河谷。两侧是抬高的台地，谷壁是两级台阶（陡坎 + 平台），谷底中间是河
+## 峡谷：一条从地图一边蜿蜒到另一边的河谷。两侧是抬高的台地，谷壁是三级台阶（陡坎 + 平台），谷底中间是河
 func _carve_canyon() -> void:
 	var horiz := rng.randf() < 0.5
 	var off := rng.randf_range(-H * 0.25, H * 0.25)
@@ -846,16 +847,16 @@ func _carve_canyon() -> void:
 	_trace_river(start, Vector2(1, 0) if horiz else Vector2(0, 1))
 	var vw: float = float(prm.get("valley_w", 11.0)) * clampf(w.size / 128.0, 0.7, 1.0)
 	var floor_y := WATER_Y + 0.45
-	var steps := 2.0
+	var steps := 3.0
 	for j in n + 1:
 		for i in n + 1:
 			var q := w.vert_xz(i, j)
 			var d: float = _nearest_on_river(q, vw * 2.4)[0]
 			if d > vw * 2.2:
 				continue
-			var t := clampf((d - vw * 0.5) / (vw * 1.1), 0.0, 1.0)
+			var t := clampf((d - vw * 0.5) / (vw * 1.45), 0.0, 1.0)
 			var k := t * steps
-			var f := floorf(k) + smoothstep(0.62, 0.86, k - floorf(k))  # 每级：大半是平台，最后一小段是陡坎
+			var f := floorf(k) + smoothstep(0.7, 0.88, k - floorf(k))  # 每级：大半是平台，最后一小段是陡坎
 			w.set_h(i, j, minf(w.get_h(i, j), lerpf(floor_y, w.get_h(i, j), clampf(f / steps, 0.0, 1.0))))
 	_carve_channel(rng.randf_range(2.0, 2.6))
 

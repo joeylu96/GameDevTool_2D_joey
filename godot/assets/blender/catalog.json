@@ -31,32 +31,6 @@
       "plant": false
     },
     {
-      "id": "bl_pine",
-      "kind": "pine",
-      "name": "松树",
-      "category": "trees",
-      "desc": "Blender 生成的松树：八边形分层树冠，裙边深、顶盖浅，下雪时每层顶盖积白。",
-      "vary": "层数、底部粗细、收分、坡度、扭转角随种子变化；放进场景时再随机朝向、比例、色调。",
-      "tags": [
-        "forest",
-        "winter",
-        "town"
-      ],
-      "source": "generator",
-      "files": [
-        "pine_0.glb",
-        "pine_1.glb",
-        "pine_2.glb",
-        "pine_3.glb"
-      ],
-      "footprint": [
-        2.21,
-        2.21
-      ],
-      "height": 4.25,
-      "plant": true
-    },
-    {
       "id": "bl_well",
       "kind": "well",
       "name": "石井",
@@ -105,57 +79,6 @@
         1.9
       ],
       "height": 2.7,
-      "plant": false
-    },
-    {
-      "id": "bl_oak",
-      "kind": "oak",
-      "name": "阔叶树",
-      "category": "trees",
-      "desc": "Blender 生成的阔叶树：树干分叉成几根主枝，每根枝头一簇树冠，下层深上层浅。",
-      "vary": "主枝数量和方向、树冠簇的大小和数量、树干高度和粗细随种子变化；放进场景时再随机朝向、比例、色调。",
-      "tags": [
-        "forest",
-        "plains",
-        "town"
-      ],
-      "source": "generator",
-      "files": [
-        "oak_0.glb",
-        "oak_1.glb",
-        "oak_2.glb",
-        "oak_3.glb"
-      ],
-      "footprint": [
-        4.43,
-        4.43
-      ],
-      "height": 4.4,
-      "plant": true
-    },
-    {
-      "id": "bl_street_lamp",
-      "kind": "street_lamp",
-      "name": "铸铁路灯",
-      "category": "street",
-      "desc": "Blender 生成的铸铁路灯：石墩、装饰灯杆、弯臂和四面玻璃灯笼，夜里灯笼自动发光。",
-      "vary": "单臂 / 双臂、灯杆高度、颜色（墨绿 / 铁灰）、灯笼大小随种子变化。",
-      "tags": [
-        "roadside",
-        "town"
-      ],
-      "source": "generator",
-      "files": [
-        "street_lamp_0.glb",
-        "street_lamp_1.glb",
-        "street_lamp_2.glb",
-        "street_lamp_3.glb"
-      ],
-      "footprint": [
-        1.71,
-        0.6
-      ],
-      "height": 3.48,
       "plant": false
     },
     {
@@ -444,6 +367,95 @@
         2.44
       ],
       "height": 0.83,
+      "plant": false
+    },
+    {
+      "id": "bl_pine",
+      "kind": "pine",
+      "name": "松树",
+      "category": "trees",
+      "desc": "Blender 生成的松树：八边形分层树冠，裙边深、顶盖浅，下雪时每层顶盖积白。",
+      "vary": "层数、底部粗细、收分、坡度、扭转角随种子变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "forest",
+        "winter",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "pine_0.glb",
+        "pine_1.glb",
+        "pine_2.glb",
+        "pine_3.glb",
+        "pine_4.glb",
+        "pine_5.glb",
+        "pine_6.glb",
+        "pine_7.glb",
+        "pine_8.glb",
+        "pine_9.glb"
+      ],
+      "footprint": [
+        2.02,
+        2.02
+      ],
+      "height": 4.92,
+      "plant": true
+    },
+    {
+      "id": "bl_oak",
+      "kind": "oak",
+      "name": "阔叶树",
+      "category": "trees",
+      "desc": "Blender 生成的阔叶树：树干分叉成几根主枝，每根枝头一簇树冠，下层深上层浅。",
+      "vary": "主枝数量和方向、树冠簇的大小和数量、树干高度和粗细随种子变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "forest",
+        "plains",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "oak_0.glb",
+        "oak_1.glb",
+        "oak_2.glb",
+        "oak_3.glb",
+        "oak_4.glb",
+        "oak_5.glb",
+        "oak_6.glb",
+        "oak_7.glb"
+      ],
+      "footprint": [
+        3.66,
+        3.66
+      ],
+      "height": 4.41,
+      "plant": true
+    },
+    {
+      "id": "bl_street_lamp",
+      "kind": "street_lamp",
+      "name": "铸铁路灯",
+      "category": "street",
+      "desc": "Blender 生成的铸铁路灯：石墩、装饰灯杆、弯臂和四面玻璃灯笼，夜里灯笼自动发光。",
+      "vary": "单臂 / 双臂、灯杆高度、颜色（墨绿 / 铁灰）、灯笼大小随种子变化。",
+      "tags": [
+        "roadside",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "street_lamp_0.glb",
+        "street_lamp_1.glb",
+        "street_lamp_2.glb",
+        "street_lamp_3.glb",
+        "street_lamp_4.glb",
+        "street_lamp_5.glb"
+      ],
+      "footprint": [
+        1.83,
+        0.6
+      ],
+      "height": 3.59,
       "plant": false
     }
   ]

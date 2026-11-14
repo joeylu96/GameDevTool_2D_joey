@@ -220,6 +220,7 @@ static func load_blender_catalog() -> int:
 			"id": a.id, "cat": sem if not category(sem).is_empty() else "props", "blender": true, "semantic": sem,
 			"name": a.name + "（Blender）", "show": show,
 			"tags": a.get("tags", []), "footprint": fp, "height": float(a.get("height", 2.0)), "source": a.get("source", "generator"),
+			"variants": files.size(),
 			"size": maxf(maxf(fp[0], fp[1]), float(a.get("height", 2.0)) * 0.8),
 			"plant": a.get("plant", false),
 			"desc": a.get("desc", "") + "  来源：%s，%d 个变体。" % [data.get("generator", "Blender"), files.size()],
@@ -252,10 +253,17 @@ static func blender_mesh(file: String) -> Mesh:
 	return out
 
 
+## 同一个材质键（pw_<键>）的所有 Blender 资产共用一份材质：贴图是 Blender 按同样的种子画的，完全一样；
+## 共用材质后场景合批（PWBatcher 按材质分组）不会因为换成 Blender 模型而多出绘制调用
+static var _bl_mats := {}
+
+
 static func _convert_material(src: Material) -> Material:
 	var key := ""
 	if src != null:
 		key = src.resource_name.trim_prefix("pw_")
+	if key != "" and _bl_mats.has(key):
+		return _bl_mats[key]
 	var m := ShaderMaterial.new()
 	m.shader = SHADER
 	m.set_shader_parameter("uv_in_meters", false)  # Blender 端已经按 32 texel/米 算好了 UV
@@ -269,7 +277,23 @@ static func _convert_material(src: Material) -> Material:
 	if key == "glass":
 		m.set_shader_parameter("emission_full", 1.0)
 		m.set_shader_parameter("emission_random_off", 0.3)
+	if key != "":
+		_bl_mats[key] = m
 	return m
+
+
+## 有 Blender 版的资源，资源库和场景生成都用 Blender 版（Godot 代码版只在没有 Blender 资产目录时兜底）
+const REPLACED_BY := {"pine": "bl_pine", "oak": "bl_oak", "lighthouse": "bl_lighthouse", "lamp": "bl_street_lamp"}
+
+
+## Blender 资产的全部变体（网格）；没有这个资产时返回空数组
+static func blender_variants(id: String) -> Array[Mesh]:
+	var out: Array[Mesh] = []
+	for it in blender_items():
+		if it.id == id:
+			for i in int(it.get("variants", 1)):
+				out.append(it.build.call(i))
+	return out
 
 
 static func items() -> Array[Dictionary]:
@@ -374,6 +398,11 @@ static func items() -> Array[Dictionary]:
 				v.demo = true
 				return v})
 	out.append_array(_extra)
+	# 有 Blender 版的就不再列 Godot 代码版
+	var have := {}
+	for it in _extra:
+		have[it.id] = true
+	out = out.filter(func(it: Dictionary) -> bool: return not (REPLACED_BY.has(it.id) and have.has(REPLACED_BY[it.id])))
 	# 用户调整过的位置（资源库里「移动到」、资产工坊生成时选的分类）
 	var assign: Dictionary = library().assign
 	for it in out:

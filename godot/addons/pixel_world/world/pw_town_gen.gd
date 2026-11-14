@@ -379,7 +379,12 @@ func _build_lighthouse() -> void:
 		var c := Vector2(x, shore(x) + 1.2)
 		if not pl.can_place(P.LANDMARK, c, 3.1, 3.2, true):
 			continue
-		batch.add_static(Props.build_lighthouse(), Transform3D(Basis(), Vector3(c.x, 0, c.y)))
+		# 灯塔用 Blender 版（门朝向小镇）；没有 Blender 资产时退回代码版
+		var bl := PWAssetLibrary.blender_variants("bl_lighthouse")
+		if bl.is_empty():
+			batch.add_static(Props.build_lighthouse(), Transform3D(Basis(), Vector3(c.x, 0, c.y)))
+		else:
+			batch.add_static(bl[rng.randi_range(0, bl.size() - 1)], Transform3D(Basis(Vector3.UP, PI), Vector3(c.x, 0, c.y)))
 		pl.add_circle(P.LANDMARK, c, 3.1, 3.2, true)
 		pl.solid_circles.append(Vector3(c.x, c.y, 3.1))
 		return
@@ -487,6 +492,8 @@ func _house_fence(basis: Basis, center: Vector2, fp: Vector2, yard: float) -> vo
 
 func _build_lamps() -> void:
 	var lamp_meshes := {}
+	# 路灯用 Blender 版（铸铁路灯，单臂 / 双臂）：灯臂沿局部 +X 伸出，转到朝向路面；光斑放在灯头正下方
+	var bl_lamps := PWAssetLibrary.blender_variants("bl_street_lamp")
 	var pool := PlaneMesh.new()
 	pool.size = Vector2(5, 5)
 	var pm := ShaderMaterial.new()
@@ -513,21 +520,33 @@ func _build_lamps() -> void:
 					to_road = Vector2(1, 0) if side < 0 else Vector2(-1, 0)
 				var style: String = Trees.LAMP_STYLES[rng.randi_range(0, Trees.LAMP_STYLES.size() - 1)]
 				var canopy := 0.9 if style == "arm" or style == "twin" else 0.4
+				var bl_mesh: Mesh = null
+				var bl_light := Vector3.ZERO
+				if not bl_lamps.is_empty():
+					bl_mesh = bl_lamps[rng.randi_range(0, bl_lamps.size() - 1)]
+					var a := bl_mesh.get_aabb()
+					canopy = maxf(maxf(absf(a.position.x), absf(a.end.x)), 0.4)
+					# 双臂（两边都伸出）：光斑在灯柱下；单臂：在灯头下
+					bl_light = Vector3(0.0 if a.position.x < -0.3 else a.end.x - 0.22, 0, 0)
 				if not on_land(Rect2(p - Vector2.ONE * 0.3, Vector2.ONE * 0.6), 1.0):
 					continue
 				if not pl.can_place(P.LAMP, p, 0.22, canopy, true):
 					continue
-				var metal: String = Trees.LAMP_METALS[rng.randi_range(0, Trees.LAMP_METALS.size() - 1)]
-				var key := style + "/" + metal
-				if not lamp_meshes.has(key):
-					lamp_meshes[key] = Trees.build_lamp(style, metal)
 				# 局部 +X 朝路（悬臂灯的灯头伸向路面）：绕 Y 转 θ 后 +X → (cosθ, 0, -sinθ)
 				var yaw := atan2(-to_road.y, to_road.x)
 				var basis := Basis(Vector3.UP, yaw)
-				batch.add_static(lamp_meshes[key], Transform3D(basis, Vector3(p.x, 0, p.y)))
+				if bl_mesh != null:
+					batch.add_static(bl_mesh, Transform3D(basis, Vector3(p.x, 0, p.y)))
+					pools.append(Transform3D(Basis(), Vector3(p.x, 0.04, p.y) + basis * bl_light))
+				else:
+					var metal: String = Trees.LAMP_METALS[rng.randi_range(0, Trees.LAMP_METALS.size() - 1)]
+					var key := style + "/" + metal
+					if not lamp_meshes.has(key):
+						lamp_meshes[key] = Trees.build_lamp(style, metal)
+					batch.add_static(lamp_meshes[key], Transform3D(basis, Vector3(p.x, 0, p.y)))
+					pools.append(Transform3D(Basis(), Vector3(p.x, 0.04, p.y) + basis * Trees.lamp_light_offset(style)))
 				pl.add_circle(P.LAMP, p, 0.22, canopy, true)
 				pl.solid_circles.append(Vector3(p.x, p.y, 0.25))
-				pools.append(Transform3D(Basis(), Vector3(p.x, 0.04, p.y) + basis * Trees.lamp_light_offset(style)))
 				_lamp_spots.append([p, to_road])
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -567,8 +586,8 @@ func _build_benches() -> void:
 
 # ---------------------------------------------------------------- 植被
 
-var _pines: Array[ArrayMesh] = []
-var _broads: Array[ArrayMesh] = []
+var _pines: Array[Mesh] = []
+var _broads: Array[Mesh] = []
 var _bushes: Array[ArrayMesh] = []
 var _rocks: Array[ArrayMesh] = []
 var _canopy := {}  # Mesh -> 树冠半径
@@ -577,17 +596,27 @@ var _canopy := {}  # Mesh -> 树冠半径
 func _variants() -> void:
 	if not _pines.is_empty():
 		return
-	for i in 10:
-		_pines.append(Trees.build_pine(1000 + i))
+	# 松树、橡树用 Blender 版（各有 10 / 8 个变体）；白桦、杨树没有 Blender 版，继续用代码版。
+	# 没有 Blender 资产目录时全部退回代码版
+	var bl_pines := PWAssetLibrary.blender_variants("bl_pine")
+	var bl_oaks := PWAssetLibrary.blender_variants("bl_oak")
+	if bl_pines.is_empty():
+		for i in 10:
+			_pines.append(Trees.build_pine(1000 + i))
+	else:
+		_pines.append_array(bl_pines)
 	var styles := ["oak", "oak", "birch", "poplar", "oak", "birch", "poplar", "oak", "oak", "birch", "poplar", "oak"]
 	for i in styles.size():
+		if styles[i] == "oak" and not bl_oaks.is_empty():
+			continue
 		_broads.append(Trees.build_broadleaf(2000 + i, styles[i]))
+	_broads.append_array(bl_oaks)
 	for i in 8:
 		_bushes.append(Trees.build_bush(3000 + i))
 	for i in 8:
 		_rocks.append(Trees.build_rock(4000 + i))
 	for m in _pines + _broads + _bushes + _rocks:
-		var a := m.get_aabb()
+		var a: AABB = m.get_aabb()
 		_canopy[m] = maxf(maxf(absf(a.position.x), absf(a.end.x)), maxf(absf(a.position.z), absf(a.end.z)))
 
 
@@ -597,7 +626,7 @@ func tint(amount: float) -> Color:
 
 
 ## 放一棵树（任意朝向、宽高比例、色调）；能放返回 true
-func try_tree(p: Vector2, mesh: ArrayMesh, s: float, pine: bool) -> bool:
+func try_tree(p: Vector2, mesh: Mesh, s: float, pine: bool) -> bool:
 	var sxz := s * rng.randf_range(0.9, 1.1)
 	var sy := s * rng.randf_range(0.9, 1.18)
 	var canopy: float = _canopy[mesh] * sxz
@@ -635,7 +664,7 @@ func _build_trees() -> void:
 		if not belt and rng.randf() > 0.35:
 			continue
 		var pine := rng.randf() < (0.92 if belt else 0.55)
-		var mesh: ArrayMesh = _pines[rng.randi_range(0, _pines.size() - 1)] if pine else _broads[rng.randi_range(0, _broads.size() - 1)]
+		var mesh: Mesh = _pines[rng.randi_range(0, _pines.size() - 1)] if pine else _broads[rng.randi_range(0, _broads.size() - 1)]
 		try_tree(p, mesh, rng.randf_range(0.75, 1.2), pine)
 
 

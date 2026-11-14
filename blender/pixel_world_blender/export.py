@@ -183,7 +183,7 @@ def build_all(out_dir, kinds=None, variants=4, seed0=1, specs_dir=None, preview_
         gen = GENERATORS[kind]
         files = []
         info = {}
-        for v in range(variants):
+        for v in range(getattr(gen, "VARIANTS", variants)):  # 场景里大量出现的（树、路灯）多导出几个变体，不重样
             clear_scene()
             obj, info = generate(kind, seed0 + v)
             name = "%s_%d.glb" % (kind, v)

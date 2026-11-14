@@ -77,10 +77,10 @@ const STYLES := [
 	},
 	{
 		"id": "canyon", "name": "峡谷", "en": "Canyon", "generator": "nature", "size": 128, "ready": true,
-		"desc": "红岩台地中间一条蜿蜒的河谷：两级台阶的崖壁，谷底有河，台地上零星的树和岩柱。",
+		"desc": "红岩台地中间一条蜿蜒的河谷：三级台阶的崖壁，谷底有河，台地上零星的树和岩柱。",
 		"color": Color("a3352d"),
 		"params": {
-			"canyon": true, "plateau": 6.0, "valley_w": 12.0, "terrain_mat": "terrain_canyon", "hill_amp": 3.0,
+			"canyon": true, "plateau": 8.0, "valley_w": 13.0, "terrain_mat": "terrain_canyon", "hill_amp": 3.0,
 			"hill_freq": 0.02, "lakes": [0, 0], "forest_cover": 0.86, "tree_density": 0.25, "lone_trees": 0.02,
 			"pine_ratio": 0.55, "grove_trees": false, "hedgerows": false, "grass": 0.35, "flowers": 0.04, "rocks": 1.3,
 			"pois": ["camp", "ruins", "camp"],

@@ -10,6 +10,7 @@ CATEGORY = "street"
 DESC = "Blender 生成的铸铁路灯：石墩、装饰灯杆、弯臂和四面玻璃灯笼，夜里灯笼自动发光。"
 VARY = "单臂 / 双臂、灯杆高度、颜色（墨绿 / 铁灰）、灯笼大小随种子变化。"
 TAGS = ["roadside", "town"]
+VARIANTS = 6  # 场景里大量使用（替换了 Godot 版），多导出几个变体
 
 
 def _lantern(mb, x, y, z, s, metal):
