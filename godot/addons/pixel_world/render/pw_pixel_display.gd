@@ -48,7 +48,9 @@ func _update() -> void:
 		return
 	var s := 1
 	if pixel_mode:
-		s = maxi(1, int(floor(size.y / float(pixel_height))))
+		# 至少缩小 2 倍（720p 窗口约 360 行、1080p 540 行、4K 540 行），任何分辨率下都看得出像素感
+		s = maxi(2, int(floor(size.y / float(pixel_height))))
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if pixel_mode else CanvasItem.TEXTURE_FILTER_PARENT_NODE
 	viewport.msaa_3d = Viewport.MSAA_DISABLED if pixel_mode else Viewport.MSAA_4X
 	if stretch_shrink != s:
 		stretch_shrink = s

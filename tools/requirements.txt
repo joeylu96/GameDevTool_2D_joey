@@ -1,2 +1,4 @@
 # 资产工坊（tools/pw_asset_server.py）用 Claude 时需要；只用 OpenAI 兼容接口可以不装
 anthropic>=1.0
+# 可选：生成的新资源名里有字体缺的字时自动重新裁剪中文字体（还要把完整的 NotoSansSC-Regular.otf 放到 ~/.pixelworld/）
+fonttools>=4.40

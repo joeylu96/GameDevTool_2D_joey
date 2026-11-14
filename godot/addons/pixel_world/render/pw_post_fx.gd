@@ -18,11 +18,11 @@ const VIGNETTE_SHADER := preload("res://addons/pixel_world/shaders/post_vignette
 	set(v):
 		focus_center = v
 		_set_param("focus_center", v)
-@export_range(0.0, 0.5) var focus_width := 0.16:
+@export_range(0.0, 0.5) var focus_width := 0.18:
 	set(v):
 		focus_width = v
 		_set_param("focus_width", v)
-@export_range(0.0, 8.0) var blur_px := 2.5:
+@export_range(0.0, 8.0) var blur_px := 3.2:
 	set(v):
 		blur_px = v
 		_set_param("blur_px", v)

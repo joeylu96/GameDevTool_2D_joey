@@ -97,6 +97,7 @@ add_child(world)            # generate_on_ready 默认为 true，加入场景树
   3D 视图侧边栏（N）出现「Pixel World」标签页：选资产和种子「生成」，或「导出全部到 Godot」。
 
 代码生成器：农舍（双坡 / 四坡顶，竖木板 / 横木板 / 石墙 / 灰泥墙）、松树、阔叶树、石井、集市摊位、铸铁路灯、手推车、路牌、灯塔（`blender/pixel_world_blender/generators/`）。
+松树、阔叶树、路灯、灯塔在场景和资源库里都用 Blender 版（Godot 代码版只在没有 Blender 资产时兜底）。
 规格生成的摆件：`shared/asset_specs/props/*.json`（雪人、篝火、布告栏、椰子树、仙人掌、帐篷、红岩石柱、渔船……），由 `generators/spec_parts.py` 按零件拼装，
 可以手写，也可以用 AI 资产工坊让大模型写。它们读取同一份 `shared/style/style.json`，
 像素密度 32 texel/米、只用调色板颜色；导入 Godot 后材质自动换成统一的 `pixel_world` 材质，所以积雪、潮湿、夜间窗户发光和代码生成的资产完全一样。
@@ -152,6 +153,7 @@ python tools/workshop_selftest.py          # 自检（模拟模型，不花钱�
 - 也可以不调模型、直接粘贴规格 JSON 生成；规格都存在 `shared/asset_specs/`，可以手改后重新生成。
 - 工具箱（Godot 网页版）和工坊在同一个网址里；工坊生成完会自动重新导出网页版，切回工具箱标签就能看到新资产。
 - 模型设置里「获取列表」可以查服务方的可用模型再选。
+- 3D 摆件详情可以拖动 360° 旋转；「角色动作」里有可视化动作编辑器（火柴人实时预览、滑块调姿势、关键帧）。
 - 生成时可以选「放到资源库」的分类 / 子分类；资源库里也可以自己新增分类、子分类，把资源移来移去（`godot/assets/library.json`）。
 
 详细说明（规格格式、标签、接口、接其他模型）见 [docs/ASSET_WORKSHOP.md](docs/ASSET_WORKSHOP.md)。

@@ -19,11 +19,27 @@ ROOT = Path(__file__).resolve().parent.parent
 SCAN = [ROOT / "godot" / "addons", ROOT / "godot" / "demo", ROOT / "godot" / "assets", ROOT / "blender", ROOT / "shared"]
 OUT_DIR = ROOT / "godot" / "addons" / "pixel_world" / "ui" / "fonts"
 OUT = OUT_DIR / "NotoSansSC-PW.otf"
+CHARS = OUT_DIR / "NotoSansSC-PW.chars.txt"  # 字体里有哪些字（资产工坊据此判断新资源名要不要补字）
 
 # 总是保留：ASCII、常用中文标点、全角符号，以及一些动态拼出来的字（数字单位等）
 BASE = "".join(chr(c) for c in range(0x20, 0x7F))
 BASE += "，。、；：？！“”‘’（）《》【】—…·～￥％＋－×÷＝＜＞／「」『』"
 BASE += "零一二三四五六七八九十百千万米秒分时天个张棵盏栋座条片处种类"
+
+
+def gb2312_chars() -> str:
+    """GB2312 一二级汉字（6763 个常用字）+ 全角符号：资产工坊生成的新资源名几乎都在里面，Godot 里不会显示成方块"""
+    out = []
+    for hi in range(0xA1, 0xF8):
+        for lo in range(0xA1, 0xFF):
+            try:
+                out.append(bytes([hi, lo]).decode("gb2312"))
+            except UnicodeDecodeError:
+                pass
+    return "".join(out)
+
+
+BASE += gb2312_chars()
 
 
 def collect() -> str:
@@ -52,6 +68,7 @@ def main() -> None:
     sub.populate(text=text)
     sub.subset(font)
     subset.save_font(font, str(OUT), opts)
+    CHARS.write_text("".join(ch for ch in text if ord(ch) > 0x7F), encoding="utf-8")
     lic = src.parent / "LICENSE"
     if lic.exists():
         (OUT_DIR / "OFL.txt").write_text(lic.read_text(encoding="utf-8"), encoding="utf-8")

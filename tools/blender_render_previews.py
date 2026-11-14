@@ -33,7 +33,7 @@ for a in cat.get("assets", []):
     if only and kind not in only:
         continue
     out = Path(args.out) / ("prop_%s.png" % kind)
-    if out.exists() and not args.force:
+    if out.exists() and out.with_name(out.stem + "_spin.png").exists() and not args.force:
         continue
     files = a.get("files", [])
     if not files:

@@ -61,6 +61,7 @@ DEFAULTS = {
     "blender": "",               # 留空 = 自动查找
     "godot": "",
     "sync_web": True,            # 生成完自动重新导出网页版，工具箱标签里就能看到新资产
+    "font_source": "",           # 完整的 NotoSansSC-Regular.otf（新资源名里有字体缺的字时自动重新裁剪）；留空 = ~/.pixelworld/ 下找
 }
 # 支持服务端拒答兜底（fallbacks="default"）的模型
 FALLBACK_MODELS = {"claude-fable-5-2", "claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"}
@@ -367,6 +368,7 @@ def run_job(job):
             _build(job, cfg, kind, spec)
             if kind in ("prop", "character"):
                 place_asset(job, ("bl_spec_" if kind == "prop" else "sprite_") + spec["id"], req.get("place"))
+            ensure_font(job, cfg, spec)
             _import_godot(job, cfg)
             if cfg.get("sync_web", True):
                 job.result["web_updated"] = _export_web(job, cfg)
@@ -390,7 +392,7 @@ def _run(job, cmd, timeout=1800):
     t0 = time.time()
     for line in p.stdout:
         line = line.rstrip()
-        if re.search(r"角色|已生成|已导出|规格|动作|预览|Error|Traceback|错误|跳过|^\s+bl_", line) and "Saved:" not in line:
+        if re.search(r"角色|已生成|已导出|规格|动作|预览|字符|Error|Traceback|错误|跳过|^\s+bl_", line) and "Saved:" not in line:
             job.log("  " + line.strip())
         if time.time() - t0 > timeout:
             p.kill()
@@ -491,6 +493,32 @@ def write_library(d):
     return lib
 
 
+FONT_CHARS = ROOT / "godot" / "addons" / "pixel_world" / "ui" / "fonts" / "NotoSansSC-PW.chars.txt"
+
+
+def ensure_font(job, cfg, spec):
+    """Godot 界面用的是裁剪过的中文字体（常用 7500 字）。新资源的名字 / 描述里有字体缺的字时：
+    有完整字体和 fonttools 就自动重新裁剪，没有就在日志里提示（不影响生成，只是 Godot 里那几个字会显示成方块）"""
+    text = "".join(str(spec.get(k, "")) for k in ("name", "desc", "vary"))
+    have = set(FONT_CHARS.read_text(encoding="utf-8")) if FONT_CHARS.exists() else set()
+    missing = sorted({ch for ch in text if ord(ch) > 0x7F and ch not in have})
+    if not missing or not have:
+        return
+    src = Path(cfg.get("font_source") or (Path.home() / ".pixelworld" / "NotoSansSC-Regular.otf"))
+    try:
+        import fontTools  # noqa: F401
+        ok = src.exists()
+    except ImportError:
+        ok = False
+    if not ok:
+        job.log("提示：字体里没有「%s」，Godot 里会显示成方块。把完整的 NotoSansSC-Regular.otf 放到 %s 并 pip install fonttools，"
+                "以后会自动补字" % ("".join(missing), src))
+        return
+    job.status = "补字体（%s）" % "".join(missing)
+    _run(job, [sys.executable, "tools/subset_font.py", str(src)], timeout=300)
+    job.log("字体已补上：%s" % "".join(missing))
+
+
 def place_asset(job, asset_id, place):
     """把生成的资源放到资源库里指定的分类 / 子分类（工坊里选的）"""
     if not place or not place.get("cat"):
@@ -524,7 +552,7 @@ def missing_previews():
     """目录里有、但还没有预览图的 Blender 资产"""
     out = []
     for a in _blender_catalog().get("assets", []):
-        if not (WORK / "previews" / ("prop_%s.png" % a["kind"])).exists():
+        if not (WORK / "previews" / ("prop_%s_spin.png" % a["kind"])).exists():
             out.append(a["kind"])
     return out
 
@@ -612,7 +640,9 @@ def list_assets():
                       "where": asset_location(a["id"], a.get("category") or "props", lib),
                       "tags": a.get("tags", []), "source": a.get("source", "generator"), "variants": len(a.get("files", [])),
                       "preview": "/files/previews/prop_%s.png" % a["kind"]
-                      if (WORK / "previews" / ("prop_%s.png" % a["kind"])).exists() else ""})
+                      if (WORK / "previews" / ("prop_%s.png" % a["kind"])).exists() else "",
+                      "spin": "/files/previews/prop_%s_spin.png" % a["kind"]
+                      if (WORK / "previews" / ("prop_%s_spin.png" % a["kind"])).exists() else ""})
     actions = []
     for p in sorted((SPECS / "actions").glob("*.json")):
         try:
@@ -692,6 +722,17 @@ class Handler(BaseHTTPRequestHandler):
             return self._file(BUILD_WEB, path[len("/game/"):])
         if path == "/api/library":
             return self._send(200, read_library())
+        if path == "/api/poses":
+            # 动作编辑器用：默认姿势、各参数合法范围、内置动作、已有的自定义动作
+            custom = {}
+            for p in sorted((SPECS / "actions").glob("*.json")):
+                try:
+                    act, _ = poses.validate_action(json.loads(p.read_text(encoding="utf-8")))
+                    custom[act["id"]] = act
+                except ValueError:
+                    pass
+            return self._send(200, {"neutral": poses.NEUTRAL, "ranges": poses.RANGES, "builtin": poses.ACTIONS,
+                                    "custom": custom})
         if path == "/api/web":
             f = BUILD_WEB / "index.pck"
             return self._send(200, {"exists": f.exists(), "mtime": f.stat().st_mtime if f.exists() else 0})

@@ -127,6 +127,7 @@ func _make_heights() -> void:
 			moisture[idx(i, j)] = mn.get_noise_2d(p.x, p.y) * 0.5 + 0.5
 	if float(prm.get("island", 0.0)) > 0.0:
 		_shape_island(float(prm.island))
+		_fill_puddles()
 	if prm.get("canyon", false):
 		_carve_canyon()
 		return
@@ -837,6 +838,33 @@ func _shape_island(frac: float) -> void:
 			# 丘陵越靠近海越矮：起伏按 m 逐渐压平，沙滩到内陆是缓坡（不再出现一圈灰色陡坎）
 			var land := WATER_Y + 0.24 + (base - (WATER_Y + 0.24)) * smoothstep(0.18, 0.9, m)
 			w.set_h(i, j, lerpf(WATER_Y - 2.6, land, smoothstep(0.0, 0.18, m)))
+
+
+## 填平孤立的小水坑：面积小于 min_cells 个网格点、又不是大片水域的积水抬到水面以上（海岛轮廓的扰动会在岸边留下这种小洼）
+func _fill_puddles(min_cells := 60) -> void:
+	var cnt := (n + 1) * (n + 1)
+	var seen := PackedByteArray()
+	seen.resize(cnt)
+	for j0 in n + 1:
+		for i0 in n + 1:
+			if seen[idx(i0, j0)] != 0 or w.get_h(i0, j0) >= WATER_Y:
+				continue
+			var comp: Array[Vector2i] = []
+			var stack: Array[Vector2i] = [Vector2i(i0, j0)]
+			seen[idx(i0, j0)] = 1
+			while not stack.is_empty():
+				var c: Vector2i = stack.pop_back()
+				comp.append(c)
+				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					var q: Vector2i = c + d
+					if q.x < 0 or q.y < 0 or q.x > n or q.y > n or seen[idx(q.x, q.y)] != 0:
+						continue
+					if w.get_h(q.x, q.y) < WATER_Y:
+						seen[idx(q.x, q.y)] = 1
+						stack.append(q)
+			if comp.size() < min_cells:
+				for c in comp:
+					w.set_h(c.x, c.y, WATER_Y + 0.12)
 
 
 ## 峡谷：一条从地图一边蜿蜒到另一边的河谷。两侧是抬高的台地，谷壁是三级台阶（陡坎 + 平台），谷底中间是河

@@ -114,6 +114,7 @@
     <div id="actextra" style="display:none">
       <label>给哪些角色（不选 = 全部主要角色）</label>
       <select id="targets" multiple size="5"></select>
+      <button id="openeditor" style="margin-top:8px;width:100%">打开动作编辑器（拖滑块摆姿势、实时预览）</button>
     </div>
     <div class="row" style="margin-top:12px">
       <button class="primary" id="gen">让模型生成</button>
@@ -139,12 +140,56 @@
 </div>
 
 <div>
+  <section id="acteditor" style="display:none">
+    <h2>动作编辑器 <span class="hint" style="font-weight:normal">拖滑块摆姿势，关键帧之间自动平滑过渡；满意了再交给 Blender 渲染 8 个方向</span></h2>
+    <div class="row" style="align-items:flex-start;gap:14px">
+      <div style="flex:0 0 330px">
+        <div class="row" style="gap:6px">
+          <canvas id="ae-front" width="160" height="220" style="background:#0f1118;border-radius:6px"></canvas>
+          <canvas id="ae-side" width="160" height="220" style="background:#0f1118;border-radius:6px"></canvas>
+        </div>
+        <div class="hint">左：正面　右：侧面（朝左）　蓝 = 左手左脚，橙 = 右手右脚</div>
+        <label>预览时间</label>
+        <div class="row"><input type="range" id="ae-time" min="0" max="1" step="0.01" value="0" style="flex:4">
+          <button id="ae-play" style="flex:1">播放</button></div>
+        <label>关键帧</label>
+        <div id="ae-keys" class="anims"></div>
+        <div class="row" style="margin-top:6px">
+          <button id="ae-add">＋ 关键帧</button><button id="ae-del">删除这个关键帧</button>
+        </div>
+        <label>这个关键帧的时间位置（0 = 开头，1 = 结尾）</label>
+        <input type="range" id="ae-kt" min="0" max="1" step="0.01" value="0" style="width:100%">
+      </div>
+      <div style="flex:1">
+        <div class="row">
+          <div><label>从已有动作开始</label><select id="ae-load"></select></div>
+          <div><label>动作 id（英文）</label><input type="text" id="ae-id" value="my_action"></div>
+          <div><label>名字</label><input type="text" id="ae-name" value="新动作"></div>
+        </div>
+        <div class="row">
+          <div><label>帧数</label><input type="text" id="ae-frames" value="6"></div>
+          <div><label>每秒帧数</label><input type="text" id="ae-fps" value="10"></div>
+          <div><label><input type="checkbox" id="ae-loop"> 循环播放</label></div>
+        </div>
+        <div id="ae-sliders" style="display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;margin-top:8px"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="primary" id="ae-render">让 Blender 渲染这个动作</button>
+          <button id="ae-json">复制成规格 JSON</button>
+          <button id="ae-close">关闭编辑器</button>
+        </div>
+        <div class="hint">渲染给「生成新资产 → 角色动作」里选中的角色（不选 = 全部主要角色）。</div>
+      </div>
+    </div>
+  </section>
   <section id="detail" style="display:none">
     <h2 id="dtitle"></h2>
     <div class="row" style="align-items:flex-start">
       <div style="flex:0 0 270px">
         <canvas id="anim" width="128" height="128"></canvas>
         <img id="dimg" class="pv" style="width:256px;height:256px;display:none">
+        <canvas id="spin" width="192" height="192" style="width:256px;height:256px;display:none;cursor:grab"
+          title="左右拖动转着看"></canvas>
+        <div class="hint" id="spinhint" style="display:none">左右拖动旋转（360°），松手后继续慢慢转</div>
         <img id="dstrip" class="pv" style="width:100%;height:auto;display:none;margin-top:6px">
         <div class="anims" id="danims" style="margin-top:8px"></div>
         <div class="row" style="margin-top:6px"><button id="rotl">◀ 转向</button><button id="rotr">转向 ▶</button></div>
@@ -388,6 +433,8 @@ async function showChar(id, anim) {
   const c = assets.characters.find(x => x.id === id);
   if (!c) return;
   cur = {kind: "character", id};
+  clearInterval(spinTimer);
+  $("spin").style.display = $("spinhint").style.display = "none";
   animName = anim && c.anims[anim] ? anim : "idle";
   $("detail").style.display = "block"; $("anim").style.display = "block"; $("dimg").style.display = "none";
   $("dtitle").textContent = c.name + "（" + c.id + "）";
@@ -404,13 +451,33 @@ async function showChar(id, anim) {
 function setAnim(k) { animName = k; document.querySelectorAll("#danims button").forEach(b => b.classList.toggle("on", b.textContent === (assets.characters.find(x => x.id === cur.id).anims[k].name || k))); drawAnim(); }
 $("rotl").onclick = () => { dir = (dir + 1) % assets.dirs; drawAnim(); };
 $("rotr").onclick = () => { dir = (dir + assets.dirs - 1) % assets.dirs; drawAnim(); };
+// 3D 摆件：16 个角度的转盘图，拖动换角度，松手后慢慢自转
+let spinImg = null, spinF = 0, spinDrag = null, spinTimer = null;
+function drawSpin() {
+  if (!spinImg) return;
+  const g = $("spin").getContext("2d");
+  g.clearRect(0, 0, 192, 192);
+  g.drawImage(spinImg, (Math.round(spinF) % 16 + 16) % 16 * 192, 0, 192, 192, 0, 0, 192, 192);
+}
+$("spin").onpointerdown = (e) => { spinDrag = {x: e.clientX, f: spinF}; $("spin").setPointerCapture(e.pointerId); $("spin").style.cursor = "grabbing"; };
+$("spin").onpointermove = (e) => { if (spinDrag) { spinF = spinDrag.f - (e.clientX - spinDrag.x) / 18; drawSpin(); } };
+$("spin").onpointerup = () => { spinDrag = null; $("spin").style.cursor = "grab"; };
+function startSpin(url) {
+  clearInterval(spinTimer);
+  spinImg = new Image();
+  spinImg.onload = () => { drawSpin(); spinTimer = setInterval(() => { if (!spinDrag) { spinF += 0.12; drawSpin(); } }, 60); };
+  spinImg.src = url + "?t=" + Date.now();
+}
+
 async function showProp(id) {
   const p = assets.props.find(x => x.id === id);
   if (!p) return;
   clearInterval(animTimer);
   cur = {kind: "prop", id};
   $("detail").style.display = "block"; $("anim").style.display = "none";
-  $("dimg").style.display = p.preview ? "block" : "none"; $("dimg").src = p.preview + "?t=" + Date.now();
+  $("dimg").style.display = p.preview && !p.spin ? "block" : "none"; $("dimg").src = p.preview + "?t=" + Date.now();
+  $("spin").style.display = $("spinhint").style.display = p.spin ? "block" : "none";
+  if (p.spin) startSpin(p.spin); else clearInterval(spinTimer);
   $("dstrip").style.display = "none";
   $("danims").innerHTML = (p.tags || []).map(t => `<span class="badge">${t}</span>`).join("");
   $("rotl").parentElement.style.display = "none";
@@ -439,6 +506,175 @@ $("exportweb").onclick = async () => {
   if (r.job) watch(r.job);
 };
 
+
+// ---------------- 动作编辑器：和 Blender 端 sprites.build_character 同样的关节计算，画成火柴人
+const AE = {schema: null, keys: [], sel: 0, playing: false, t: 0, last: 0};
+const AE_LABELS = {bob: "上下起伏", breath: "呼吸", lean: "上身前倾", twist: "扭腰（正 = 右肩向前）", head: ["低头 / 抬头", "向左 / 右转头"],
+  arm_l: ["左臂前摆", "左肘弯", "左臂外张"], arm_r: ["右臂前摆", "右肘弯", "右臂外张"],
+  leg_l: ["左腿前迈", "左膝弯"], leg_r: ["右腿前迈", "右膝弯"], cape: "披风 / 马尾飘动", weapon_angle: "武器角度", hand_glow: "手上发光"};
+const clone = (o) => JSON.parse(JSON.stringify(o));
+async function aeOpen() {
+  if (!AE.schema) AE.schema = await api("/api/poses");
+  const opts = [["", "（空白：待机姿势）"]].concat(Object.values(AE.schema.builtin).map(a => ["b:" + a.id, "内置：" + a.name]))
+    .concat(Object.values(AE.schema.custom).map(a => ["c:" + a.id, "自定义：" + a.name]));
+  $("ae-load").innerHTML = opts.map(([v, n]) => `<option value="${v}">${n}</option>`).join("");
+  if (!$("ae-weapon")) aeBuildSliders();
+  if (!AE.keys.length) aeLoad("");
+  $("acteditor").style.display = "block";
+  $("acteditor").scrollIntoView({behavior: "smooth"});
+  if (!AE.loopStarted) { AE.loopStarted = true; requestAnimationFrame(aeTick); }
+}
+function aeFill(keys) {  // 关键帧补全成完整姿势（和 poses._filled_keys 一样）
+  let prev = clone(AE.schema.neutral);
+  return keys.slice().sort((a, b) => (a.t || 0) - (b.t || 0)).map(k => {
+    const cur = clone(prev);
+    for (const [n, v] of Object.entries(k)) if (n !== "t") cur[n] = clone(v);
+    cur.t = k.t || 0; prev = cur; return cur;
+  });
+}
+function aeLoad(v) {
+  const a = v.startsWith("b:") ? AE.schema.builtin[v.slice(2)] : v.startsWith("c:") ? AE.schema.custom[v.slice(2)] : null;
+  if (a) {
+    AE.keys = aeFill(a.keys);
+    $("ae-id").value = v.startsWith("c:") ? a.id : a.id + "_custom"; $("ae-name").value = a.name;
+    $("ae-frames").value = a.frames; $("ae-fps").value = a.fps; $("ae-loop").checked = !!a.loop;
+  } else {
+    AE.keys = [Object.assign(clone(AE.schema.neutral), {t: 0}), Object.assign(clone(AE.schema.neutral), {t: 1})];
+  }
+  AE.sel = 0; aeKeysUI(); aeSyncSliders(); aeDraw();
+}
+$("ae-load").onchange = () => aeLoad($("ae-load").value);
+function aeBuildSliders() {
+  const R = AE.schema.ranges, box = $("ae-sliders");
+  let html = `<label style="grid-column:1/3"><input type="checkbox" id="ae-weapon"> 武器拿在右手上（攻击用）</label>`;
+  for (const [name, rng] of Object.entries(R)) {
+    const parts = Array.isArray(rng[0]) ? rng : [rng];
+    parts.forEach((r, i) => {
+      const lab = Array.isArray(AE_LABELS[name]) ? AE_LABELS[name][i] : AE_LABELS[name] || name;
+      html += `<div><label>${lab} <span class="hint" id="ae-v-${name}-${i}"></span></label>
+        <input type="range" data-n="${name}" data-i="${Array.isArray(rng[0]) ? i : -1}" min="${r[0]}" max="${r[1]}" step="0.01" style="width:100%"></div>`;
+    });
+  }
+  box.innerHTML = html;
+  box.querySelectorAll("input[type=range]").forEach(el => el.oninput = () => {
+    const k = AE.keys[AE.sel], i = +el.dataset.i, v = +el.value;
+    if (i < 0) k[el.dataset.n] = v; else k[el.dataset.n][i] = v;
+    $(`ae-v-${el.dataset.n}-${Math.max(i, 0)}`).textContent = v.toFixed(2);
+    AE.playing = false; AE.t = k.t; $("ae-time").value = k.t; aeDraw();
+  });
+  $("ae-weapon").onchange = () => { AE.keys[AE.sel].weapon = $("ae-weapon").checked ? "hand" : "sheathed"; aeDraw(); };
+}
+function aeSyncSliders() {
+  const k = AE.keys[AE.sel];
+  if (!k) return;
+  $("ae-sliders").querySelectorAll("input[type=range]").forEach(el => {
+    const i = +el.dataset.i, v = i < 0 ? k[el.dataset.n] : k[el.dataset.n][i];
+    el.value = v; $(`ae-v-${el.dataset.n}-${Math.max(i, 0)}`).textContent = (+v).toFixed(2);
+  });
+  $("ae-weapon").checked = k.weapon === "hand";
+  $("ae-kt").value = k.t;
+}
+function aeKeysUI() {
+  AE.keys.sort((a, b) => a.t - b.t);
+  $("ae-keys").innerHTML = AE.keys.map((k, i) => `<button class="${i === AE.sel ? "on" : ""}" onclick="aeSelect(${i})">关键帧 ${i + 1}（${k.t.toFixed(2)}）</button>`).join("");
+}
+function aeSelect(i) { AE.sel = i; AE.playing = false; AE.t = AE.keys[i].t; $("ae-time").value = AE.t; aeKeysUI(); aeSyncSliders(); aeDraw(); }
+$("ae-kt").oninput = () => { const k = AE.keys[AE.sel]; k.t = +$("ae-kt").value; aeKeysUI(); AE.sel = AE.keys.indexOf(k); aeKeysUI(); AE.t = k.t; aeDraw(); };
+$("ae-add").onclick = () => {
+  const k = Object.assign(aeSample(AE.t), {t: Math.min(1, AE.t + (AE.keys.some(x => Math.abs(x.t - AE.t) < 0.01) ? 0.1 : 0))});
+  AE.keys.push(k); AE.sel = AE.keys.indexOf(k); aeKeysUI(); AE.sel = AE.keys.indexOf(k); aeKeysUI(); aeSyncSliders(); aeDraw();
+};
+$("ae-del").onclick = () => { if (AE.keys.length > 1) { AE.keys.splice(AE.sel, 1); aeSelect(0); } };
+$("ae-time").oninput = () => { AE.playing = false; AE.t = +$("ae-time").value; aeDraw(); };
+$("ae-play").onclick = () => { AE.playing = !AE.playing; $("ae-play").textContent = AE.playing ? "暂停" : "播放"; };
+$("ae-close").onclick = () => { $("acteditor").style.display = "none"; AE.playing = false; };
+const sm = (x) => x * x * (3 - 2 * x);
+function aeLerp(a, b, u) { return Array.isArray(a) ? a.map((x, i) => aeLerp(x, b[i], u)) : (typeof a === "number" ? a + (b - a) * u : (u < 0.5 ? a : b)); }
+function aeSample(t) {  // 和 poses.sample 一样：关键帧之间 smoothstep 插值
+  const ks = AE.keys.slice().sort((a, b) => a.t - b.t);
+  if (t <= ks[0].t) return clone(ks[0]);
+  for (let i = 0; i < ks.length - 1; i++) {
+    if (t <= ks[i + 1].t) {
+      const u = sm((t - ks[i].t) / Math.max(1e-6, ks[i + 1].t - ks[i].t)), out = {};
+      for (const n of Object.keys(AE.schema.neutral)) out[n] = aeLerp(ks[i][n], ks[i + 1][n], u);
+      return out;
+    }
+  }
+  return clone(ks[ks.length - 1]);
+}
+function aeTick(now) {
+  if (AE.playing && $("acteditor").style.display !== "none") {
+    const dur = (+$("ae-frames").value || 6) / (+$("ae-fps").value || 10);
+    AE.t += (now - (AE.last || now)) / 1000 / dur;
+    if (AE.t > 1) AE.t = $("ae-loop").checked ? AE.t % 1 : 0;
+    $("ae-time").value = AE.t; aeDraw();
+  }
+  AE.last = now;
+  requestAnimationFrame(aeTick);
+}
+// 关节位置（Blender 坐标：x = 角色左，y = 向后，z = 向上）
+function aeJoints(p) {
+  const dir = (th, sx = 0) => { const v = [sx, -Math.sin(th), -Math.cos(th)], l = Math.hypot(...v); return v.map(x => x / l); };
+  const add = (a, b, s = 1) => a.map((x, i) => x + b[i] * s);
+  const hipZ = 0.62 + p.bob, shZ = 1.04 + p.bob + p.breath, headZ = 1.32 + p.bob + p.breath * 1.5;
+  const J = {lower: {}, upper: {}, head: {}};
+  for (const [side, key] of [[1, "leg_l"], [-1, "leg_r"]]) {
+    const [th, kn] = p[key], hip = [side * 0.085, 0, hipZ], knee = add(hip, dir(th), 0.29), ankle = add(knee, dir(th - kn), 0.28);
+    J.lower[key] = [hip, knee, ankle, add(ankle, dir(th - kn + Math.PI / 2), 0.13)];
+  }
+  J.upper.spine = [[0, 0, hipZ + 0.08], [0, 0, shZ]];
+  J.upper.shoulders = [[0.19, 0, shZ - 0.04], [-0.19, 0, shZ - 0.04]];
+  let d2r = null, handR = null;
+  for (const [side, key] of [[1, "arm_l"], [-1, "arm_r"]]) {
+    const [a, e, sp] = p[key], sh = [side * 0.19, 0, shZ - 0.04], el = add(sh, dir(a, side * (0.05 + sp)), 0.24);
+    const d2 = dir(a + e, side * (0.02 + sp * 0.4)), hand = add(el, d2, 0.2);
+    J.upper[key] = [sh, el, hand];
+    if (side < 0) { d2r = d2; handR = hand; }
+  }
+  if (p.weapon === "hand") {
+    const ang = Math.atan2(-d2r[1], -d2r[2]) + p.weapon_angle, d = [d2r[0] * 0.5, -Math.sin(ang), -Math.cos(ang)], l = Math.hypot(...d);
+    J.upper.weapon = [add(handR, d, -0.07 / l), add(handR, d, 0.9 / l)];
+  }
+  J.glow = p.hand_glow;
+  J.head.c = [0, 0, headZ]; J.head.neck = [0, 0, headZ - 0.18]; J.head.nose = [0, -0.2, headZ - 0.03];
+  // 姿势变换：头绕脖子（低头 x、转头 z），上半身绕腰（扭腰 z、前倾 x）
+  const rot = (v, axis, ang, piv) => {
+    const c = Math.cos(ang), s = Math.sin(ang), q = v.map((x, i) => x - piv[i]);
+    const r = axis === "x" ? [q[0], q[1] * c - q[2] * s, q[1] * s + q[2] * c] : [q[0] * c - q[1] * s, q[0] * s + q[1] * c, q[2]];
+    return r.map((x, i) => x + piv[i]);
+  };
+  const mapAll = (obj, f) => { for (const k in obj) obj[k] = Array.isArray(obj[k][0]) ? obj[k].map(f) : f(obj[k]); };
+  const neck = J.head.neck.slice();
+  mapAll(J.head, v => rot(rot(v, "x", p.head[0], neck), "z", p.head[1], neck));
+  for (const part of [J.upper, J.head]) mapAll(part, v => rot(rot(v, "z", p.twist, [0, 0, 0]), "x", p.lean, [0, 0, hipZ + 0.08]));
+  return J;
+}
+function aeDraw() {
+  if (!AE.schema || !AE.keys.length) return;
+  const J = aeJoints(aeSample(AE.t));
+  for (const [cv, proj] of [["ae-front", v => [v[0], v[2]]], ["ae-side", v => [v[1], v[2]]]]) {
+    const g = $(cv).getContext("2d"), W = 160, H = 220, S = 105;
+    g.clearRect(0, 0, W, H);
+    const P = v => { const [x, z] = proj(v); return [W / 2 + x * S, H - 14 - z * S]; };
+    g.strokeStyle = "#33384f"; g.beginPath(); g.moveTo(10, H - 14); g.lineTo(W - 10, H - 14); g.stroke();
+    const line = (pts, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = "round"; g.beginPath(); pts.forEach((v, i) => { const [x, y] = P(v); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); };
+    line(J.lower.leg_l, "#6f92c6", 7); line(J.lower.leg_r, "#f0a040", 7);
+    line(J.upper.spine, "#cfd3e0", 11); line(J.upper.shoulders, "#cfd3e0", 6);
+    line(J.upper.arm_l, "#6f92c6", 6); line(J.upper.arm_r, "#f0a040", 6);
+    if (J.upper.weapon) line(J.upper.weapon, "#eef2f7", 3);
+    if (J.glow > 0.05) for (const k of ["arm_l", "arm_r"]) { const [x, y] = P(J.upper[k][2]); g.fillStyle = "rgba(255,240,180,0.7)"; g.beginPath(); g.arc(x, y, 4 + 9 * J.glow, 0, 7); g.fill(); }
+    const [hx, hy] = P(J.head.c); g.fillStyle = "#e8b892"; g.beginPath(); g.arc(hx, hy, 0.21 * S, 0, 7); g.fill();
+    const [nx, ny] = P(J.head.nose); g.fillStyle = "#2b2338"; g.beginPath(); g.arc(nx, ny, 3, 0, 7); g.fill();
+  }
+}
+function aeSpec() {
+  return {id: $("ae-id").value.trim() || "my_action", name: $("ae-name").value.trim() || "新动作", frames: +$("ae-frames").value || 6,
+    fps: +$("ae-fps").value || 10, loop: $("ae-loop").checked, for: [...$("targets").selectedOptions].map(o => o.value),
+    keys: AE.keys.map(k => { const o = clone(k); return o; })};
+}
+$("ae-render").onclick = () => { setKind("action"); start({spec: aeSpec()}); };
+$("ae-json").onclick = () => { $("manual").style.display = "block"; setKind("action"); $("specjson").value = JSON.stringify(aeSpec(), null, 1); window.scrollTo({top: 0, behavior: "smooth"}); };
+$("openeditor").onclick = aeOpen;
 setInterval(() => { if (assets && assets.props.some(p => !p.preview)) loadAssets(); }, 5000);
 
 loadLibrary();
@@ -447,7 +683,8 @@ loadConfig();
 loadAssets().then(() => {
   // 直达链接：#char=角色id[&anim=动作] / #prop=资产id
   const h = new URLSearchParams(location.hash.slice(1));
-  if (h.get("char")) showChar(h.get("char"), h.get("anim"));
+  if (h.get("editor") !== null) { setKind("action"); aeOpen().then(() => { if (h.get("editor")) { $("ae-load").value = "b:" + h.get("editor"); aeLoad($("ae-load").value); aeSelect(1); } }); }
+  else if (h.get("char")) showChar(h.get("char"), h.get("anim"));
   else if (h.get("prop")) showProp(h.get("prop"));
 });
 </script>

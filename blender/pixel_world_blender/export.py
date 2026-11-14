@@ -53,8 +53,12 @@ def export_object(obj, path):
     )
 
 
-def render_preview(obj, path, size=320):
-    """资产工坊用的预览图：Workbench 显示像素贴图，从斜前上方看，透明底。"""
+SPIN_FRAMES = 16
+
+
+def render_preview(obj, path, size=320, spin=True):
+    """资产工坊用的预览图：Workbench 显示像素贴图，从斜前上方看，透明底。
+    spin = True 时再绕一圈渲染 16 个角度，横向拼成 <名字>_spin.png（网页里拖动就能 360° 转着看）"""
     import math
     from mathutils import Vector
     sc = bpy.context.scene
@@ -89,6 +93,32 @@ def render_preview(obj, path, size=320):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     sc.render.filepath = str(path)
     bpy.ops.render.render(write_still=True)
+    if spin:
+        import numpy as np
+        dist = span * 3.0
+        frames = []
+        sc.render.resolution_x = sc.render.resolution_y = 192
+        tmp = str(Path(path).with_name(Path(path).stem + "_tmp.png"))
+        for k in range(SPIN_FRAMES):
+            a = yaw + 2 * math.pi * k / SPIN_FRAMES
+            dk = Vector((math.cos(a) * math.cos(pitch), math.sin(a) * math.cos(pitch), math.sin(pitch)))
+            cam.location = ctr + dk * dist
+            cam.rotation_euler = (-dk).to_track_quat("-Z", "Y").to_euler()
+            sc.render.filepath = tmp
+            bpy.ops.render.render(write_still=True)
+            img = bpy.data.images.load(tmp)
+            buf = np.empty(192 * 192 * 4, dtype=np.float32)
+            img.pixels.foreach_get(buf)
+            bpy.data.images.remove(img)
+            frames.append(buf.reshape(192, 192, 4))
+        strip = np.concatenate(frames, axis=1)  # Blender 像素第 0 行在底部，横向拼接不受影响
+        out = bpy.data.images.new("pw_spin", width=strip.shape[1], height=192, alpha=True)
+        out.pixels.foreach_set(strip.ravel())
+        out.filepath_raw = str(Path(path).with_name(Path(path).stem + "_spin.png"))
+        out.file_format = "PNG"
+        out.save()
+        bpy.data.images.remove(out)
+        Path(tmp).unlink(missing_ok=True)
     bpy.data.objects.remove(cam, do_unlink=True)
     bpy.data.cameras.remove(cam_data)
 
