@@ -29,8 +29,17 @@ python tools/pw_asset_server.py           # 浏览器打开 http://127.0.0.1:877
 - 「AI 资产工坊」：模型设置、生成、任务日志、资产浏览。
 
 工坊生成完新资产会自动重新导出网页版（约 10~30 秒），工具箱标签上出现「有新资产」，点回去就自动刷新。
-工具箱里「AI 资产工坊」页的按钮会直接切到工坊标签。第一次用时如果还没有 `build/web`，在工坊里点「更新网页版」。
-在 Godot 编辑器 / 桌面版里，「AI 资产工坊」页可以「启动工坊」「在浏览器打开」。
+第一次用时如果还没有 `build/web`，在工坊里点「更新网页版」。预览图（`.workshop/previews/`，不进仓库）缺的话，服务启动时会自动补渲染。
+
+## 放到资源库的哪里
+
+资源库的分类结构在 `godot/assets/library.json`，工具箱和工坊共用：
+
+- **工具箱 → 资源库**：左边是分类树（分类 → 子分类），下面「＋分类」「＋子分类」「删除」（内置分类不能删）；
+  选中某个资源，右下角「移动到」可以把它放到任意分类 / 子分类。网页版通过工坊服务保存，编辑器里直接写文件。
+- **工坊 → 生成新资产**：「放到资源库」选分类和子分类（下拉框里也能直接「新建分类 / 子分类」）；
+  不选就按类型自动放（角色进「角色」，摆件按模型给的类型进「树木 / 杂物 / 街道设施……」）。
+- 资产卡片上会显示它现在在资源库的哪个位置。
 
 ## 模型设置（网页左上）
 
@@ -39,7 +48,7 @@ python tools/pw_asset_server.py           # 浏览器打开 http://127.0.0.1:877
 | 接口类型 | **Anthropic Claude**：官方 `anthropic` Python SDK。**OpenAI 兼容接口**：任何实现了 `/chat/completions` 的服务 |
 | Host | Claude 留空 = 官方地址（也可以填兼容 Anthropic 接口的代理）；OpenAI 兼容接口填到 `/v1` 为止 |
 | API Key | 只保存在本机 `~/.pixelworld/workshop.json`（权限 600），不进仓库；网页上只显示末尾 4 位。Claude 的 Key 留空时，SDK 会用 `ANTHROPIC_API_KEY` 环境变量或 `ant auth login` 的登录 |
-| 模型 | Claude 默认 `claude-opus-5-5`；OpenAI 兼容接口填服务方的模型名 |
+| 模型 | Claude 默认 `claude-opus-5-5`；OpenAI 兼容接口填服务方的模型名。点「获取列表」会用上面填的 Host 和 Key 向服务方查可用模型（Claude 用 Models API，OpenAI 兼容接口用 `GET /models`），在下拉框里选 |
 | 思考强度 | Claude 的 `output_config.effort`：低 / 中 / 高（默认中）；老模型不支持时选「不发送」 |
 | 拒答自动换模型 | 只对 Claude 官方地址生效：模型拒答（`stop_reason: refusal`）时服务端自动换一个模型重试（server-side fallback，`fallbacks: "default"`） |
 | Blender / Godot 路径 | 一般自动找到（macOS 的 /Applications、Windows 的 Program Files、PATH）；找不到时手填 |
@@ -124,7 +133,9 @@ cape（披风飘动）、weapon（"hand" = 武器拿在右手）、weapon_angle�
 | GET | `/api/ping` | 服务在不在 |
 | GET / POST | `/api/config` | 读 / 存模型设置（读到的 Key 是遮盖过的） |
 | POST | `/api/test` | 测试连接 |
-| POST | `/api/generate` | `{"kind": "character" \| "action" \| "prop", "prompt": "...", "image": {"media_type", "data"(base64)}, "for": [...]}`；或者 `{"kind", "spec": {...}}` 不调模型直接生成。返回 `{"job": id}` |
+| POST | `/api/models` | 模型列表（body 里可以带当前填的 provider / host / api_key，不用先保存） |
+| GET / POST | `/api/library` | 资源库分类结构（分类、子分类、资源位置） |
+| POST | `/api/generate` | `{"kind": "character" \| "action" \| "prop", "prompt": "...", "image": {"media_type", "data"(base64)}, "for": [...], "place": {"cat", "sub"}}`；或者 `{"kind", "spec": {...}}` 不调模型直接生成。返回 `{"job": id}` |
 | GET | `/api/jobs/<id>` | 任务状态、日志、规格、警告、结果 |
 | GET | `/api/assets` | 现有角色、摆件、自定义动作 |
 | GET | `/api/spec/<kind>/<id>` | 某个资产的规格 |

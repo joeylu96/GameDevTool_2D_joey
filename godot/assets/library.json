@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "trees",
+      "name": "树木",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "plants",
+      "name": "灌木与草",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "rocks",
+      "name": "岩石",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "buildings",
+      "name": "建筑",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "landmarks",
+      "name": "地标",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "street",
+      "name": "街道设施",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "props",
+      "name": "杂物",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "water",
+      "name": "水生",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "characters",
+      "name": "角色",
+      "builtin": true,
+      "children": []
+    },
+    {
+      "id": "c_shore",
+      "name": "海边",
+      "builtin": false,
+      "children": [
+        {
+          "id": "s_fishing",
+          "name": "渔具"
+        }
+      ]
+    }
+  ],
+  "assign": {
+    "bl_spec_rowboat": [
+      "c_shore",
+      "s_fishing"
+    ]
+  }
+}

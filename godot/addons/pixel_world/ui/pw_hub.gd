@@ -25,7 +25,16 @@ var _diorama_world: PWWorld
 var _content_host: Control
 
 # 资源库
-var _cat_list: ItemList
+var _cat_tree: Tree
+var _cat_sel := ["", ""]          # 当前选中的 [分类 id, 子分类 id]
+var _tree_building := false
+var _move_to: OptionButton
+var _move_targets: Array = []     # 下拉项 → [分类 id, 子分类 id]
+var _lib_msg: Label
+var _lib_http: HTTPRequest
+var _name_dialog: ConfirmationDialog
+var _name_edit: LineEdit
+var _name_cb: Callable
 var _item_list: ItemList
 var _asset_preview: PWPreview
 var _asset_title: Label
@@ -80,7 +89,6 @@ func _ready() -> void:
 	_pages["generator"] = _build_generator_page()
 	_pages["effects"] = _build_effects_page()
 	_pages["lighting"] = _build_lighting_page()
-	_pages["workshop"] = _build_workshop_page()
 	_pages["about"] = _build_about_page()
 	for k: String in _pages:
 		host.add_child(_pages[k])
@@ -104,8 +112,7 @@ func _build_nav() -> Control:
 	var sp := Control.new()
 	sp.custom_minimum_size.y = 18
 	v.add_child(sp)
-	for spec in [["generator", "场景生成器"], ["assets", "资源库"], ["workshop", "AI 资产工坊"], ["effects", "特效库"],
-			["lighting", "天气光照"], ["about", "关于"]]:
+	for spec in [["generator", "场景生成器"], ["assets", "资源库"], ["effects", "特效库"], ["lighting", "天气光照"], ["about", "关于"]]:
 		var b := Button.new()
 		b.text = "  " + spec[1]
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -133,11 +140,10 @@ func show_page(id: String) -> void:
 		"assets":
 			if _asset_item.is_empty():
 				_select_category(0)
+			_fetch_library()
 		"effects":
 			_attach_diorama(_fx_host)
 			_apply_fx()
-		"workshop":
-			_ws_check()
 		"lighting":
 			_attach_diorama(_light_host)
 			if _fx_actor != null:
@@ -163,12 +169,51 @@ func _build_assets_page() -> Control:
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 12)
 	page.add_child(row)
-	_cat_list = ItemList.new()
-	_cat_list.custom_minimum_size.x = 150
-	for c: Dictionary in PWAssetLibrary.CATEGORIES:
-		_cat_list.add_item("%s（%d）" % [c.name, PWAssetLibrary.in_category(c.id).size()])
-	_cat_list.item_selected.connect(_select_category)
-	row.add_child(_cat_list)
+	# 左：分类树（分类 → 子分类）+ 新增 / 删除
+	var left := VBoxContainer.new()
+	left.custom_minimum_size.x = 176
+	left.add_theme_constant_override("separation", 6)
+	row.add_child(left)
+	_cat_tree = Tree.new()
+	_cat_tree.hide_root = true
+	_cat_tree.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_cat_tree.item_selected.connect(func():
+		if _tree_building:
+			return
+		var m: Array = _cat_tree.get_selected().get_metadata(0)
+		_select_cat(m[0], m[1]))
+	left.add_child(_cat_tree)
+	var btns := HBoxContainer.new()
+	btns.add_theme_constant_override("separation", 4)
+	btns.add_child(T.button("＋分类", func(): _ask_name("新分类的名字", func(n: String):
+		_select_cat(PWAssetLibrary.add_category(n), "")
+		_persist_library())))
+	btns.add_child(T.button("＋子分类", func():
+		if _cat_sel[0] == "":
+			return
+		var cname: String = PWAssetLibrary.category(_cat_sel[0]).get("name", "")
+		_ask_name("在「%s」下新增子分类" % cname, func(n: String):
+			_select_cat(_cat_sel[0], PWAssetLibrary.add_subcategory(_cat_sel[0], n))
+			_persist_library())))
+	btns.add_child(T.button("删除", func(): _remove_selected()))
+	left.add_child(btns)
+	_lib_msg = T.label("", 12, T.TEXT_DIM)
+	_lib_msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	left.add_child(_lib_msg)
+	_name_dialog = ConfirmationDialog.new()
+	_name_dialog.title = "名字"
+	_name_edit = LineEdit.new()
+	_name_edit.custom_minimum_size.x = 260
+	_name_dialog.add_child(_name_edit)
+	_name_dialog.confirmed.connect(func():
+		var n := _name_edit.text.strip_edges()
+		if n != "" and _name_cb.is_valid():
+			_name_cb.call(n))
+	_name_edit.text_submitted.connect(func(_t): _name_dialog.get_ok_button().pressed.emit())
+	page.add_child(_name_dialog)
+	_lib_http = HTTPRequest.new()
+	_lib_http.request_completed.connect(_on_library_http)
+	page.add_child(_lib_http)
 	_item_list = ItemList.new()
 	_item_list.custom_minimum_size.x = 180
 	_item_list.item_selected.connect(func(i): _select_item(_asset_items[i]))
@@ -198,30 +243,97 @@ func _build_assets_page() -> Control:
 	_asset_vary = T.label("", 13, T.TEXT_DIM)
 	_asset_vary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	iv.add_child(_asset_vary)
+	var mv := HBoxContainer.new()
+	mv.add_child(T.label("移动到", 13, T.TEXT_DIM))
+	_move_to = OptionButton.new()
+	_move_to.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_move_to.item_selected.connect(_on_move_selected)
+	mv.add_child(_move_to)
+	iv.add_child(mv)
+	_rebuild_cat_tree()
 	return page
 
 
-## 资源数量变了（资产工坊生成了新资源）：更新分类列表里的数字，当前分类重新列一遍
+## 分类树：分类（资源数）→ 子分类（资源数）
+func _rebuild_cat_tree() -> void:
+	_tree_building = true
+	_cat_tree.clear()
+	var root_item := _cat_tree.create_item()
+	for c: Dictionary in PWAssetLibrary.categories():
+		var ti := _cat_tree.create_item(root_item)
+		ti.set_text(0, "%s（%d）" % [c.name, PWAssetLibrary.in_category(c.id).size()])
+		ti.set_metadata(0, [c.id, ""])
+		if c.id == _cat_sel[0] and _cat_sel[1] == "":
+			ti.select(0)
+		for k: Dictionary in c.children:
+			var si := _cat_tree.create_item(ti)
+			si.set_text(0, "%s（%d）" % [k.name, PWAssetLibrary.in_category(c.id, k.id).size()])
+			si.set_metadata(0, [c.id, k.id])
+			if c.id == _cat_sel[0] and k.id == _cat_sel[1]:
+				si.select(0)
+	_tree_building = false
+	_rebuild_move_targets()
+
+
+func _rebuild_move_targets() -> void:
+	if _move_to == null:
+		return
+	_move_to.clear()
+	_move_targets = []
+	for c: Dictionary in PWAssetLibrary.categories():
+		_move_to.add_item(c.name)
+		_move_targets.append([c.id, ""])
+		for k: Dictionary in c.children:
+			_move_to.add_item("　%s / %s" % [c.name, k.name])
+			_move_targets.append([c.id, k.id])
+	_sync_move_target()
+
+
+func _sync_move_target() -> void:
+	if _move_to == null:
+		return
+	if _asset_item.is_empty():
+		_move_to.disabled = true
+		return
+	_move_to.disabled = false
+	for i in _move_targets.size():
+		if _move_targets[i][0] == _asset_item.cat and _move_targets[i][1] == _asset_item.get("sub", ""):
+			_move_to.select(i)
+
+
+func _on_move_selected(i: int) -> void:
+	if _asset_item.is_empty():
+		return
+	var t: Array = _move_targets[i]
+	PWAssetLibrary.move_item(_asset_item.id, t[0], t[1])
+	_persist_library()
+	_select_cat(t[0], t[1])
+
+
+## 资源数量 / 分类变了（新增分类、资产工坊生成了新资源）：分类树重建，当前分类重新列一遍
 func _refresh_categories() -> void:
-	for i in PWAssetLibrary.CATEGORIES.size():
-		var c: Dictionary = PWAssetLibrary.CATEGORIES[i]
-		_cat_list.set_item_text(i, "%s（%d）" % [c.name, PWAssetLibrary.in_category(c.id).size()])
-	var sel := _cat_list.get_selected_items()
-	if not sel.is_empty():
-		_select_category(sel[0])
+	_select_cat(_cat_sel[0], _cat_sel[1])
 
 
+## 兼容旧的调用（命令行截图 --hubcat=N）：选第 i 个分类
 func _select_category(i: int) -> void:
-	_cat_list.select(i)
-	var cat: Dictionary = PWAssetLibrary.CATEGORIES[i]
-	_asset_items = PWAssetLibrary.in_category(cat.id)
+	var cats := PWAssetLibrary.categories()
+	_select_cat(cats[clampi(i, 0, cats.size() - 1)].id, "")
+
+
+func _select_cat(cat_id: String, sub_id: String) -> void:
+	_cat_sel = [cat_id, sub_id]
+	_rebuild_cat_tree()
+	var c := PWAssetLibrary.category(cat_id)
+	_asset_items = PWAssetLibrary.in_category(cat_id, sub_id)
 	_item_list.clear()
 	for it in _asset_items:
 		_item_list.add_item(it.name)
 	if _asset_items.is_empty():
 		_asset_item = {}
-		_asset_title.text = cat.name
-		_asset_desc.text = "这个分类还没有资源。" + ("运行 tools/blender_build_assets.py 生成 Blender 资产后会出现在这里。" if cat.id == "blender" else "")
+		_sync_move_target()
+		_asset_title.text = c.get("name", "")
+		_asset_desc.text = "这个分类还没有资源。可以在别的分类里选中资源，用「移动到」放过来；AI 资产工坊生成时也可以选放到这里。"
 		_asset_vary.text = ""
 		_asset_preview.set_content(null, 3.0)
 		return
@@ -229,9 +341,73 @@ func _select_category(i: int) -> void:
 	_select_item(_asset_items[0])
 
 
+func _remove_selected() -> void:
+	var c := PWAssetLibrary.category(_cat_sel[0])
+	if c.is_empty():
+		return
+	if _cat_sel[1] == "" and c.get("builtin", false):
+		_lib_msg.text = "内置分类不能删除"
+		return
+	if PWAssetLibrary.remove(_cat_sel[0], _cat_sel[1]):
+		var back: String = _cat_sel[0] if _cat_sel[1] != "" else String(PWAssetLibrary.categories()[0].id)
+		_persist_library()
+		_select_cat(back, "")
+
+
+func _ask_name(title: String, cb: Callable) -> void:
+	_name_cb = cb
+	_name_dialog.title = title
+	_name_edit.text = ""
+	_name_dialog.popup_centered()
+	_name_edit.grab_focus()
+
+
+# ---- 分类结构的保存 / 读取：桌面版直接写 library.json；网页版通过工坊服务（同一个网址的 /api/library）
+
+func _server_base() -> String:
+	if OS.has_feature("web"):
+		var origin: Variant = JavaScriptBridge.eval("window.location.origin", true)
+		if origin is String and (origin as String).begins_with("http"):
+			return origin
+	return "http://127.0.0.1:8777"
+
+
+func _persist_library() -> void:
+	if PWAssetLibrary.save_library():
+		_lib_msg.text = "已保存"
+		return
+	if OS.has_feature("web") and _lib_http != null:
+		_lib_http.cancel_request()
+		_lib_http.request(_server_base() + "/api/library", ["Content-Type: application/json"], HTTPClient.METHOD_POST,
+			JSON.stringify(PWAssetLibrary.library()))
+		_lib_msg.text = "保存中……"
+	else:
+		_lib_msg.text = "没能保存（导出的桌面版不能改资源库，请在编辑器里或网页版里改）"
+
+
+## 网页版：启动时从工坊服务取最新的分类结构（工具箱里改过、或者资产工坊里新建过的分类）
+func _fetch_library() -> void:
+	if OS.has_feature("web") and _lib_http != null and _lib_http.is_inside_tree():
+		_lib_http.request(_server_base() + "/api/library")
+
+
+func _on_library_http(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		_lib_msg.text = "没连上工坊服务：分类改动没有保存（用 python tools/pw_asset_server.py 打开的网页才能保存）" \
+			if _lib_msg.text == "保存中……" else ""
+		return
+	var d: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if d is Dictionary and (d as Dictionary).has("categories"):
+		PWAssetLibrary.set_library(d)
+		_select_cat(_cat_sel[0] if _cat_sel[0] != "" else "trees", _cat_sel[1])
+	if _lib_msg.text == "保存中……":
+		_lib_msg.text = "已保存"
+
+
 func _select_item(it: Dictionary) -> void:
 	_asset_item = it
 	_asset_batch = 0
+	_sync_move_target()
 	_show_asset()
 
 
@@ -677,11 +853,6 @@ func _attach_diorama(host: Control) -> void:
 
 
 func _process(delta: float) -> void:
-	if _current == "workshop":
-		_ws_timer += delta
-		if _ws_timer > 3.0:
-			_ws_timer = 0.0
-			_ws_check()
 	if _current == "effects" and _fx_current.has("vfx") and _fx_loop != null and _fx_loop.button_pressed:
 		_fx_timer += delta
 		if _fx_timer > 2.2:
@@ -690,133 +861,6 @@ func _process(delta: float) -> void:
 		_clock.text = "时间 " + _diorama.tod.get_clock_text()
 		if _auto_time.button_pressed:
 			_hour.set_value_no_signal(_diorama.tod.hour)
-
-
-# ---------------------------------------------------------------- AI 资产工坊
-
-var _ws_port: SpinBox
-var _ws_status: Label
-var _ws_counts: Label
-var _ws_http: HTTPRequest
-var _ws_timer := 0.0
-
-
-func _build_workshop_page() -> Control:
-	var page := _page("AI 资产工坊", "用一句话或一张原画生成像素角色、角色动作和 3D 摆件：大模型写规格，Blender 建模渲染，画风和场景自动一致。")
-	var box := PanelContainer.new()
-	box.add_theme_stylebox_override("panel", T.box(T.PANEL, 10, 16))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
-	box.add_child(v)
-	page.add_child(box)
-	_ws_status = T.label("正在检查工坊服务……", 16)
-	v.add_child(_ws_status)
-	_ws_port = _spin(1024, 65535, 1, 8777)
-	_ws_port.custom_minimum_size.x = 120
-	_ws_port.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	if OS.has_feature("web"):
-		# 网页版：工具箱和工坊在同一个页面里（顶部两个标签），这里的按钮直接切过去 / 重新载入工具箱
-		row.add_child(T.button("切换到资产工坊", func(): _js_parent("show-workshop"), true))
-		row.add_child(T.button("刷新工具箱（载入新资产）", func(): _js_parent("reload-game")))
-	else:
-		row.add_child(_labeled("端口", _ws_port))
-		row.add_child(T.button("启动工坊", func(): _ws_start(), true))
-		row.add_child(T.button("在浏览器打开", func(): OS.shell_open("http://127.0.0.1:%d/#workshop" % int(_ws_port.value))))
-		row.add_child(T.button("刷新资源库", func(): _ws_reload()))
-	v.add_child(row)
-	_ws_counts = T.label("", 14, T.TEXT_DIM)
-	v.add_child(_ws_counts)
-	var txt := T.label("", 14)
-	txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	txt.text = """怎么用
-  1. 运行 python tools/pw_asset_server.py（或在 Godot 里点「启动工坊」），浏览器打开 http://127.0.0.1:8777 ——
-     同一个页面顶部有两个标签：「PixelWorld 工具箱」（就是这个界面）和「AI 资产工坊」。
-  2. 在网页的「模型设置」里填接口类型、Host、API Key、模型：
-       Anthropic Claude —— Host 留空用官方地址，模型默认 claude-opus-5-5；
-       OpenAI 兼容接口 —— Host 填到 /v1 为止，可以接任何兼容的模型。
-     Key 只保存在本机 ~/.pixelworld/workshop.json，不进仓库。
-  3. 选「像素角色 / 角色动作 / 3D 摆件」，写一句描述（角色可以上传原画），点「让模型生成」。
-     也可以不调模型，直接粘贴规格 JSON 生成。
-  4. 生成完工坊会自动更新网页版，切回工具箱标签（或点「刷新工具箱」）新资源就出现在资源库里；
-     带 plaza / roadside / yard 标签的摆件自动摆进小镇，带 winter / desert / island / canyon 的出现在对应风格。
-
-背后发生了什么
-  大模型只负责写 JSON 规格（角色的发型衣服配色、动作的关键帧、摆件的零件组合），
-  校验不通过会把错误发回模型改一次；Blender 按规格搭模型、贴 32 texel/米 的像素贴图、渲染 8 方向精灵或导出 glb，
-  所以画风和手写的资产完全一致。规格存在 shared/asset_specs/，可以手改后重新生成。"""
-	v.add_child(txt)
-	_ws_http = HTTPRequest.new()
-	_ws_http.timeout = 2.0
-	_ws_http.request_completed.connect(_ws_ping_done)
-	page.add_child(_ws_http)
-	_ws_update_counts()
-	return page
-
-
-func _ws_base() -> String:
-	# 网页版由工坊服务一起提供（/game/），工坊就在同一个地址
-	if OS.has_feature("web"):
-		var origin: Variant = JavaScriptBridge.eval("window.location.origin", true)
-		if origin is String and (origin as String).begins_with("http"):
-			return origin
-	return "http://127.0.0.1:%d" % int(_ws_port.value)
-
-
-## 给外层合并页面（tools/workshop/app.html）发消息：切标签、重新载入工具箱
-func _js_parent(msg: String) -> void:
-	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.parent && window.parent.postMessage({pw: '%s'}, '*')" % msg, true)
-
-
-func _ws_check() -> void:
-	if _ws_http == null or not _ws_http.is_inside_tree():
-		return
-	_ws_http.cancel_request()
-	_ws_http.request(_ws_base() + "/api/ping")
-
-
-func _ws_ping_done(result: int, code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
-	if result == HTTPRequest.RESULT_SUCCESS and code == 200:
-		_ws_status.text = "● 工坊服务在运行：%s/" % _ws_base()
-		_ws_status.add_theme_color_override("font_color", Color("7fc77a"))
-	else:
-		_ws_status.text = "○ 工坊服务没有运行（%s）" % ("用 python tools/pw_asset_server.py 打开的网页才能连上工坊"
-			if OS.has_feature("web") else "点「启动工坊」")
-		_ws_status.add_theme_color_override("font_color", T.TEXT_DIM)
-
-
-func _ws_start() -> void:
-	var script := ProjectSettings.globalize_path("res://").path_join("../tools/pw_asset_server.py").simplify_path()
-	if not FileAccess.file_exists(script):
-		_ws_status.text = "找不到 %s（需要完整的仓库）" % script
-		return
-	var py := "python" if OS.get_name() == "Windows" else "python3"
-	var pid := OS.create_process(py, [script, "--port", str(int(_ws_port.value))])
-	_ws_status.text = "正在启动工坊（进程 %d）……" % pid if pid > 0 else "启动失败：找不到 %s" % py
-	get_tree().create_timer(2.0).timeout.connect(_ws_check)
-
-
-func _ws_reload() -> void:
-	PWSpriteVisual.reload_catalog()
-	var n := PWAssetLibrary.reload_blender_catalog()
-	_ws_update_counts()
-	_refresh_categories()
-	_ws_counts.text += "　已刷新（Blender 资产 %d 种）" % n
-
-
-func _ws_update_counts() -> void:
-	var chars := PWSpriteVisual.characters()
-	var acts := 0
-	for c: Dictionary in chars:
-		acts = maxi(acts, (c.get("anims", {}) as Dictionary).size())
-	var spec_props := 0
-	for it in PWAssetLibrary.in_category("blender"):
-		if it.get("source", "") == "spec":
-			spec_props += 1
-	_ws_counts.text = "现有像素角色 %d 个（最多 %d 个动作），Blender 资产 %d 种（其中规格生成 %d 种）" % [
-		chars.size(), acts, PWAssetLibrary.in_category("blender").size(), spec_props]
 
 
 # ---------------------------------------------------------------- 关于
@@ -833,7 +877,8 @@ func _build_about_page() -> Control:
 
 当前进度
   P0 风格规范、统一材质     P1 天气与昼夜     P2 场景生成（7 种风格）
-  P3 Blender 资产生成     P4 HD-2D 像素角色、动作、NPC     AI 资产工坊（大模型写规格 → Blender 生成）
+  P3 Blender 资产生成     P4 HD-2D 像素角色、动作、NPC
+  AI 资产工坊：python tools/pw_asset_server.py，浏览器打开 http://127.0.0.1:8777 的「AI 资产工坊」标签
 
 文档
   docs/DESIGN.md        方案设计与进度

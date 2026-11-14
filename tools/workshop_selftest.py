@@ -55,6 +55,28 @@ class Mock(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
+    def do_GET(self):
+        # 模型列表：Anthropic 格式（/v1/models，分页字段）和 OpenAI 兼容格式（/v1/models，只有 data）
+        path = self.path.split("?")[0]
+        if path == "/v1/models" and self.headers.get("anthropic-version"):
+            out = {"data": [{"type": "model", "id": "claude-opus-5-5", "display_name": "Claude Opus 5.5",
+                             "created_at": "2026-01-01T00:00:00Z"},
+                            {"type": "model", "id": "claude-sonnet-5-5", "display_name": "Claude Sonnet 5.5",
+                             "created_at": "2026-01-01T00:00:00Z"}],
+                   "has_more": False, "first_id": "claude-opus-5-5", "last_id": "claude-sonnet-5-5"}
+        elif path == "/v1/models":
+            out = {"object": "list", "data": [{"id": "my-model-a", "object": "model"}, {"id": "my-model-b", "object": "model"}]}
+        else:
+            self.send_response(404)
+            self.end_headers()
+            return
+        data = json.dumps(out).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8"))
         if self.path.endswith("/v1/messages"):
@@ -128,6 +150,19 @@ def main():
         check("图片随请求发送", STATE["calls"][-1]["image"])
     except Exception as e:  # noqa: BLE001
         check("请求和解析", False, repr(e))
+
+    print("2b. 获取模型列表")
+    try:
+        ms = ws.list_models(cfg)
+        check("Claude（Models API）", [m["id"] for m in ms] == ["claude-opus-5-5", "claude-sonnet-5-5"] and ms[0]["name"] == "Claude Opus 5.5",
+              ", ".join(m["id"] for m in ms))
+    except Exception as e:  # noqa: BLE001
+        check("Claude（Models API）", False, repr(e))
+    try:
+        ms = ws.list_models(cfg2)
+        check("OpenAI 兼容（/models）", [m["id"] for m in ms] == ["my-model-a", "my-model-b"], ", ".join(m["id"] for m in ms))
+    except Exception as e:  # noqa: BLE001
+        check("OpenAI 兼容（/models）", False, repr(e))
 
     print("3. 校验 + 修正循环（角色）")
     STATE["bad_first"] = True

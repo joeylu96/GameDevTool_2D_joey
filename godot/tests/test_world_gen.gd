@@ -76,7 +76,7 @@ func _check(theme: String, s: int) -> void:
 				_fail(label, "有一片只有 %d 平方米的小水坑" % area)
 				break
 	var params: Dictionary = PWStyles.get_style(theme).get("params", {})
-	if not params.get("blender", []).is_empty() and not PWAssetLibrary.in_category("blender").is_empty():
+	if not params.get("blender", []).is_empty() and not PWAssetLibrary.blender_items().is_empty():
 		var bl := 0
 		for k: String in w.stats:
 			if k.begins_with("bl:"):

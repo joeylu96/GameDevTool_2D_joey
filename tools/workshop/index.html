@@ -67,8 +67,13 @@
     <input type="text" id="host" placeholder="留空 = https://api.anthropic.com">
     <label>API Key</label>
     <input type="password" id="api_key" placeholder="sk-...">
-    <div class="row">
-      <div><label>模型</label><input type="text" id="model" placeholder="claude-opus-5-5"></div>
+    <div>
+      <div><label>模型</label>
+        <div class="row"><input type="text" id="model" placeholder="claude-opus-5-5" list="modellist" style="flex:3">
+          <button id="fetchmodels" style="flex:2;padding:7px 6px" title="用上面填的 Host 和 Key 向服务方查询可用的模型">获取列表</button></div>
+        <datalist id="modellist"></datalist>
+        <select id="modelpick" style="display:none;margin-top:6px"></select>
+      </div>
       <div id="effortbox"><label>思考强度</label>
         <select id="effort"><option value="low">低（快）</option><option value="medium">中</option><option value="high">高</option><option value="">不发送</option></select></div>
     </div>
@@ -97,6 +102,14 @@
       <label>原画（可选，jpg / png）</label>
       <input type="file" id="image" accept="image/png,image/jpeg,image/webp">
       <img id="imgthumb">
+    </div>
+    <div id="placebox">
+      <label>放到资源库</label>
+      <div class="row">
+        <select id="placecat"></select>
+        <select id="placesub"></select>
+      </div>
+      <div class="hint">生成后出现在「PixelWorld 工具箱 → 资源库」的这个分类里；不选就按类型自动放。</div>
     </div>
     <div id="actextra" style="display:none">
       <label>给哪些角色（不选 = 全部主要角色）</label>
@@ -164,6 +177,7 @@ const embedded = window.parent !== window;   // 在合并入口（app.html）里
 if (embedded) document.querySelector("header").style.display = "none";
 function tellParent(msg) { if (embedded) window.parent.postMessage({pw: msg}, "*"); }
 let kind = "character", assets = null, image = null, poll = null, cur = null, dir = 1, animName = "idle", animTimer = null;
+let lib = {categories: [], assign: {}};
 const PROMPTS = {
   character: ["描述角色的外形、服装、配色和武器", "例如：一个在港口卖鱼的大婶，系着蓝白条纹围裙，扎着发髻，手里拿着一根扁担"],
   action: ["描述动作", "例如：双手叉腰、得意地点头，循环播放"],
@@ -202,6 +216,18 @@ $("save").onclick = async () => {
   $("cfgmsg").innerHTML = '<span class="ok">已保存</span>';
   loadConfig();
 };
+$("fetchmodels").onclick = async () => {
+  $("cfgmsg").textContent = "正在获取模型列表……";
+  const r = await api("/api/models", {provider: $("provider").value, host: $("host").value.trim(), api_key: $("api_key").value.trim()});
+  if (!r.ok) { $("cfgmsg").innerHTML = `<span class="err">${r.error}</span>`; return; }
+  const cur = $("model").value;
+  $("modellist").innerHTML = r.models.map(m => `<option value="${m.id}">${m.name}</option>`).join("");
+  $("modelpick").innerHTML = `<option value="">—— 选一个模型（共 ${r.models.length} 个）——</option>` +
+    r.models.map(m => `<option value="${m.id}" ${m.id === cur ? "selected" : ""}>${m.name === m.id ? m.id : m.name + "（" + m.id + "）"}</option>`).join("");
+  $("modelpick").style.display = r.models.length ? "block" : "none";
+  $("cfgmsg").innerHTML = `<span class="ok">找到 ${r.models.length} 个模型，在下拉框里选一个，再点「保存」</span>`;
+};
+$("modelpick").onchange = () => { if ($("modelpick").value) $("model").value = $("modelpick").value; };
 $("test").onclick = async () => {
   $("cfgmsg").textContent = "正在测试……";
   const r = await api("/api/test", {});
@@ -216,6 +242,8 @@ function setKind(k) {
   $("prompt").placeholder = PROMPTS[k][1];
   $("charextra").style.display = k === "character" ? "block" : "none";
   $("actextra").style.display = k === "action" ? "block" : "none";
+  $("placebox").style.display = k === "action" ? "none" : "block";
+  fillPlace();
 }
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setKind(b.dataset.kind));
 $("image").onchange = () => {
@@ -230,8 +258,52 @@ $("image").onchange = () => {
   rd.readAsDataURL(f);
 };
 $("manualbtn").onclick = () => { $("manual").style.display = $("manual").style.display === "none" ? "block" : "none"; };
+// ---------------- 资源库位置（分类 / 子分类，和工具箱的资源库共用 godot/assets/library.json）
+async function loadLibrary() { lib = await api("/api/library"); fillPlace(); }
+function fillPlace(keepCat, keepSub) {
+  const cat = keepCat ?? $("placecat").value, sub = keepSub ?? $("placesub").value;
+  const auto = kind === "character" ? "自动（角色）" : "自动（按模型给的类型）";
+  $("placecat").innerHTML = `<option value="">${auto}</option>` +
+    lib.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join("") + '<option value="__new">＋ 新建分类…</option>';
+  $("placecat").value = lib.categories.some(c => c.id === cat) ? cat : "";
+  fillSub(sub);
+}
+function fillSub(keep) {
+  const c = lib.categories.find(x => x.id === $("placecat").value);
+  $("placesub").disabled = !c;
+  $("placesub").innerHTML = '<option value="">（不分子分类）</option>' +
+    (c ? c.children.map(k => `<option value="${k.id}">${k.name}</option>`).join("") + '<option value="__new">＋ 新建子分类…</option>' : "");
+  $("placesub").value = c && c.children.some(k => k.id === keep) ? keep : "";
+}
+async function saveLibrary() { lib = await api("/api/library", lib); }
+$("placecat").onchange = async () => {
+  if ($("placecat").value === "__new") {
+    const name = (prompt("新分类的名字") || "").trim();
+    if (!name) { fillPlace("", ""); return; }
+    const id = "c" + Date.now().toString(36);
+    lib.categories.push({id, name, builtin: false, children: []});
+    await saveLibrary();
+    fillPlace(id, "");
+    return;
+  }
+  fillSub("");
+};
+$("placesub").onchange = async () => {
+  if ($("placesub").value !== "__new") return;
+  const c = lib.categories.find(x => x.id === $("placecat").value);
+  const name = (prompt(`在「${c.name}」下新建子分类`) || "").trim();
+  if (!name) { fillSub(""); return; }
+  const id = "s" + Date.now().toString(36);
+  c.children.push({id, name});
+  await saveLibrary();
+  fillPlace(c.id, id);
+};
+$("placecat").onfocus = loadLibrary;   // 工具箱里新加的分类，下次点开下拉框时就有
+
 async function start(body) {
   body.kind = kind;
+  if (kind !== "action" && $("placecat").value && $("placecat").value !== "__new")
+    body.place = {cat: $("placecat").value, sub: $("placesub").value === "__new" ? "" : $("placesub").value};
   if (kind === "action") body.for = [...$("targets").selectedOptions].map(o => o.value);
   const r = await api("/api/generate", body);
   if (r.error) { $("jobstatus").innerHTML = `<span class="err">${r.error}</span>`; return; }
@@ -274,7 +346,7 @@ async function loadAssets() {
   assets = await api("/api/assets");
   $("chars").innerHTML = assets.characters.map(c => `<div class="card" onclick="showChar('${c.id}')">
       <canvas class="thumb" data-id="${c.id}" width="128" height="128" style="width:100%;height:150px;object-fit:contain"></canvas>
-      <div class="name">${c.name}</div><div class="meta">${c.generated ? '<span class="badge ai">工坊生成</span>' : ""}${Object.keys(c.anims).length} 个动作</div></div>`).join("");
+      <div class="name">${c.name}</div><div class="meta">${c.generated ? '<span class="badge ai">工坊生成</span>' : ""}${Object.keys(c.anims).length} 个动作 · ${c.where.label}</div></div>`).join("");
   // 卡片缩略图：直接从精灵表里取「待机」第一帧的侧前方（第 1 行）
   document.querySelectorAll("canvas.thumb").forEach(cv => {
     const c = assets.characters.find(x => x.id === cv.dataset.id);
@@ -286,8 +358,8 @@ async function loadAssets() {
     img.src = "/files/sprites/" + a.file + "?t=" + Date.now();
   });
   $("props").innerHTML = assets.props.map(p => `<div class="card" onclick="showProp('${p.id}')">
-      ${p.preview ? `<img class="pv" src="${p.preview}?t=${Date.now()}">` : '<div class="pv" style="height:150px"></div>'}
-      <div class="name">${p.name}</div><div class="meta">${p.source === "spec" ? '<span class="badge ai">规格生成</span>' : '<span class="badge">代码生成器</span>'}${p.variants} 个变体</div></div>`).join("");
+      ${p.preview ? `<img class="pv" src="${p.preview}?t=${Date.now()}">` : '<div class="pv" style="height:150px;display:flex;align-items:center;justify-content:center;color:#9aa0b4;font-size:12px">预览生成中…</div>'}
+      <div class="name">${p.name}</div><div class="meta">${p.source === "spec" ? '<span class="badge ai">规格生成</span>' : '<span class="badge">代码生成器</span>'}${p.variants} 个变体 · ${p.where.label}</div></div>`).join("");
   $("actions").innerHTML = assets.actions.map(a => `<div class="card" onclick="showAction('${a.id}')">
       <div class="name">${a.name}</div><div class="meta">${a.frames} 帧 · ${(a.for || []).join("、") || "（未指定角色）"}</div></div>`).join("") || '<div class="hint">还没有自定义动作</div>';
   $("targets").innerHTML = assets.characters.filter(c => !c.id.startsWith("villager_")).map(c => `<option value="${c.id}">${c.name}（${c.id}）</option>`).join("");
@@ -367,6 +439,9 @@ $("exportweb").onclick = async () => {
   if (r.job) watch(r.job);
 };
 
+setInterval(() => { if (assets && assets.props.some(p => !p.preview)) loadAssets(); }, 5000);
+
+loadLibrary();
 setKind("character");
 loadConfig();
 loadAssets().then(() => {

@@ -368,32 +368,6 @@
       "plant": true
     },
     {
-      "id": "bl_spec_rowboat",
-      "kind": "spec_rowboat",
-      "name": "倒扣的渔船",
-      "category": "props",
-      "desc": "倒扣在岸边晒着的小木渔船：船底朝天，两支桨斜靠在船边，旁边一卷渔网和几个红白浮球。",
-      "vary": "船身颜色（青 / 红 / 原木）、船的长度、桨和浮球的位置随变体变化。",
-      "tags": [
-        "shore",
-        "island",
-        "town"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_rowboat_0.glb",
-        "spec_rowboat_1.glb",
-        "spec_rowboat_2.glb",
-        "spec_rowboat_3.glb"
-      ],
-      "footprint": [
-        3.13,
-        2.44
-      ],
-      "height": 0.83,
-      "plant": false
-    },
-    {
       "id": "bl_spec_tent",
       "kind": "spec_tent",
       "name": "帐篷",
@@ -444,6 +418,32 @@
         1.07
       ],
       "height": 1.92,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_rowboat",
+      "kind": "spec_rowboat",
+      "name": "倒扣的渔船",
+      "category": "props",
+      "desc": "倒扣在岸边晒着的小木渔船：船底朝天，两支桨斜靠在船边，旁边一卷渔网和几个红白浮球。",
+      "vary": "船身颜色（青 / 红 / 原木）、船的长度、桨和浮球的位置随变体变化。",
+      "tags": [
+        "shore",
+        "island",
+        "town"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_rowboat_0.glb",
+        "spec_rowboat_1.glb",
+        "spec_rowboat_2.glb",
+        "spec_rowboat_3.glb"
+      ],
+      "footprint": [
+        3.13,
+        2.44
+      ],
+      "height": 0.83,
       "plant": false
     }
   ]

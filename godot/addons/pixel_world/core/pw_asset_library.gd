@@ -9,12 +9,19 @@ extends RefCounted
 ##   build：func(seed: int) -> Mesh 或 Node3D —— 不同种子得到不同的形状 / 款式
 ##   plant：true 表示放进场景时还会再加随机朝向、宽高比例和色调（和场景里完全一样的做法）
 ##   size：大致尺寸（米），预览时用来排布和取景
+##   sub：子分类 id（可选）；blender：true 表示来自 Blender 资产目录
+##
+## 分类结构可以改（资源库里新增分类 / 子分类、把资源挪到别的分类；AI 资产工坊生成时选放到哪）：
+##   res://assets/library.json = {"categories": [{id, name, builtin?, children: [{id, name}]}],
+##                                "assign": {"资源 id": ["分类 id", "子分类 id"]}}
+## 工具箱和资产工坊共用这一份；网页版通过工坊服务（/api/library）读写，桌面 / 编辑器里直接读写文件。
 
 const Trees := preload("res://addons/pixel_world/assets/placeholder/pw_tree_builder.gd")
 const House := preload("res://addons/pixel_world/assets/placeholder/pw_house_builder.gd")
 const Props := preload("res://addons/pixel_world/assets/placeholder/pw_props_builder.gd")
 
-const CATEGORIES := [
+## 内置分类（library.json 缺失或少了某个内置分类时补上）
+const DEFAULT_CATEGORIES := [
 	{"id": "trees", "name": "树木"},
 	{"id": "plants", "name": "灌木与草"},
 	{"id": "rocks", "name": "岩石"},
@@ -24,8 +31,120 @@ const CATEGORIES := [
 	{"id": "props", "name": "杂物"},
 	{"id": "water", "name": "水生"},
 	{"id": "characters", "name": "角色"},
-	{"id": "blender", "name": "Blender 资产"},
 ]
+const LIBRARY_PATH := "res://assets/library.json"
+static var _lib: Dictionary = {}
+
+
+# ---------------------------------------------------------------- 分类结构
+
+static func library() -> Dictionary:
+	if _lib.is_empty():
+		var d: Variant = null
+		if FileAccess.file_exists(LIBRARY_PATH):
+			d = JSON.parse_string(FileAccess.get_file_as_string(LIBRARY_PATH))
+		_lib = _normalize(d)
+	return _lib
+
+
+## 网页版从工坊服务拿到最新的分类结构后调用
+static func set_library(d: Variant) -> void:
+	_lib = _normalize(d)
+
+
+static func _normalize(d: Variant) -> Dictionary:
+	var out := {"version": 1, "categories": [], "assign": {}}
+	var cats: Array = (d as Dictionary).get("categories", []) if d is Dictionary else []
+	var seen := {}
+	for c: Variant in cats:
+		if not (c is Dictionary) or not c.has("id"):
+			continue
+		var kids: Array = []
+		for k: Variant in c.get("children", []):
+			if k is Dictionary and k.has("id"):
+				kids.append({"id": String(k.id), "name": String(k.get("name", k.id))})
+		out.categories.append({"id": String(c.id), "name": String(c.get("name", c.id)), "builtin": bool(c.get("builtin", false)),
+			"children": kids})
+		seen[String(c.id)] = true
+	for i in DEFAULT_CATEGORIES.size():
+		var dc: Dictionary = DEFAULT_CATEGORIES[i]
+		if not seen.has(dc.id):
+			out.categories.insert(mini(i, out.categories.size()), {"id": dc.id, "name": dc.name, "builtin": true, "children": []})
+	if d is Dictionary and (d as Dictionary).get("assign") is Dictionary:
+		for k: String in d.assign:
+			var v: Variant = d.assign[k]
+			if v is Array and v.size() >= 1:
+				out.assign[k] = [String(v[0]), String(v[1]) if v.size() > 1 else ""]
+	return out
+
+
+static func categories() -> Array:
+	return library().categories
+
+
+static func category(id: String) -> Dictionary:
+	for c: Dictionary in categories():
+		if c.id == id:
+			return c
+	return {}
+
+
+static func _new_id(prefix: String) -> String:
+	return "%s%x" % [prefix, (Time.get_unix_time_from_system() * 1000.0) as int & 0xFFFFFFFF]
+
+
+## 新增分类，返回 id
+static func add_category(name: String) -> String:
+	var id := _new_id("c")
+	categories().append({"id": id, "name": name, "builtin": false, "children": []})
+	return id
+
+
+## 在某个分类下新增子分类，返回 id
+static func add_subcategory(cat_id: String, name: String) -> String:
+	var c := category(cat_id)
+	if c.is_empty():
+		return ""
+	var id := _new_id("s")
+	(c.children as Array).append({"id": id, "name": name})
+	return id
+
+
+## 删除分类（内置分类不能删）或子分类；放在里面的资源回到默认位置
+static func remove(cat_id: String, sub_id := "") -> bool:
+	var lib := library()
+	if sub_id == "":
+		var c := category(cat_id)
+		if c.is_empty() or c.get("builtin", false):
+			return false
+		lib.categories.erase(c)
+	else:
+		var c := category(cat_id)
+		for k: Dictionary in c.get("children", []):
+			if k.id == sub_id:
+				(c.children as Array).erase(k)
+				break
+	for item_id: String in lib.assign.keys():
+		var v: Array = lib.assign[item_id]
+		if v[0] == cat_id and (sub_id == "" or v[1] == sub_id):
+			lib.assign.erase(item_id)
+	return true
+
+
+## 把资源放到某个分类 / 子分类
+static func move_item(item_id: String, cat_id: String, sub_id := "") -> void:
+	library().assign[item_id] = [cat_id, sub_id]
+
+
+## 桌面版 / 编辑器：直接写 library.json。网页版写不了（返回 false），由界面通过工坊服务保存
+static func save_library() -> bool:
+	if OS.has_feature("web"):
+		return false
+	var f := FileAccess.open(LIBRARY_PATH, FileAccess.WRITE)
+	if f == null:
+		return false
+	f.store_string(JSON.stringify(library(), "  "))
+	return true
 
 ## Blender 生成的资产（P3）：读 res://assets/blender/catalog.json 追加进来；也可以用 register() 手动登记
 const BLENDER_DIR := "res://assets/blender/"
@@ -43,7 +162,7 @@ static func blender_with_tags(any_tags: Array, exclude: Array = []) -> Array[Dic
 		load_blender_catalog()
 	var out: Array[Dictionary] = []
 	for it in _extra:
-		if it.get("cat", "") != "blender" or it.id in exclude:
+		if not it.get("blender", false) or it.id in exclude:
 			continue
 		for t in it.get("tags", []):
 			if t in any_tags:
@@ -73,7 +192,7 @@ static func reload_blender_catalog() -> int:
 	_blender_meshes.clear()
 	var keep: Array[Dictionary] = []
 	for it in _extra:
-		if it.get("cat", "") != "blender":
+		if not it.get("blender", false):
 			keep.append(it)
 	_extra = keep
 	return load_blender_catalog()
@@ -98,7 +217,8 @@ static func load_blender_catalog() -> int:
 		var sem: String = a.get("category", "")
 		var show: Variant = [3, 6] if sem == "trees" else ("styles:%d" % mini(files.size(), 3 if sem == "buildings" else 4))
 		register({
-			"id": a.id, "cat": "blender", "semantic": sem, "name": a.name + "（Blender）", "show": show,
+			"id": a.id, "cat": sem if not category(sem).is_empty() else "props", "blender": true, "semantic": sem,
+			"name": a.name + "（Blender）", "show": show,
 			"tags": a.get("tags", []), "footprint": fp, "height": float(a.get("height", 2.0)), "source": a.get("source", "generator"),
 			"size": maxf(maxf(fp[0], fp[1]), float(a.get("height", 2.0)) * 0.8),
 			"plant": a.get("plant", false),
@@ -254,13 +374,37 @@ static func items() -> Array[Dictionary]:
 				v.demo = true
 				return v})
 	out.append_array(_extra)
+	# 用户调整过的位置（资源库里「移动到」、资产工坊生成时选的分类）
+	var assign: Dictionary = library().assign
+	for it in out:
+		it["sub"] = ""
+		if assign.has(it.id):
+			var v: Array = assign[it.id]
+			var c := category(v[0])
+			if not c.is_empty():
+				it.cat = v[0]
+				for k: Dictionary in c.children:
+					if k.id == v[1]:
+						it.sub = v[1]
 	return out
 
 
-static func in_category(cat: String) -> Array[Dictionary]:
+## 某个分类（sub 为空 = 整个分类，含所有子分类）里的资源
+static func in_category(cat: String, sub := "") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for it in items():
-		if it.cat == cat:
+		if it.cat == cat and (sub == "" or it.get("sub", "") == sub):
+			out.append(it)
+	return out
+
+
+## 全部 Blender 资产（场景生成器、测试用）
+static func blender_items() -> Array[Dictionary]:
+	if not _blender_loaded:
+		load_blender_catalog()
+	var out: Array[Dictionary] = []
+	for it in _extra:
+		if it.get("blender", false):
 			out.append(it)
 	return out
 

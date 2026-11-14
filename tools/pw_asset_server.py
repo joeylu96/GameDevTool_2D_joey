@@ -48,6 +48,7 @@ SPRITES = ROOT / "godot" / "assets" / "sprites"
 BLENDER_ASSETS = ROOT / "godot" / "assets" / "blender"
 WEB = Path(__file__).resolve().parent / "workshop"
 BUILD_WEB = ROOT / "build" / "web"   # Godot 网页版（导出预设 "Web"）
+LIBRARY = ROOT / "godot" / "assets" / "library.json"  # 资源库的分类 / 子分类和资源位置（工具箱和工坊共用）
 
 DEFAULTS = {
     "provider": "anthropic",     # anthropic / openai
@@ -227,6 +228,40 @@ def _call_openai(cfg, system, text, image, max_tokens):
                                                      u.get("completion_tokens", "?"))
 
 
+def list_models(cfg):
+    """当前接口能用的模型：[{"id", "name"}]。Claude 走官方 SDK 的 Models API，OpenAI 兼容接口走 GET {host}/models"""
+    if cfg.get("provider") == "openai":
+        host = (cfg.get("host") or "").rstrip("/")
+        if not host:
+            raise LLMError("OpenAI 兼容接口需要先填 Host（到 /v1 为止）")
+        req = urllib.request.Request(host + "/models", headers={"Authorization": "Bearer " + (cfg.get("api_key") or "")})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                data = json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            raise LLMError("接口返回 %d：%s" % (e.code, e.read().decode("utf-8", "replace")[:200]))
+        except urllib.error.URLError as e:
+            raise LLMError("连不上 %s：%s" % (host, e.reason))
+        items = data.get("data", data if isinstance(data, list) else [])
+        out = [{"id": m.get("id"), "name": m.get("id")} for m in items if isinstance(m, dict) and m.get("id")]
+        return sorted(out, key=lambda m: m["id"])
+    try:
+        import anthropic
+    except ImportError:
+        raise LLMError("没有安装 anthropic SDK：运行 pip install -r tools/requirements.txt")
+    client = anthropic.Anthropic(api_key=cfg.get("api_key") or None, base_url=cfg.get("host") or None)
+    try:
+        return [{"id": m.id, "name": getattr(m, "display_name", None) or m.id} for m in client.models.list()]
+    except anthropic.AuthenticationError:
+        raise LLMError("API Key 无效（401）")
+    except anthropic.NotFoundError:
+        raise LLMError("这个 Host 不支持模型列表（404），直接手填模型名")
+    except anthropic.APIStatusError as e:
+        raise LLMError("服务端错误（%s）：%s" % (e.status_code, e.message))
+    except anthropic.APIConnectionError:
+        raise LLMError("连不上 %s，检查网络和 Host" % (cfg.get("host") or "api.anthropic.com"))
+
+
 def extract_json(text):
     """从模型回复里取出 JSON 对象：优先 ```json 代码块，否则取第一个 { 到最后一个 }"""
     m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.S)
@@ -330,6 +365,8 @@ def run_job(job):
         job.log("规格已保存：%s" % path.relative_to(ROOT).as_posix())
         with _build_lock:
             _build(job, cfg, kind, spec)
+            if kind in ("prop", "character"):
+                place_asset(job, ("bl_spec_" if kind == "prop" else "sprite_") + spec["id"], req.get("place"))
             _import_godot(job, cfg)
             if cfg.get("sync_web", True):
                 job.result["web_updated"] = _export_web(job, cfg)
@@ -353,7 +390,7 @@ def _run(job, cmd, timeout=1800):
     t0 = time.time()
     for line in p.stdout:
         line = line.rstrip()
-        if re.search(r"角色|已生成|已导出|规格|动作|Error|Traceback|错误|跳过|^\s+bl_", line) and "Saved:" not in line:
+        if re.search(r"角色|已生成|已导出|规格|动作|预览|Error|Traceback|错误|跳过|^\s+bl_", line) and "Saved:" not in line:
             job.log("  " + line.strip())
         if time.time() - t0 > timeout:
             p.kill()
@@ -404,6 +441,107 @@ def _export_web(job, cfg):
         return False
     job.log("网页版已更新：刷新「PixelWorld 工具箱」标签就能看到新资产")
     return True
+
+
+# ---------------------------------------------------------------- 资源库分类
+
+DEFAULT_CATEGORIES = [("trees", "树木"), ("plants", "灌木与草"), ("rocks", "岩石"), ("buildings", "建筑"),
+                      ("landmarks", "地标"), ("street", "街道设施"), ("props", "杂物"), ("water", "水生"), ("characters", "角色")]
+_lib_lock = threading.Lock()
+
+
+def read_library():
+    try:
+        d = json.loads(LIBRARY.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        d = {}
+    return normalize_library(d)
+
+
+def normalize_library(d):
+    """和 Godot 端 PWAssetLibrary._normalize 一样：分类有 id / name / children，内置分类一个不少，assign 是 {资源 id: [分类, 子分类]}"""
+    cats = []
+    seen = set()
+    for c in d.get("categories", []) if isinstance(d, dict) else []:
+        if not isinstance(c, dict) or not c.get("id"):
+            continue
+        cid = re.sub(r"[^A-Za-z0-9_]", "", str(c["id"]))[:40]
+        if not cid or cid in seen:
+            continue
+        kids = []
+        for k in c.get("children", []) or []:
+            if isinstance(k, dict) and k.get("id"):
+                kids.append({"id": re.sub(r"[^A-Za-z0-9_]", "", str(k["id"]))[:40], "name": str(k.get("name") or k["id"])[:20]})
+        cats.append({"id": cid, "name": str(c.get("name") or cid)[:20], "builtin": bool(c.get("builtin")), "children": kids})
+        seen.add(cid)
+    for i, (cid, name) in enumerate(DEFAULT_CATEGORIES):
+        if cid not in seen:
+            cats.insert(min(i, len(cats)), {"id": cid, "name": name, "builtin": True, "children": []})
+    assign = {}
+    for k, v in (d.get("assign") or {}).items() if isinstance(d, dict) else []:
+        if isinstance(v, list) and v:
+            assign[str(k)] = [str(v[0]), str(v[1]) if len(v) > 1 else ""]
+    return {"version": 1, "categories": cats, "assign": assign}
+
+
+def write_library(d):
+    lib = normalize_library(d)
+    with _lib_lock:
+        LIBRARY.write_text(json.dumps(lib, ensure_ascii=False, indent=2), encoding="utf-8")
+    return lib
+
+
+def place_asset(job, asset_id, place):
+    """把生成的资源放到资源库里指定的分类 / 子分类（工坊里选的）"""
+    if not place or not place.get("cat"):
+        return
+    lib = read_library()
+    cat = next((c for c in lib["categories"] if c["id"] == place["cat"]), None)
+    if cat is None:
+        job.log("资源库里没有分类 %s，放到默认位置" % place["cat"])
+        return
+    sub = place.get("sub") or ""
+    if sub and not any(k["id"] == sub for k in cat["children"]):
+        sub = ""
+    lib["assign"][asset_id] = [cat["id"], sub]
+    write_library(lib)
+    names = [cat["name"]] + [k["name"] for k in cat["children"] if k["id"] == sub]
+    job.log("放到资源库：%s" % " / ".join(names))
+
+
+def asset_location(asset_id, default_cat, lib):
+    v = lib["assign"].get(asset_id)
+    cat_id, sub_id = (v[0], v[1]) if v else (default_cat, "")
+    cat = next((c for c in lib["categories"] if c["id"] == cat_id), None)
+    if cat is None:
+        cat = next((c for c in lib["categories"] if c["id"] == default_cat), lib["categories"][0])
+        sub_id = ""
+    sub = next((k for k in cat["children"] if k["id"] == sub_id), None)
+    return {"cat": cat["id"], "sub": sub["id"] if sub else "", "label": cat["name"] + (" / " + sub["name"] if sub else "")}
+
+
+def missing_previews():
+    """目录里有、但还没有预览图的 Blender 资产"""
+    out = []
+    for a in _blender_catalog().get("assets", []):
+        if not (WORK / "previews" / ("prop_%s.png" % a["kind"])).exists():
+            out.append(a["kind"])
+    return out
+
+
+def run_preview_job(job, kinds):
+    """补预览图（预览图不进仓库，换了机器 / 新克隆的仓库第一次启动时要补一次）"""
+    cfg = load_config()
+    try:
+        b = _blender(cfg)
+        job.status = "补 %d 张预览图（约 %d 秒）" % (len(kinds), max(5, len(kinds) * 3))
+        with _build_lock:
+            _run(job, [b, "-b", "--factory-startup", "-P", "tools/blender_render_previews.py", "--", "--only", ",".join(kinds)])
+        job.status = "完成"
+        job.state = "done"
+    except Exception as e:  # noqa: BLE001
+        job.status = "出错：%s" % e
+        job.state = "error"
 
 
 def run_export_job(job):
@@ -460,15 +598,18 @@ def _blender_catalog():
 
 def list_assets():
     sc = _sprite_catalog()
+    lib = read_library()
     chars = []
     for c in sc.get("characters", []):
         spec_file = SPECS / "characters" / ("%s.json" % c["id"])
         chars.append({"id": c["id"], "name": c.get("name"), "desc": c.get("desc"), "anims": c.get("anims", {}),
+                      "where": asset_location("sprite_" + c["id"], "characters", lib),
                       "generated": spec_file.exists(), "preview": "/files/previews/char_%s.png" % c["id"]
                       if (WORK / "previews" / ("char_%s.png" % c["id"])).exists() else ""})
     props = []
     for a in _blender_catalog().get("assets", []):
         props.append({"id": a["id"], "name": a.get("name"), "desc": a.get("desc"), "category": a.get("category"),
+                      "where": asset_location(a["id"], a.get("category") or "props", lib),
                       "tags": a.get("tags", []), "source": a.get("source", "generator"), "variants": len(a.get("files", [])),
                       "preview": "/files/previews/prop_%s.png" % a["kind"]
                       if (WORK / "previews" / ("prop_%s.png" % a["kind"])).exists() else ""})
@@ -549,6 +690,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._file(BUILD_WEB, "index.html")
         if path.startswith("/game/"):
             return self._file(BUILD_WEB, path[len("/game/"):])
+        if path == "/api/library":
+            return self._send(200, read_library())
         if path == "/api/web":
             f = BUILD_WEB / "index.pck"
             return self._send(200, {"exists": f.exists(), "mtime": f.stat().st_mtime if f.exists() else 0})
@@ -583,6 +726,17 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": str(e)})
         if path == "/api/config":
             return self._send(200, public_config(save_config(body)))
+        if path == "/api/models":
+            # 用网页上当前填的值（不用先保存）；Key 没改（还是遮盖的 ••••）就用已保存的
+            cfg = load_config()
+            for k in ("provider", "host", "api_key"):
+                v = body.get(k)
+                if v is not None and not (k == "api_key" and (not v or str(v).startswith("••"))):
+                    cfg[k] = v
+            try:
+                return self._send(200, {"ok": True, "models": list_models(cfg)})
+            except LLMError as e:
+                return self._send(200, {"ok": False, "error": str(e)})
         if path == "/api/test":
             cfg = load_config()
             try:
@@ -590,6 +744,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, {"ok": True, "reply": text.strip()[:60], "usage": usage})
             except LLMError as e:
                 return self._send(200, {"ok": False, "error": str(e)})
+        if path == "/api/library":
+            # 工具箱（新增分类 / 子分类、移动资源）和工坊（新建分类）都用这个保存整份分类结构
+            return self._send(200, write_library(body))
         if path == "/api/export_web":
             job = Job("web", body)
             JOBS[job.id] = job
@@ -617,6 +774,12 @@ def main():
     print("  模型：%s / %s（%s）" % (cfg["provider"], cfg["model"], "已配置 Key" if cfg.get("api_key") else "未配置 Key"))
     print("  Blender：%s" % (find_blender(cfg) or "没找到（在网页设置里填路径）"))
     print("  Godot：%s" % (find_godot(cfg) or "没找到（生成后在 Godot 编辑器里导入）"))
+    kinds = missing_previews()
+    if kinds and find_blender(cfg):
+        print("  缺 %d 张预览图，后台补渲染……" % len(kinds))
+        job = Job("preview", {})
+        JOBS[job.id] = job
+        threading.Thread(target=run_preview_job, args=(job, kinds), daemon=True).start()
     try:
         srv = ThreadingHTTPServer((args.host, args.port), Handler)
     except OSError:
