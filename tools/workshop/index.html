@@ -185,7 +185,7 @@
     <h2 id="dtitle"></h2>
     <div class="row" style="align-items:flex-start">
       <div style="flex:0 0 270px">
-        <canvas id="anim" width="128" height="128"></canvas>
+        <canvas id="anim" width="80" height="80" style="width:240px;height:240px"></canvas>
         <img id="dimg" class="pv" style="width:256px;height:256px;display:none">
         <canvas id="spin" width="192" height="192" style="width:256px;height:256px;display:none;cursor:grab"
           title="左右拖动转着看"></canvas>
@@ -398,8 +398,9 @@ async function loadAssets() {
     const a = c && c.anims.idle;
     if (!a) return;
     const img = new Image();
-    img.onload = () => { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
-      g.drawImage(img, 0, assets.frame, assets.frame, assets.frame, 0, 0, 128, 128); };
+    img.onload = () => { const F = assets.frame; cv.width = cv.height = F;  // 画布 = 一帧大小，CSS 按像素放大
+      const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+      g.drawImage(img, 0, F, F, F, 0, 0, F, F); };
     img.src = "/files/sprites/" + a.file + "?t=" + Date.now();
   });
   $("props").innerHTML = assets.props.map(p => `<div class="card" onclick="showProp('${p.id}')">
@@ -418,8 +419,9 @@ function drawAnim() {
   img.src = "/files/sprites/" + a.file + "?t=" + Date.now();
   let f = 0;
   const ctx = $("anim").getContext("2d");
-  ctx.imageSmoothingEnabled = false;
   img.onload = () => {
+    $("anim").width = $("anim").height = assets.frame;  // 画布 = 一帧大小（改尺寸会重置绘图状态，之后再关平滑）
+    ctx.imageSmoothingEnabled = false;
     animTimer = setInterval(() => {
       const F = assets.frame;
       ctx.clearRect(0, 0, F, F);
@@ -616,18 +618,20 @@ function aeTick(now) {
 function aeJoints(p) {
   const dir = (th, sx = 0) => { const v = [sx, -Math.sin(th), -Math.cos(th)], l = Math.hypot(...v); return v.map(x => x / l); };
   const add = (a, b, s = 1) => a.map((x, i) => x + b[i] * s);
-  const hipZ = 0.62 + p.bob, shZ = 1.04 + p.bob + p.breath, headZ = 1.32 + p.bob + p.breath * 1.5;
+  // 和 Blender 端 sprites.py 的比例常量一致（约 6 头身）
+  const HIP_Z = 0.86, SH_Z = 1.38, HEAD_UP = 0.285, HS = 0.62, THIGH = 0.42, SHIN = 0.40, UPPER = 0.30, FORE = 0.26;
+  const hipZ = HIP_Z + p.bob, shZ = SH_Z + p.bob + p.breath, headZ = shZ + HEAD_UP + p.breath * 0.5, chinZ = headZ - 0.2;
   const J = {lower: {}, upper: {}, head: {}};
   for (const [side, key] of [[1, "leg_l"], [-1, "leg_r"]]) {
-    const [th, kn] = p[key], hip = [side * 0.085, 0, hipZ], knee = add(hip, dir(th), 0.29), ankle = add(knee, dir(th - kn), 0.28);
+    const [th, kn] = p[key], hip = [side * 0.085, 0, hipZ], knee = add(hip, dir(th), THIGH), ankle = add(knee, dir(th - kn), SHIN);
     J.lower[key] = [hip, knee, ankle, add(ankle, dir(th - kn + Math.PI / 2), 0.13)];
   }
   J.upper.spine = [[0, 0, hipZ + 0.08], [0, 0, shZ]];
   J.upper.shoulders = [[0.19, 0, shZ - 0.04], [-0.19, 0, shZ - 0.04]];
   let d2r = null, handR = null;
   for (const [side, key] of [[1, "arm_l"], [-1, "arm_r"]]) {
-    const [a, e, sp] = p[key], sh = [side * 0.19, 0, shZ - 0.04], el = add(sh, dir(a, side * (0.05 + sp)), 0.24);
-    const d2 = dir(a + e, side * (0.02 + sp * 0.4)), hand = add(el, d2, 0.2);
+    const [a, e, sp] = p[key], sh = [side * 0.19, 0, shZ - 0.04], el = add(sh, dir(a, side * (0.05 + sp)), UPPER);
+    const d2 = dir(a + e, side * (0.02 + sp * 0.4)), hand = add(el, d2, FORE);
     J.upper[key] = [sh, el, hand];
     if (side < 0) { d2r = d2; handR = hand; }
   }
@@ -636,7 +640,7 @@ function aeJoints(p) {
     J.upper.weapon = [add(handR, d, -0.07 / l), add(handR, d, 0.9 / l)];
   }
   J.glow = p.hand_glow;
-  J.head.c = [0, 0, headZ]; J.head.neck = [0, 0, headZ - 0.18]; J.head.nose = [0, -0.2, headZ - 0.03];
+  J.head.c = [0, 0, chinZ + 0.2 * HS]; J.head.neck = [0, 0, chinZ + 0.02 * HS]; J.head.nose = [0, -0.2 * HS, chinZ + 0.17 * HS];
   // 姿势变换：头绕脖子（低头 x、转头 z），上半身绕腰（扭腰 z、前倾 x）
   const rot = (v, axis, ang, piv) => {
     const c = Math.cos(ang), s = Math.sin(ang), q = v.map((x, i) => x - piv[i]);
@@ -653,7 +657,7 @@ function aeDraw() {
   if (!AE.schema || !AE.keys.length) return;
   const J = aeJoints(aeSample(AE.t));
   for (const [cv, proj] of [["ae-front", v => [v[0], v[2]]], ["ae-side", v => [v[1], v[2]]]]) {
-    const g = $(cv).getContext("2d"), W = 160, H = 220, S = 105;
+    const g = $(cv).getContext("2d"), W = 160, H = 220, S = 100;
     g.clearRect(0, 0, W, H);
     const P = v => { const [x, z] = proj(v); return [W / 2 + x * S, H - 14 - z * S]; };
     g.strokeStyle = "#33384f"; g.beginPath(); g.moveTo(10, H - 14); g.lineTo(W - 10, H - 14); g.stroke();
@@ -663,7 +667,7 @@ function aeDraw() {
     line(J.upper.arm_l, "#6f92c6", 6); line(J.upper.arm_r, "#f0a040", 6);
     if (J.upper.weapon) line(J.upper.weapon, "#eef2f7", 3);
     if (J.glow > 0.05) for (const k of ["arm_l", "arm_r"]) { const [x, y] = P(J.upper[k][2]); g.fillStyle = "rgba(255,240,180,0.7)"; g.beginPath(); g.arc(x, y, 4 + 9 * J.glow, 0, 7); g.fill(); }
-    const [hx, hy] = P(J.head.c); g.fillStyle = "#e8b892"; g.beginPath(); g.arc(hx, hy, 0.21 * S, 0, 7); g.fill();
+    const [hx, hy] = P(J.head.c); g.fillStyle = "#e8b892"; g.beginPath(); g.arc(hx, hy, 0.21 * 0.62 * S, 0, 7); g.fill();
     const [nx, ny] = P(J.head.nose); g.fillStyle = "#2b2338"; g.beginPath(); g.arc(nx, ny, 3, 0, 7); g.fill();
   }
 }

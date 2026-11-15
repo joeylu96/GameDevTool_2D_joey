@@ -106,7 +106,7 @@ func _ready() -> void:
 	var drow := HBoxContainer.new()
 	body.add_child(drow)
 	drow.add_child(_check("走路", true, func(on): main.walk_mode = on))
-	drow.add_child(_check("像素风", false, func(on): main.display.pixel_mode = on))
+	drow.add_child(_check("像素风", main.display.pixel_mode, func(on): main.display.pixel_mode = on))
 	drow.add_child(_check("移轴", false, func(on): main.post.tilt_shift = on))
 
 	_status = T.label("", 12, T.TEXT_DIM)

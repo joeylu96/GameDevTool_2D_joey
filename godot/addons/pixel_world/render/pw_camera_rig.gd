@@ -31,9 +31,14 @@ const Style := preload("res://addons/pixel_world/style/pw_style_data.gd")
 @export var keyboard_pan := true
 
 var camera: Camera3D
+## 像素对齐：> 0 时镜头位置对齐到这个间距（米，= 对准的地面上一个渲染像素的大小），由 PWPixelDisplay 每帧设置
+var pixel_snap_m := 0.0
+## 对齐时镜头挪动了多少（渲染像素，x 右、y 上）；PWPixelDisplay 把画面反向平移这么多，看起来仍是平滑移动
+var snap_offset := Vector2.ZERO
 
 
 func _ready() -> void:
+	process_priority = 100  # 在跟随角色等移动镜头的逻辑之后再对齐像素
 	camera = Camera3D.new()
 	camera.name = "Camera"
 	camera.far = 400.0
@@ -51,6 +56,22 @@ func _update() -> void:
 	var off := Vector3(sin(y) * cos(p), sin(p), cos(y) * cos(p)) * distance
 	camera.fov = fov
 	camera.transform = Transform3D(Basis.looking_at(-off, Vector3.UP), off)
+	_snap()
+
+
+## 镜头沿自己的右 / 上方向对齐到像素网格：静止的物体每帧都落在同样的渲染像素上，移动镜头时不会闪烁「爬像素」
+func _snap() -> void:
+	snap_offset = Vector2.ZERO
+	if camera == null or pixel_snap_m <= 0.0:
+		return
+	var b := camera.transform.basis
+	var base := global_position + camera.transform.origin
+	var a := base.dot(b.x) / pixel_snap_m
+	var c := base.dot(b.y) / pixel_snap_m
+	var da := roundf(a) - a
+	var dc := roundf(c) - c
+	camera.position = camera.transform.origin + (b.x * da + b.y * dc) * pixel_snap_m
+	snap_offset = Vector2(da, dc)
 
 
 func _process(delta: float) -> void:
@@ -75,6 +96,7 @@ func _process(delta: float) -> void:
 		zoom(1.0 - delta)
 	if Input.is_physical_key_pressed(KEY_MINUS):
 		zoom(1.0 + delta)
+	_update()  # 每帧重新对齐（位置可能被跟随逻辑改过）
 
 
 ## 按屏幕方向平移（x 右，y 下），单位米

@@ -1,128 +1,17 @@
 {
   "version": 2,
-  "generator": "pixel_world_blender sprites 0.2.0",
+  "generator": "pixel_world_blender sprites 0.3.0",
   "blender": "5.2.4 LTS",
-  "frame": 128,
-  "px_per_m": 60.0,
+  "frame": 80,
+  "px_per_m": 32.0,
   "origin": [
-    64.0,
-    119.75
+    40.0,
+    64.51
   ],
   "dirs": 8,
+  "elev_deg": 40.0,
   "dir_order": "第 d 行 = 相机从角色正面逆时针（俯视）转 d×45°",
   "characters": [
-    {
-      "id": "merchant",
-      "name": "行商",
-      "desc": "戴宽檐帽的行商，系着白围裙，腰边挎一个货袋。",
-      "anims": {
-        "idle": {
-          "file": "merchant/idle.png",
-          "count": 4,
-          "fps": 4,
-          "loop": true,
-          "name": "待机"
-        },
-        "walk": {
-          "file": "merchant/walk.png",
-          "count": 6,
-          "fps": 10,
-          "loop": true,
-          "name": "走路"
-        },
-        "run": {
-          "file": "merchant/run.png",
-          "count": 6,
-          "fps": 14,
-          "loop": true,
-          "name": "跑步"
-        },
-        "attack": {
-          "file": "merchant/attack.png",
-          "count": 6,
-          "fps": 12,
-          "loop": false,
-          "name": "攻击（劈砍）"
-        },
-        "hit": {
-          "file": "merchant/hit.png",
-          "count": 4,
-          "fps": 10,
-          "loop": false,
-          "name": "受击"
-        },
-        "cast": {
-          "file": "merchant/cast.png",
-          "count": 6,
-          "fps": 10,
-          "loop": false,
-          "name": "施法"
-        },
-        "wave": {
-          "file": "merchant/wave.png",
-          "count": 4,
-          "fps": 6,
-          "loop": true,
-          "name": "挥手"
-        }
-      }
-    },
-    {
-      "id": "maiden",
-      "name": "村姑",
-      "desc": "长发的村庄姑娘，青色长裙配白上衣，走路时裙摆轻轻摆动。",
-      "anims": {
-        "idle": {
-          "file": "maiden/idle.png",
-          "count": 4,
-          "fps": 4,
-          "loop": true,
-          "name": "待机"
-        },
-        "walk": {
-          "file": "maiden/walk.png",
-          "count": 6,
-          "fps": 10,
-          "loop": true,
-          "name": "走路"
-        },
-        "run": {
-          "file": "maiden/run.png",
-          "count": 6,
-          "fps": 14,
-          "loop": true,
-          "name": "跑步"
-        },
-        "attack": {
-          "file": "maiden/attack.png",
-          "count": 6,
-          "fps": 12,
-          "loop": false,
-          "name": "攻击（劈砍）"
-        },
-        "hit": {
-          "file": "maiden/hit.png",
-          "count": 4,
-          "fps": 10,
-          "loop": false,
-          "name": "受击"
-        },
-        "cast": {
-          "file": "maiden/cast.png",
-          "count": 6,
-          "fps": 10,
-          "loop": false,
-          "name": "施法"
-        },
-        "wave": {
-          "file": "maiden/wave.png",
-          "count": 4,
-          "fps": 6,
-          "loop": true,
-          "name": "挥手"
-        }
-      }
-    },
     {
       "id": "scholar",
       "name": "学者",
@@ -172,62 +61,6 @@
         },
         "wave": {
           "file": "scholar/wave.png",
-          "count": 4,
-          "fps": 6,
-          "loop": true,
-          "name": "挥手"
-        }
-      }
-    },
-    {
-      "id": "guard",
-      "name": "卫兵",
-      "desc": "戴铁盔、穿红色罩袍的镇上卫兵，手持长枪。",
-      "anims": {
-        "idle": {
-          "file": "guard/idle.png",
-          "count": 4,
-          "fps": 4,
-          "loop": true,
-          "name": "待机"
-        },
-        "walk": {
-          "file": "guard/walk.png",
-          "count": 6,
-          "fps": 10,
-          "loop": true,
-          "name": "走路"
-        },
-        "run": {
-          "file": "guard/run.png",
-          "count": 6,
-          "fps": 14,
-          "loop": true,
-          "name": "跑步"
-        },
-        "attack": {
-          "file": "guard/attack.png",
-          "count": 6,
-          "fps": 12,
-          "loop": false,
-          "name": "攻击（劈砍）"
-        },
-        "hit": {
-          "file": "guard/hit.png",
-          "count": 4,
-          "fps": 10,
-          "loop": false,
-          "name": "受击"
-        },
-        "cast": {
-          "file": "guard/cast.png",
-          "count": 6,
-          "fps": 10,
-          "loop": false,
-          "name": "施法"
-        },
-        "wave": {
-          "file": "guard/wave.png",
           "count": 4,
           "fps": 6,
           "loop": true,
@@ -288,6 +121,132 @@
           "fps": 6,
           "loop": true,
           "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "fisherwoman",
+      "name": "渔家大婶",
+      "desc": "港口卖鱼的大婶：盘着发髻，蓝白条纹围裙配深蓝长裙，肩上挎着鱼篓。",
+      "anims": {
+        "idle": {
+          "file": "fisherwoman/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "fisherwoman/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "fisherwoman/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "fisherwoman/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "fisherwoman/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "fisherwoman/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "fisherwoman/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "mercenary",
+      "name": "佣兵队长",
+      "desc": "金色短发、留山羊胡的佣兵队长，黑色皮甲背心配棕褐色内衬，袖口绑着红色臂带，腰挂长剑。",
+      "anims": {
+        "idle": {
+          "file": "mercenary/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "mercenary/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "mercenary/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "mercenary/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "mercenary/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "mercenary/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "mercenary/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        },
+        "shoulder_rest": {
+          "file": "mercenary/shoulder_rest.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "扛剑"
+        },
+        "victory": {
+          "file": "mercenary/victory.png",
+          "count": 6,
+          "fps": 8,
+          "loop": false,
+          "name": "胜利欢呼"
         }
       }
     },
@@ -460,62 +419,6 @@
       }
     },
     {
-      "id": "fisherwoman",
-      "name": "渔家大婶",
-      "desc": "港口卖鱼的大婶：盘着发髻，蓝白条纹围裙配深蓝长裙，肩上挎着鱼篓。",
-      "anims": {
-        "idle": {
-          "file": "fisherwoman/idle.png",
-          "count": 4,
-          "fps": 4,
-          "loop": true,
-          "name": "待机"
-        },
-        "walk": {
-          "file": "fisherwoman/walk.png",
-          "count": 6,
-          "fps": 10,
-          "loop": true,
-          "name": "走路"
-        },
-        "run": {
-          "file": "fisherwoman/run.png",
-          "count": 6,
-          "fps": 14,
-          "loop": true,
-          "name": "跑步"
-        },
-        "attack": {
-          "file": "fisherwoman/attack.png",
-          "count": 6,
-          "fps": 12,
-          "loop": false,
-          "name": "攻击（劈砍）"
-        },
-        "hit": {
-          "file": "fisherwoman/hit.png",
-          "count": 4,
-          "fps": 10,
-          "loop": false,
-          "name": "受击"
-        },
-        "cast": {
-          "file": "fisherwoman/cast.png",
-          "count": 6,
-          "fps": 10,
-          "loop": false,
-          "name": "施法"
-        },
-        "wave": {
-          "file": "fisherwoman/wave.png",
-          "count": 4,
-          "fps": 6,
-          "loop": true,
-          "name": "挥手"
-        }
-      }
-    },
-    {
       "id": "swordsman",
       "name": "旅人剑士",
       "desc": "背着红披风的年轻剑士，腰间挂一把长剑，短发翘起。",
@@ -579,72 +482,170 @@
       }
     },
     {
-      "id": "mercenary",
-      "name": "佣兵队长",
-      "desc": "金色短发、留山羊胡的佣兵队长，黑色皮甲背心配棕褐色内衬，袖口绑着红色臂带，腰挂长剑。",
+      "id": "merchant",
+      "name": "行商",
+      "desc": "戴宽檐帽的行商，系着白围裙，腰边挎一个货袋。",
       "anims": {
         "idle": {
-          "file": "mercenary/idle.png",
+          "file": "merchant/idle.png",
           "count": 4,
           "fps": 4,
           "loop": true,
           "name": "待机"
         },
         "walk": {
-          "file": "mercenary/walk.png",
+          "file": "merchant/walk.png",
           "count": 6,
           "fps": 10,
           "loop": true,
           "name": "走路"
         },
         "run": {
-          "file": "mercenary/run.png",
+          "file": "merchant/run.png",
           "count": 6,
           "fps": 14,
           "loop": true,
           "name": "跑步"
         },
         "attack": {
-          "file": "mercenary/attack.png",
+          "file": "merchant/attack.png",
           "count": 6,
           "fps": 12,
           "loop": false,
           "name": "攻击（劈砍）"
         },
         "hit": {
-          "file": "mercenary/hit.png",
+          "file": "merchant/hit.png",
           "count": 4,
           "fps": 10,
           "loop": false,
           "name": "受击"
         },
         "cast": {
-          "file": "mercenary/cast.png",
+          "file": "merchant/cast.png",
           "count": 6,
           "fps": 10,
           "loop": false,
           "name": "施法"
         },
         "wave": {
-          "file": "mercenary/wave.png",
+          "file": "merchant/wave.png",
           "count": 4,
           "fps": 6,
           "loop": true,
           "name": "挥手"
-        },
-        "shoulder_rest": {
-          "file": "mercenary/shoulder_rest.png",
+        }
+      }
+    },
+    {
+      "id": "maiden",
+      "name": "村姑",
+      "desc": "长发的村庄姑娘，青色长裙配白上衣，走路时裙摆轻轻摆动。",
+      "anims": {
+        "idle": {
+          "file": "maiden/idle.png",
           "count": 4,
           "fps": 4,
           "loop": true,
-          "name": "扛剑"
+          "name": "待机"
         },
-        "victory": {
-          "file": "mercenary/victory.png",
+        "walk": {
+          "file": "maiden/walk.png",
           "count": 6,
-          "fps": 8,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "maiden/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "maiden/attack.png",
+          "count": 6,
+          "fps": 12,
           "loop": false,
-          "name": "胜利欢呼"
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "maiden/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "maiden/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "maiden/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "guard",
+      "name": "卫兵",
+      "desc": "戴铁盔、穿红色罩袍的镇上卫兵，手持长枪。",
+      "anims": {
+        "idle": {
+          "file": "guard/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "guard/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "run": {
+          "file": "guard/run.png",
+          "count": 6,
+          "fps": 14,
+          "loop": true,
+          "name": "跑步"
+        },
+        "attack": {
+          "file": "guard/attack.png",
+          "count": 6,
+          "fps": 12,
+          "loop": false,
+          "name": "攻击（劈砍）"
+        },
+        "hit": {
+          "file": "guard/hit.png",
+          "count": 4,
+          "fps": 10,
+          "loop": false,
+          "name": "受击"
+        },
+        "cast": {
+          "file": "guard/cast.png",
+          "count": 6,
+          "fps": 10,
+          "loop": false,
+          "name": "施法"
+        },
+        "wave": {
+          "file": "guard/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
         }
       }
     }

@@ -29,12 +29,24 @@ from .builder import MeshBuilder
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # blender/：让 pw_specs 可以导入
 from pw_specs import charspec, poses  # noqa: E402
 
-VERSION = "0.2.0"
-FRAME = 128
+VERSION = "0.3.0"
+# 全像素风：精灵和场景同一个像素密度（场景贴图 32 texel/米），用和游戏镜头一样的 40° 俯角渲染。
+# Godot 里公告板是竖直的，竖向拉长 1/cos(40°)，从 40° 俯视看过去正好还原、像素和屏幕像素一一对应。
+FRAME = 80
 SS = 2
-PX_PER_M = 60.0
-ELEV = math.radians(12.0)   # 相机俯角：接近平视，和 HD-2D 的角色立绘角度一致
-TARGET_Z = 0.95
+PX_PER_M = 32.0
+ELEV = math.radians(40.0)
+TARGET_Z = 1.0
+
+# 身体比例（身高系数 h = 1 时约 1.72 米、6 头身）。资产工坊动作编辑器（tools/workshop/index.html aeJoints）用同一组数
+HIP_Z = 0.86
+SH_Z = 1.38
+HEAD_UP = 0.285     # 头部中心比肩高多少（缩放前；头的轮廓从中心往下 0.2 是下巴）
+HEAD_SCALE = 0.62   # 头（连同头发、帽子、眼睛）以下巴为中心缩放
+THIGH = 0.42
+SHIN = 0.40
+UPPER_ARM = 0.30
+FORE_ARM = 0.26
 DIRS = 8
 INK = np.array([0x1d, 0x20, 0x30]) / 255.0
 
@@ -154,9 +166,9 @@ def build_character(spec, pose):
     h = spec.get("height", 1.0)
     bw = spec.get("build", 1.0)
     bob, breath = pose["bob"], pose["breath"]
-    hip_z = 0.62 * h + bob
-    sh_z = 1.04 * h + bob + breath
-    head_z = 1.32 * h + bob + breath * 1.5
+    hip_z = HIP_Z * h + bob
+    sh_z = SH_Z * h + bob + breath
+    head_z = sh_z + HEAD_UP + breath * 0.5
     weapon = spec.get("weapon")
     in_hand = pose.get("weapon") == "hand"
 
@@ -164,9 +176,9 @@ def build_character(spec, pose):
     for side, key in ((1, "leg_l"), (-1, "leg_r")):
         th, kn = pose[key]
         hip = np.array([side * 0.085 * bw, 0.0, hip_z])
-        kneep = hip + _dir(th) * 0.29 * h
-        ankle = kneep + _dir(th - kn) * 0.28 * h
-        mid = kneep + _dir(th - kn) * 0.12 * h
+        kneep = hip + _dir(th) * THIGH * h
+        ankle = kneep + _dir(th - kn) * SHIN * h
+        mid = kneep + _dir(th - kn) * 0.17 * h
         mb.tube("bottom", hip, kneep, 0.075 * bw, 0.064 * bw, 8)
         mb.tube("bottom", kneep, mid, 0.064 * bw, 0.06 * bw, 8)
         mb.tube("boots", mid - _dir(th - kn) * 0.02, ankle, 0.068 * bw, 0.062 * bw, 8)
@@ -214,9 +226,9 @@ def build_character(spec, pose):
     for side, key in ((1, "arm_l"), (-1, "arm_r")):
         a, e, spread = pose[key]
         sh = np.array([side * 0.19 * bw, 0.0, sh_z - 0.04])
-        elbow = sh + _dir(a, side * (0.05 + spread)) * 0.24 * h
+        elbow = sh + _dir(a, side * (0.05 + spread)) * UPPER_ARM * h
         d2 = _dir(a + e, side * (0.02 + spread * 0.4))
-        hand = elbow + d2 * 0.2 * h
+        hand = elbow + d2 * FORE_ARM * h
         mb.tube("top", sh, elbow, 0.062 * bw, 0.055 * bw, 8)
         if spec.get("sleeve_band"):
             d1 = (elbow - sh) / np.linalg.norm(elbow - sh)
@@ -235,7 +247,7 @@ def build_character(spec, pose):
             c = hand + d2 * 0.05
             mb.stack("glow", c[0], c[1], [(c[2] - r, 0.0), (c[2] - r * 0.5, r * 0.85), (c[2] + r * 0.5, r * 0.85), (c[2] + r, 0.0)], 8)
     if spec.get("scarf"):
-        mb.stack("scarf", 0, 0, [(sh_z - 0.02, 0.17 * bw), (sh_z + 0.03, 0.15 * bw), (sh_z + 0.07, 0.1)], 10, sy=0.8)
+        mb.stack("scarf", 0, 0, [(sh_z - 0.03, 0.17 * bw), (sh_z + 0.01, 0.145 * bw), (sh_z + 0.04, 0.085)], 10, sy=0.8)
         mb.box("scarf", (0.04, -0.17 * bw, sh_z - 0.24), (0.11, -0.13 * bw, sh_z))
     if spec.get("cape"):
         top_y = 0.1
@@ -253,14 +265,14 @@ def build_character(spec, pose):
     _weapon_in_hand(mb, spec, pose, hands[-1], fore_dirs[-1], in_hand, h)
     head_start = len(mb.verts)
 
-    # ---- 头：大而圆（Q 版比例），脸正面是一个平面，眼睛贴在上面
+    # ---- 头：先按原尺寸搭（脸正面是一个平面，眼睛贴在上面），最后整体以下巴为中心缩到 HEAD_SCALE
     head = [(-0.2, 0.0), (-0.19, 0.085), (-0.15, 0.155), (-0.06, 0.2), (0.05, 0.212), (0.14, 0.192), (0.2, 0.14),
             (0.235, 0.06), (0.245, 0.0)]
     mb.stack("skin", 0, 0, [(head_z + dz, r) for dz, r in head], 12, sy=0.94)
     front = -0.2 * 0.94 * math.cos(math.pi / 12)  # 正面那个面到中心的距离（y）
     for sx in (-1, 1):
-        mb.box("eye", (sx * 0.074 - 0.021, front - 0.012, head_z - 0.085), (sx * 0.074 + 0.021, front + 0.02, head_z - 0.01))
-        mb.box("shine", (sx * 0.078 - 0.009, front - 0.016, head_z - 0.035), (sx * 0.078 + 0.009, front - 0.01, head_z - 0.015))
+        # 眼睛：缩放后约 1~2 个像素（像素画里眼睛就是两个小点；太小的高光点不画）
+        mb.box("eye", (sx * 0.08 - 0.034, front - 0.012, head_z - 0.1), (sx * 0.08 + 0.034, front + 0.02, head_z - 0.01))
     _hair(mb, spec, head_z, front, pose)
     _hat(mb, spec, head_z, front)
     if spec.get("beard"):
@@ -268,9 +280,12 @@ def build_character(spec, pose):
         mb.stack("hair", 0, -0.115, [(head_z - 0.29, 0.0), (head_z - 0.25, 0.05), (head_z - 0.19, 0.075), (head_z - 0.15, 0.06)], 8, sy=0.7)
         mb.box("hair", (-0.055, front - 0.012, head_z - 0.15), (0.055, front + 0.02, head_z - 0.125))  # 上唇胡
     end = len(mb.verts)
+    chin = np.array([0.0, 0.0, head_z - 0.2])
+    for i in range(head_start, end):
+        mb.verts[i] = tuple(chin + (np.array(mb.verts[i]) - chin) * HEAD_SCALE)
 
     # ---- 姿势变换：头（绕脖子），再整个上半身（扭转 + 前倾，绕腰）
-    neck = (0.0, 0.0, head_z - 0.18)
+    neck = (0.0, 0.0, chin[2] + 0.02 * HEAD_SCALE)
     mb.rotate(head_start, end, "x", pose["head"][0], neck)
     mb.rotate(head_start, end, "z", pose["head"][1], neck)
     mb.rotate(lower_end, end, "z", pose["twist"], (0.0, 0.0, 0.0))
@@ -470,6 +485,11 @@ def _compose(idimg, nrm, pal):
     for i in range(k):
         votes[..., i] = (ids == i).reshape(n, SS, n, SS).sum(axis=(1, 3))
     pid = votes.argmax(axis=2)
+    # 眼睛这类很小的部位：2×2 里只要有一个子像素就保留（否则 1 个多像素宽的眼睛会被投票投掉）
+    for part in ("eye", "gem"):
+        if part in PARTS:
+            pi = PARTS.index(part)
+            pid[votes[..., pi] >= 1] = pi
     nv = nrm[..., :3] * 2.0 - 1.0
     lum = np.clip((nv * LIGHT_DIR).sum(axis=2), -1.0, 1.0)
     lm = (lum * a).reshape(n, SS, n, SS).sum(axis=(1, 3)) / np.maximum(cnt, 1)
@@ -486,7 +506,7 @@ def _compose(idimg, nrm, pal):
         na = np.roll(np.roll(alpha, dy, 0), dx, 1)
         npid = np.roll(np.roll(pid, dy, 0), dx, 1)
         m = ~alpha & na & ~edge
-        edge_col[m] = pal[npid[m], 2] * 0.45 + INK * 0.55
+        edge_col[m] = pal[npid[m], 2] * 0.7 + INK * 0.3  # 描边用部位自己的暗色（偏一点墨色），不是近黑
         edge |= m
     out[edge, :3] = edge_col[edge]
     out[edge, 3] = 1.0
@@ -573,6 +593,7 @@ def catalog_header():
     return {
         "version": 2, "generator": "pixel_world_blender sprites %s" % VERSION, "blender": bpy.app.version_string,
         "frame": FRAME, "px_per_m": PX_PER_M, "origin": [FRAME / 2, round(origin_y, 2)], "dirs": DIRS,
+        "elev_deg": round(math.degrees(ELEV), 2),
         "dir_order": "第 d 行 = 相机从角色正面逆时针（俯视）转 d×45°",
     }
 

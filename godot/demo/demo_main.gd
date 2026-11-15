@@ -192,7 +192,7 @@ func _after_generate() -> void:
 		weather.set_weather(st.weather, 0.0, true)
 	player.position = world.spawn_point
 	player.velocity = Vector3.ZERO
-	rig.position = Vector3(player.position.x, 0, player.position.z)
+	rig.position = player.position  # 注视点跟人物同高（峡谷台地、山坡上镜头不会钻进地里）
 	rig.bounds = Rect2(-world.size * 0.5, -world.size * 0.5, world.size, world.size)
 	if world.fish != null:
 		world.fish.threat = player
@@ -276,6 +276,8 @@ func _apply_cmdline() -> void:
 		RenderingServer.directional_soft_shadow_filter_set_quality(int(args["shadowsoft"]))
 	if args.has("pixel"):
 		display.pixel_mode = true
+	if args.has("nopixel"):  # 关闭全像素风（原生分辨率 + MSAA）
+		display.pixel_mode = false
 	if args.has("tilt"):
 		post.tilt_shift = true
 	if args.has("yaw"):
@@ -449,7 +451,7 @@ func _process(delta: float) -> void:
 	var running := walk_mode and Input.is_physical_key_pressed(KEY_SHIFT)
 	player.walk(dir, delta, running)
 	if walk_mode:
-		rig.position = rig.position.lerp(Vector3(player.position.x, 0.0, player.position.z), 1.0 - exp(-delta * 4.0))
+		rig.position = rig.position.lerp(player.position, 1.0 - exp(-delta * 4.0))
 	# 阴影范围和级联跟着镜头距离走：画面主体落在高精度的第一级（性能 + 画质 + 细阴影稳定）
 	tod.fit_shadows(rig.distance)
 

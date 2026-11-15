@@ -83,9 +83,11 @@ func setup(id: String) -> bool:
 	var f: float = cat.frame
 	var ppm: float = cat.px_per_m
 	var q := QuadMesh.new()
-	q.size = Vector2(f / ppm, f / ppm)
+	# 精灵是按 elev_deg 俯角渲染的；公告板竖直，竖向拉长 1/cos(俯角)，从同样的俯角看过去不变形、像素一一对应
+	var stretch := 1.0 / cos(deg_to_rad(float(cat.get("elev_deg", 0.0))))
+	q.size = Vector2(f / ppm, f / ppm * stretch)
 	# 脚底（精灵表里的 origin 像素）对准节点原点
-	q.center_offset = Vector3(0, (float(cat.origin[1]) - f * 0.5) / ppm, 0)
+	q.center_offset = Vector3(0, (float(cat.origin[1]) - f * 0.5) / ppm * stretch, 0)
 	mesh = q
 	_mat = ShaderMaterial.new()
 	_mat.shader = SHADER

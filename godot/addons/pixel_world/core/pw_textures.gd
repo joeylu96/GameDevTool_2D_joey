@@ -646,9 +646,8 @@ static func sand(seed_value: int, size := 96) -> Image:
 	for y in size:
 		for x in size:
 			var v := n[y * size + x]
-			var col := c1
-			if v > 0.6:
-				col = c0
+			# 亮斑柔和过渡、低对比（硬边的大块亮斑远看像一块块补丁）
+			var col := c1.lerp(c0, smoothstep(0.55, 0.78, v) * 0.55)
 			# 沙纹：被噪声扭曲的弯曲条纹，低对比
 			var ripple := sin((y * 0.9 + x * 0.3 + v * 22.0) * TAU / 10.0)
 			if ripple > 0.9:
