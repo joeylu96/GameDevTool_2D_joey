@@ -32,6 +32,7 @@ const STYLES := [
 		"params": {
 			"hill_amp": 1.6, "hill_freq": 0.014, "lakes": [1, 1], "lake_r": [14.0, 21.0], "river_chance": 1.0,
 			"forest_cover": 0.86, "tree_density": 0.35, "lone_trees": 0.012, "pine_ratio": 0.2, "grove_trees": true, "hedgerows": true,
+			"tree_scale": [0.6, 1.4],
 			"grass": 1.0, "flowers": 0.22, "rocks": 0.35, "pois": ["farm", "windmill", "camp"],
 		},
 	},
@@ -42,7 +43,8 @@ const STYLES := [
 		"color": Color("c9d3e3"),
 		"params": {
 			"hill_amp": 3.6, "hill_freq": 0.02, "lakes": [1, 2], "lake_r": [9.0, 15.0], "river_chance": 0.4,
-			"forest_cover": 0.5, "tree_density": 0.9, "pine_ratio": 0.96, "grove_trees": false, "hedgerows": false,
+			"forest_cover": 0.5, "tree_density": 0.9, "pine_ratio": 0.82, "grove_trees": false, "hedgerows": false,
+			"tree_scale": [0.55, 1.45], "clearings": -0.25, "lone_trees": 0.05,
 			"grass": 0.12, "flowers": 0.0, "rocks": 1.1, "pois": ["cabin", "camp", "ruins", "cabin"],
 			"blender": [{"tag": "winter", "density": 0.4, "where": "land", "semantic": ["props", "street"]},
 				{"tag": "camp", "density": 0.05, "where": "land"}],
@@ -67,7 +69,7 @@ const STYLES := [
 		"desc": "起伏的沙丘、红岩石柱和仙人掌；中间一片绿洲湖，湖边一圈草地和椰子树。",
 		"color": Color("d6a24e"),
 		"params": {
-			"desert": true, "oasis": 1.9, "terrain_mat": "terrain_desert", "hill_amp": 2.6, "hill_freq": 0.024,
+			"desert": true, "rock_tint": Color(1.25, 0.9, 0.72), "oasis": 1.9, "terrain_mat": "terrain_desert", "hill_amp": 2.6, "hill_freq": 0.024,
 			"lakes": [1, 1], "lake_r": [7.0, 10.0], "river_chance": 0.0, "forest_cover": 0.0, "tree_density": 0.0,
 			"grass": 0.7, "flowers": 0.05, "rocks": 0.25, "pois": ["camp", "ruins", "camp"],
 			"blender": [{"tag": "desert", "density": 1.6, "where": "oasis", "semantic": ["trees"]},
@@ -77,12 +79,12 @@ const STYLES := [
 	},
 	{
 		"id": "canyon", "name": "峡谷", "en": "Canyon", "generator": "nature", "size": 128, "ready": true,
-		"desc": "红岩台地中间一条蜿蜒的河谷：三级台阶的崖壁，谷底有河，台地上零星的树和岩柱。",
+		"desc": "红岩台地间一条蜿蜒的河谷和分叉的支沟：厚薄不一的岩层台阶、被水冲出的冲沟，谷底有河，台地上零星的树和岩柱。",
 		"color": Color("a3352d"),
 		"params": {
-			"canyon": true, "plateau": 8.0, "valley_w": 13.0, "terrain_mat": "terrain_canyon", "hill_amp": 3.0,
+			"canyon": true, "rock_tint": Color(1.3, 0.86, 0.7), "plateau": 14.0, "valley_w": 14.0, "terrain_mat": "terrain_canyon", "hill_amp": 2.2,
 			"hill_freq": 0.02, "lakes": [0, 0], "forest_cover": 0.86, "tree_density": 0.25, "lone_trees": 0.02,
-			"pine_ratio": 0.55, "grove_trees": false, "hedgerows": false, "grass": 0.35, "flowers": 0.04, "rocks": 1.3,
+			"pine_ratio": 0.55, "grove_trees": false, "hedgerows": false, "grass": 0.12, "flowers": 0.02, "rocks": 1.3,
 			"pois": ["camp", "ruins", "camp"],
 			"blender": [{"tag": "canyon", "density": 0.35, "where": "land", "semantic": ["rocks"]},
 				{"tag": "canyon", "density": 0.3, "where": "land", "semantic": ["plants"]}],

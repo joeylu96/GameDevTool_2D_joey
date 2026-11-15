@@ -221,6 +221,7 @@ static func load_blender_catalog() -> int:
 			"name": a.name + "（Blender）", "show": show,
 			"tags": a.get("tags", []), "footprint": fp, "height": float(a.get("height", 2.0)), "source": a.get("source", "generator"),
 			"variants": files.size(),
+			"variant_info": a.get("variant_info", []),
 			"size": maxf(maxf(fp[0], fp[1]), float(a.get("height", 2.0)) * 0.8),
 			"plant": a.get("plant", false),
 			"desc": a.get("desc", "") + "  来源：%s，%d 个变体。" % [data.get("generator", "Blender"), files.size()],
@@ -246,11 +247,63 @@ static func blender_mesh(file: String) -> Mesh:
 			for s in mi.mesh.get_surface_count():
 				var st := SurfaceTool.new()
 				st.append_from(mi.mesh, s, xf)
-				out = st.commit(out)
-				out.surface_set_material(out.get_surface_count() - 1, _convert_material(mi.get_active_material(s)))
+				var src_mat := mi.get_active_material(s)
+				var key := src_mat.resource_name.trim_prefix("pw_") if src_mat != null else ""
+				var arr := st.commit_to_arrays()
+				_fix_surface(arr, key, file)
+				out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+				out.surface_set_material(out.get_surface_count() - 1, _convert_material(src_mat))
 		inst.free()
 	_blender_meshes[file] = out
 	return out
+
+
+## 导入时按材质修一下顶点数据：
+##   草叶：法线偏向正上方（和代码版草丛一样），背面不会发黑，草地整体受光均匀
+##   窗玻璃：每块玻璃（相连的一组三角形）随机一个顶点 alpha，夜里按 emission_random_off 有的亮有的不亮
+static func _fix_surface(arr: Array, key: String, file: String) -> void:
+	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	if key.begins_with("blade"):
+		var nrm: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+		for i in nrm.size():
+			nrm[i] = nrm[i].lerp(Vector3.UP, 0.7).normalized()
+		arr[Mesh.ARRAY_NORMAL] = nrm
+	elif key == "glass":
+		var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX] if arr[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+		if idx.is_empty():
+			idx.resize(verts.size())
+			for i in verts.size():
+				idx[i] = i
+		# 并查集：同一个三角形的顶点、位置重合的顶点归到一块玻璃
+		var parent := PackedInt32Array()
+		parent.resize(verts.size())
+		for i in verts.size():
+			parent[i] = i
+		var find := func(x: int) -> int:
+			while parent[x] != x:
+				parent[x] = parent[parent[x]]
+				x = parent[x]
+			return x
+		var by_pos := {}
+		for i in verts.size():
+			var k := Vector3i((verts[i] * 100.0).round())
+			if by_pos.has(k):
+				parent[find.call(i)] = find.call(by_pos[k])
+			else:
+				by_pos[k] = i
+		for t in range(0, idx.size() - 2, 3):
+			var r0: int = find.call(idx[t])
+			parent[find.call(idx[t + 1])] = r0
+			parent[find.call(idx[t + 2])] = find.call(r0)
+		var cols := PackedColorArray()
+		var old: Variant = arr[Mesh.ARRAY_COLOR]
+		cols.resize(verts.size())
+		var h0 := hash(file)
+		for i in verts.size():
+			var c: Color = (old as PackedColorArray)[i] if old != null else Color.WHITE
+			c.a = float(hash(h0 + find.call(i)) % 1000) / 1000.0
+			cols[i] = c
+		arr[Mesh.ARRAY_COLOR] = cols
 
 
 ## 同一个材质键（pw_<键>）的所有 Blender 资产共用一份材质：贴图是 Blender 按同样的种子画的，完全一样；
@@ -283,7 +336,20 @@ static func _convert_material(src: Material) -> Material:
 
 
 ## 有 Blender 版的资源，资源库和场景生成都用 Blender 版（Godot 代码版只在没有 Blender 资产目录时兜底）
-const REPLACED_BY := {"pine": "bl_pine", "oak": "bl_oak", "lighthouse": "bl_lighthouse", "lamp": "bl_street_lamp"}
+const REPLACED_BY := {"pine": "bl_pine", "oak": "bl_oak", "birch": "bl_birch", "poplar": "bl_poplar", "bush": "bl_bush",
+	"rock": "bl_rock", "grass": "bl_grass_tuft", "weed": "bl_weed", "fish": "bl_fish", "house": "bl_town_house",
+	"lighthouse": "bl_lighthouse", "lamp": "bl_street_lamp", "fence": "bl_fence", "bench": "bl_bench",
+	"crate": "bl_crate", "barrel": "bl_barrel", "haystack": "bl_haystack"}
+## 只作为部件用的 Blender 资产（风车叶片 / 塔身由「风车」条目组装，篱笆柱跟着篱笆走），资源库里不单独列
+const PARTS_ONLY := ["bl_windmill_tower", "bl_windmill_blades", "bl_fence_post"]
+
+
+## 每个变体自己的尺寸（catalog 里的 variant_info：footprint / height / width / depth / floors）；没有就返回空数组
+static func blender_variant_info(id: String) -> Array:
+	for it in blender_items():
+		if it.id == id:
+			return it.get("variant_info", [])
+	return []
 
 
 ## Blender 资产的全部变体（网格）；没有这个资产时返回空数组
@@ -349,14 +415,16 @@ static func items() -> Array[Dictionary]:
 			"build": func(s: int) -> Mesh: return Props.build_lighthouse()},
 		{"id": "windmill", "show": 1, "cat": "landmarks", "name": "风车", "size": 10.0, "plant": false,
 			"desc": "石砌塔身 + 红色锥顶，四片格栅叶片匀速转动（平原风格）。",
-			"vary": "目前单一款式；叶片转速可调。",
+			"vary": "有 Blender 资产时：屋顶 / 塔身 / 门 3 种 × 帆布 3 种（Blender 风车塔身 + 叶片组装）；叶片转速可调。",
 			"build": func(s: int) -> Node3D:
 				var root := Node3D.new()
 				var tower := MeshInstance3D.new()
-				tower.mesh = Props.build_windmill_tower()
+				var bt := blender_variants("bl_windmill_tower")
+				var bb := blender_variants("bl_windmill_blades")
+				tower.mesh = bt[s % bt.size()] if not bt.is_empty() else Props.build_windmill_tower()
 				root.add_child(tower)
 				var blades := MeshInstance3D.new()
-				blades.mesh = Props.build_windmill_blades()
+				blades.mesh = bb[s % bb.size()] if not bb.is_empty() else Props.build_windmill_blades()
 				blades.set_script(load("res://addons/pixel_world/world/pw_spinner.gd"))
 				blades.position = Props.windmill_hub()
 				root.add_child(blades)
@@ -402,7 +470,11 @@ static func items() -> Array[Dictionary]:
 	var have := {}
 	for it in _extra:
 		have[it.id] = true
-	out = out.filter(func(it: Dictionary) -> bool: return not (REPLACED_BY.has(it.id) and have.has(REPLACED_BY[it.id])))
+	out = out.filter(func(it: Dictionary) -> bool: return not (REPLACED_BY.has(it.id) and have.has(REPLACED_BY[it.id])) \
+		and not PARTS_ONLY.has(it.id))
+	# 代码版小人：有 Blender 渲染的像素精灵角色时不再列出
+	if not PWSpriteVisual.characters().is_empty():
+		out = out.filter(func(it: Dictionary) -> bool: return it.id != "villager")
 	# 用户调整过的位置（资源库里「移动到」、资产工坊生成时选的分类）
 	var assign: Dictionary = library().assign
 	for it in out:

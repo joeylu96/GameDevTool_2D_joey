@@ -115,7 +115,7 @@ def bricks(cols, seed, size=64, brick_w=16, row_h=8):
 def foliage(cols, seed, size=64, droop=False):
     """针叶 / 阔叶：cols = [底, 亮, 暗]；一簇簇亮笔触，下方一点阴影"""
     rng = _rng(seed)
-    base, hi, dark = (S.c(c) for c in cols)
+    base, hi, dark = (S.c(c) if isinstance(c, str) else c for c in cols)
     n = tile_noise(size, 6, rng)
     img = np.where((n < 0.3)[..., None], _lerp(dark, base, 0.5), np.array(base))
     for gy in range(0, size, 5):
@@ -170,3 +170,41 @@ def flat(name, size=4):
     img = np.zeros((size, size, 3))
     img[:] = S.c(name)
     return img
+
+
+def bark_marks(seed, size=32):
+    """白桦树皮：白底低频斑驳 + 一道道横向的黑色短疤"""
+    rng = _rng(seed)
+    img = mottle(["snow_0", "snow_2"], seed, size=size, threshold=0.62)
+    ink = np.array(S.mix("ink", "stone_3", 0.4))
+    for _ in range(size // 3):
+        y = int(rng.integers(0, size))
+        x = int(rng.integers(0, size))
+        ln = int(rng.integers(2, 6))
+        for k in range(ln):
+            img[y, (x + k) % size] = ink
+        if rng.random() < 0.5:
+            img[(y + 1) % size, (x + 1) % size] = ink
+    return img
+
+
+def flowers(seed, size=64):
+    """花丛顶面：叶子底 + 成簇的彩色小花（红 / 黄 / 白 / 浅黄）"""
+    rng = _rng(seed)
+    img = foliage(["grass_1", "grass_0", "grass_2"], seed, size=size)
+    heads = [S.c("red_0"), S.c("light_0"), S.c("frame_0"), S.c("cloth_yellow")]
+    for _ in range(size * size // 40):
+        x, y = int(rng.integers(0, size)), int(rng.integers(0, size))
+        col = np.array(heads[int(rng.integers(0, len(heads)))])
+        for dx, dy in ((0, 0), (1, 0), (0, 1)):
+            img[(y + dy) % size, (x + dx) % size] = col
+        img[(y + 1) % size, (x + 1) % size] = np.array(S.c("light_1"))
+    return img
+
+
+def gradient(top, bottom, h=16, w=4):
+    """竖向渐变（行 0 = top）：草叶根部深、尖端浅"""
+    a = np.array(S.c(top) if isinstance(top, str) else top, dtype=float)
+    b = np.array(S.c(bottom) if isinstance(bottom, str) else bottom, dtype=float)
+    t = np.linspace(0, 1, h)[:, None, None]
+    return np.broadcast_to(a + (b - a) * t, (h, w, 3)).copy()

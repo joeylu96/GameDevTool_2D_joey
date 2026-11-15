@@ -47,7 +47,9 @@ func _ready() -> void:
 	for k in KINDS.size():
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.mesh = Props.build_fish(KINDS[k])
+		# Blender 小鱼：变体 0 橙色、1 银色；没有 Blender 资产时用代码版
+		var bl := PWAssetLibrary.blender_variants("bl_fish")
+		mm.mesh = bl[1 - k] if bl.size() >= 2 else Props.build_fish(KINDS[k])
 		mm.instance_count = _counts[k]
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm

@@ -36,6 +36,25 @@ float vnoise(vec2 p) {
 	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
+// 分形噪声（fBm）：3 层倍频，每层旋转约 37° 再错开，打散值噪声沿方格排列的痕迹（单层 vnoise 取阈值会出现一块块方形斑）
+float fbm3(vec2 p) {
+	const mat2 R = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8));
+	float v = 0.0;
+	float a = 0.5;
+	for (int i = 0; i < 3; i++) {
+		v += a * vnoise(p);
+		p = R * p * 2.03 + vec2(17.1, 9.7);
+		a *= 0.5;
+	}
+	return v / 0.875;
+}
+
+// 域扭曲（domain warping，Inigo Quilez）：先用噪声把坐标推歪再取噪声，形状像流动的云 / 地貌，完全没有方格感
+float warp_noise(vec2 p) {
+	vec2 q = vec2(fbm3(p), fbm3(p + vec2(5.2, 1.3)));
+	return fbm3(p + (q - 0.5) * 3.0);
+}
+
 // 4x4 Bayer 有序抖动阈值（0..1）
 float bayer4(vec2 p) {
 	ivec2 i = ivec2(mod(p, 4.0));

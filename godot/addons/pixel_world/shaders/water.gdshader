@@ -104,7 +104,9 @@ void fragment() {
 	float b = bayer4(cell);
 	float front = freeze * 4.5 - depth + (vnoise(cell * 0.03) - 0.5) * 0.5;
 	float frozen = step(0.001, freeze) * step((b - 0.5) * 0.15, front);
-	vec3 ic = mix(ice.rgb, ice_crack.rgb, step(0.58, vnoise(cell * 0.025)));
+	// 两种冰色按域扭曲噪声成片分布（自然的流线形，不是方块），交界处逐像素抖动
+	float icen = warp_noise(cell * 0.012) + (b - 0.5) * 0.06;
+	vec3 ic = mix(ice.rgb, ice_crack.rgb, smoothstep(0.5, 0.56, icen) * 0.85);
 	float crack = step(abs(vnoise(cell * 0.0125 + 3.0) - 0.5), 0.01);
 	ic = mix(ic, mid.rgb, crack);
 	c = mix(c, ic, frozen);

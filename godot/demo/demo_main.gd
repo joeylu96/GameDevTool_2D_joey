@@ -282,6 +282,12 @@ func _apply_cmdline() -> void:
 		rig.yaw_deg = float(args["yaw"])
 	if args.has("distance"):
 		rig.distance = float(args["distance"])
+	if args.has("pitch"):  # --pitch=度：镜头俯角（看地形起伏用低一点的角度）
+		rig.pitch_deg = float(args["pitch"])
+	if args.has("noui"):  # --noui：隐藏界面（截图看画面用）
+		for c in get_children():
+			if c is CanvasLayer or (c is Control and c != display):
+				c.visible = false
 	if args.has("player"):
 		var pz: PackedStringArray = args["player"].split(",")
 		player.position = Vector3(float(pz[0]), world.ground_y(float(pz[0]), float(pz[1])), float(pz[1]))

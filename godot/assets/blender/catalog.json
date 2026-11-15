@@ -6,31 +6,6 @@
   "style": "shared/style/style.json",
   "assets": [
     {
-      "id": "bl_cottage",
-      "kind": "cottage",
-      "name": "农舍",
-      "category": "buildings",
-      "desc": "Blender 生成的农舍：石基、木板墙、双坡瓦顶、门窗和烟囱。",
-      "vary": "宽度、进深、墙面（红 / 赭 / 青 / 原木竖木板、白 / 黄横木板、石墙、白灰泥）、屋顶（双坡 / 四坡，灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。",
-      "tags": [
-        "town",
-        "yard"
-      ],
-      "source": "generator",
-      "files": [
-        "cottage_0.glb",
-        "cottage_1.glb",
-        "cottage_2.glb",
-        "cottage_3.glb"
-      ],
-      "footprint": [
-        6.9,
-        5.65
-      ],
-      "height": 6.0,
-      "plant": false
-    },
-    {
       "id": "bl_well",
       "kind": "well",
       "name": "石井",
@@ -457,6 +432,693 @@
       ],
       "height": 3.59,
       "plant": false
+    },
+    {
+      "id": "bl_birch",
+      "kind": "birch",
+      "name": "白桦",
+      "category": "trees",
+      "desc": "Blender 生成的白桦：微弯的白色树干带黑色树疤，嫩绿的叶团簇从主干中部包到树梢。",
+      "vary": "树高、弯曲方向、枝条数量和方向、叶团数量和大小随种子变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "forest",
+        "plains",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "birch_0.glb",
+        "birch_1.glb",
+        "birch_2.glb",
+        "birch_3.glb",
+        "birch_4.glb",
+        "birch_5.glb",
+        "birch_6.glb",
+        "birch_7.glb"
+      ],
+      "footprint": [
+        2.79,
+        2.79
+      ],
+      "height": 5.85,
+      "plant": true
+    },
+    {
+      "id": "bl_poplar",
+      "kind": "poplar",
+      "name": "杨树",
+      "category": "trees",
+      "desc": "Blender 生成的杨树：细高的卵形树冠，三四团由大到小往上叠，下面露出一截树干。",
+      "vary": "树冠团数、大小、整体高度随种子变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "plains",
+        "town",
+        "forest"
+      ],
+      "source": "generator",
+      "files": [
+        "poplar_0.glb",
+        "poplar_1.glb",
+        "poplar_2.glb",
+        "poplar_3.glb",
+        "poplar_4.glb",
+        "poplar_5.glb"
+      ],
+      "footprint": [
+        2.02,
+        2.02
+      ],
+      "height": 4.51,
+      "plant": true
+    },
+    {
+      "id": "bl_bush",
+      "kind": "bush",
+      "name": "灌木",
+      "category": "plants",
+      "desc": "Blender 生成的灌木：贴地的两三团枝叶，约三成顶上开着小花。",
+      "vary": "团块数量和大小、是否开花随种子变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "forest",
+        "plains",
+        "town",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "bush_0.glb",
+        "bush_1.glb",
+        "bush_2.glb",
+        "bush_3.glb",
+        "bush_4.glb",
+        "bush_5.glb",
+        "bush_6.glb",
+        "bush_7.glb"
+      ],
+      "footprint": [
+        1.44,
+        1.44
+      ],
+      "height": 0.57,
+      "plant": true
+    },
+    {
+      "id": "bl_rock",
+      "kind": "rock",
+      "name": "石头",
+      "category": "rocks",
+      "desc": "Blender 生成的石头：两段多边形叠成的低矮岩块，有的旁边还卧着一块小石头。",
+      "vary": "大小、边数、扁平程度、有没有小石头随种子变化；放进场景时再随机朝向和比例。",
+      "tags": [
+        "forest",
+        "plains",
+        "town",
+        "shore",
+        "winter"
+      ],
+      "source": "generator",
+      "files": [
+        "rock_0.glb",
+        "rock_1.glb",
+        "rock_2.glb",
+        "rock_3.glb",
+        "rock_4.glb",
+        "rock_5.glb",
+        "rock_6.glb",
+        "rock_7.glb"
+      ],
+      "footprint": [
+        1.14,
+        1.14
+      ],
+      "height": 0.4,
+      "plant": true
+    },
+    {
+      "id": "bl_grass_tuft",
+      "kind": "grass_tuft",
+      "name": "草丛",
+      "category": "plants",
+      "desc": "Blender 生成的草丛：一丛细长的草叶，根部深绿、尖端浅绿，随风摆动；前 4 个变体是普通草，后 2 个是高草。",
+      "vary": "草叶数量、高度、倾斜方向随种子变化；场景里再随机朝向、大小、色调。",
+      "tags": [
+        "plains",
+        "forest",
+        "town",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "grass_tuft_0.glb",
+        "grass_tuft_1.glb",
+        "grass_tuft_2.glb",
+        "grass_tuft_3.glb",
+        "grass_tuft_4.glb",
+        "grass_tuft_5.glb"
+      ],
+      "footprint": [
+        0.45,
+        0.45
+      ],
+      "height": 0.8,
+      "plant": true
+    },
+    {
+      "id": "bl_grass_dry",
+      "kind": "grass_dry",
+      "name": "干草丛",
+      "category": "plants",
+      "desc": "Blender 生成的干草丛：偏黄的细长草叶，长在沙滩和岩石附近。",
+      "vary": "草叶数量、高度、倾斜方向随种子变化；场景里再随机朝向、大小、色调。",
+      "tags": [
+        "plains",
+        "desert",
+        "shore",
+        "canyon"
+      ],
+      "source": "generator",
+      "files": [
+        "grass_dry_0.glb",
+        "grass_dry_1.glb",
+        "grass_dry_2.glb",
+        "grass_dry_3.glb"
+      ],
+      "footprint": [
+        0.45,
+        0.45
+      ],
+      "height": 0.48,
+      "plant": true
+    },
+    {
+      "id": "bl_grass_flower",
+      "kind": "grass_flower",
+      "name": "花草丛",
+      "category": "plants",
+      "desc": "Blender 生成的花草丛：草叶中间夹着两三朵红 / 黄 / 白色小花。",
+      "vary": "草叶和花的数量、花色、高度随种子变化。",
+      "tags": [
+        "plains",
+        "town",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "grass_flower_0.glb",
+        "grass_flower_1.glb",
+        "grass_flower_2.glb",
+        "grass_flower_3.glb"
+      ],
+      "footprint": [
+        0.45,
+        0.45
+      ],
+      "height": 0.5,
+      "plant": true
+    },
+    {
+      "id": "bl_weed",
+      "kind": "weed",
+      "name": "水草",
+      "category": "water",
+      "desc": "Blender 生成的水草：一丛细长的三棱叶，长在浅水湖底，随水流轻轻摆动。",
+      "vary": "叶片数量和高度随种子变化。",
+      "tags": [
+        "shore"
+      ],
+      "source": "generator",
+      "files": [
+        "weed_0.glb",
+        "weed_1.glb",
+        "weed_2.glb"
+      ],
+      "footprint": [
+        0.5,
+        0.5
+      ],
+      "height": 0.79,
+      "plant": true
+    },
+    {
+      "id": "bl_fish",
+      "kind": "fish",
+      "name": "小鱼",
+      "category": "water",
+      "desc": "Blender 生成的小鱼：菱形身体、背鳍和尾鳍，橙色和银色两种，成群在湖里游。",
+      "vary": "两种颜色（变体 0 橙色、1 银色）。",
+      "tags": [
+        "shore"
+      ],
+      "source": "generator",
+      "files": [
+        "fish_0.glb",
+        "fish_1.glb"
+      ],
+      "footprint": [
+        0.1,
+        0.4
+      ],
+      "height": 0.1,
+      "plant": false
+    },
+    {
+      "id": "bl_crate",
+      "kind": "crate",
+      "name": "木箱",
+      "category": "props",
+      "desc": "Blender 生成的木箱：木板箱体，四角包着深色木条，码头和营地边的货物。",
+      "vary": "三种大小（0.5 / 0.62 / 0.74 米）。",
+      "tags": [
+        "yard",
+        "camp",
+        "shore",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "crate_0.glb",
+        "crate_1.glb",
+        "crate_2.glb"
+      ],
+      "footprint": [
+        0.84,
+        0.84
+      ],
+      "height": 0.74,
+      "plant": false
+    },
+    {
+      "id": "bl_barrel",
+      "kind": "barrel",
+      "name": "木桶",
+      "category": "props",
+      "desc": "Blender 生成的木桶：中间鼓、上下收口，两道铁箍。",
+      "vary": "高矮胖瘦三种。",
+      "tags": [
+        "yard",
+        "camp",
+        "shore",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "barrel_0.glb",
+        "barrel_1.glb",
+        "barrel_2.glb"
+      ],
+      "footprint": [
+        0.74,
+        0.74
+      ],
+      "height": 1.0,
+      "plant": false
+    },
+    {
+      "id": "bl_haystack",
+      "kind": "haystack",
+      "name": "草垛",
+      "category": "props",
+      "desc": "Blender 生成的草垛：平原农田里躺倒的干草卷，或者圆锥形的草堆。",
+      "vary": "卷 / 堆两种形状，大小随种子变化。",
+      "tags": [
+        "plains",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "haystack_0.glb",
+        "haystack_1.glb",
+        "haystack_2.glb",
+        "haystack_3.glb"
+      ],
+      "footprint": [
+        2.87,
+        2.87
+      ],
+      "height": 2.72,
+      "plant": false
+    },
+    {
+      "id": "bl_bench",
+      "kind": "bench",
+      "name": "长椅",
+      "category": "street",
+      "desc": "Blender 生成的长椅：木条长椅、公园绿漆长椅、原木长凳三种款式，摆在路灯旁和广场上。",
+      "vary": "三种款式（变体 0 木条、1 公园、2 原木）。",
+      "tags": [
+        "roadside",
+        "plaza",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "bench_0.glb",
+        "bench_1.glb",
+        "bench_2.glb"
+      ],
+      "footprint": [
+        1.8,
+        0.7
+      ],
+      "height": 0.48,
+      "plant": false
+    },
+    {
+      "id": "bl_fence",
+      "kind": "fence",
+      "name": "篱笆",
+      "category": "street",
+      "desc": "Blender 生成的篱笆模块：每段 2 米，白色尖头栅栏、乡村木栏、矮石墙、深色木条栅栏四种款式，首尾相接围成一圈。",
+      "vary": "四种款式（变体 0 白栅栏、1 木栏、2 石墙、3 深色木条）。",
+      "tags": [
+        "yard",
+        "town",
+        "plains"
+      ],
+      "source": "generator",
+      "files": [
+        "fence_0.glb",
+        "fence_1.glb",
+        "fence_2.glb",
+        "fence_3.glb"
+      ],
+      "footprint": [
+        2.0,
+        0.4
+      ],
+      "height": 1.23,
+      "plant": false
+    },
+    {
+      "id": "bl_fence_post",
+      "kind": "fence_post",
+      "name": "篱笆柱",
+      "category": "street",
+      "desc": "Blender 生成的篱笆柱：和篱笆模块同款的单根柱子，一排篱笆的末尾和门口两侧用。",
+      "vary": "四种款式，和篱笆模块一一对应。",
+      "tags": [
+        "yard",
+        "town",
+        "plains"
+      ],
+      "source": "generator",
+      "files": [
+        "fence_post_0.glb",
+        "fence_post_1.glb",
+        "fence_post_2.glb",
+        "fence_post_3.glb"
+      ],
+      "footprint": [
+        0.4,
+        0.4
+      ],
+      "height": 1.2,
+      "plant": false
+    },
+    {
+      "id": "bl_windmill_tower",
+      "kind": "windmill_tower",
+      "name": "风车塔身",
+      "category": "landmarks",
+      "desc": "Blender 生成的风车塔身：石砌底座、白色锥形塔、木门小窗和尖顶，叶片另外装在轮轴上转动。",
+      "vary": "屋顶颜色（红 / 灰）、塔身（白灰泥 / 赭黄横木板）、门的颜色随变体变化；尺寸和轮毂位置不变。",
+      "tags": [
+        "plains"
+      ],
+      "source": "generator",
+      "files": [
+        "windmill_tower_0.glb",
+        "windmill_tower_1.glb",
+        "windmill_tower_2.glb"
+      ],
+      "footprint": [
+        4.8,
+        4.8
+      ],
+      "height": 8.6,
+      "plant": false
+    },
+    {
+      "id": "bl_windmill_blades",
+      "kind": "windmill_blades",
+      "name": "风车叶片",
+      "category": "landmarks",
+      "desc": "Blender 生成的风车叶片：四片木格栅叶片蒙着帆布，装在风车塔身的轮轴上转动。",
+      "vary": "帆布颜色（白 / 米黄条纹 / 红条纹）随变体变化。",
+      "tags": [
+        "plains"
+      ],
+      "source": "generator",
+      "files": [
+        "windmill_blades_0.glb",
+        "windmill_blades_1.glb",
+        "windmill_blades_2.glb"
+      ],
+      "footprint": [
+        10.4,
+        0.4
+      ],
+      "height": 5.2,
+      "plant": false
+    },
+    {
+      "id": "bl_town_house",
+      "kind": "town_house",
+      "name": "小镇房屋",
+      "category": "buildings",
+      "desc": "Blender 生成的小镇房屋：彩色木板墙、灰 / 红双坡屋顶、白色窗框和转角，带百叶窗、花箱、门廊雨棚、老虎窗和烟囱。",
+      "vary": "宽 6~10 米、深 5~6.5 米、一层或两层、墙色（红 / 赭黄 / 青 / 原木）、屋顶坡度和颜色、门色、百叶窗、花箱、雨棚、老虎窗、烟囱随变体变化。",
+      "tags": [
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "town_house_0.glb",
+        "town_house_1.glb",
+        "town_house_2.glb",
+        "town_house_3.glb",
+        "town_house_4.glb",
+        "town_house_5.glb",
+        "town_house_6.glb",
+        "town_house_7.glb",
+        "town_house_8.glb",
+        "town_house_9.glb",
+        "town_house_10.glb",
+        "town_house_11.glb",
+        "town_house_12.glb",
+        "town_house_13.glb"
+      ],
+      "footprint": [
+        9.4,
+        6.9
+      ],
+      "height": 5.83,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            7.9,
+            6.4
+          ],
+          "height": 5.35,
+          "width": 7.0,
+          "depth": 5.5,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            8.4,
+            5.9
+          ],
+          "height": 6.44,
+          "width": 7.5,
+          "depth": 5.0,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            8.9,
+            7.4
+          ],
+          "height": 9.69,
+          "width": 8.0,
+          "depth": 6.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            8.9,
+            6.9
+          ],
+          "height": 5.62,
+          "width": 8.0,
+          "depth": 6.0,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            6.9,
+            5.9
+          ],
+          "height": 5.19,
+          "width": 6.0,
+          "depth": 5.0,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            10.4,
+            6.4
+          ],
+          "height": 8.26,
+          "width": 9.5,
+          "depth": 5.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            9.4,
+            6.4
+          ],
+          "height": 6.55,
+          "width": 8.5,
+          "depth": 5.5,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            9.9,
+            5.9
+          ],
+          "height": 5.25,
+          "width": 9.0,
+          "depth": 5.0,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            7.4,
+            6.4
+          ],
+          "height": 9.12,
+          "width": 6.5,
+          "depth": 5.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            9.9,
+            6.4
+          ],
+          "height": 6.13,
+          "width": 9.0,
+          "depth": 5.5,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            6.9,
+            6.4
+          ],
+          "height": 6.58,
+          "width": 6.0,
+          "depth": 5.5,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            9.9,
+            6.4
+          ],
+          "height": 9.02,
+          "width": 9.0,
+          "depth": 5.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            7.9,
+            6.4
+          ],
+          "height": 6.64,
+          "width": 7.0,
+          "depth": 5.5,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            9.4,
+            6.9
+          ],
+          "height": 5.83,
+          "width": 8.5,
+          "depth": 6.0,
+          "floors": 1
+        }
+      ]
+    },
+    {
+      "id": "bl_cottage",
+      "kind": "cottage",
+      "name": "农舍",
+      "category": "buildings",
+      "desc": "Blender 生成的农舍：石基、木板墙、双坡瓦顶、门窗和烟囱。",
+      "vary": "宽度、进深、墙面（红 / 赭 / 青 / 原木竖木板、白 / 黄横木板、石墙、白灰泥）、屋顶（双坡 / 四坡，灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。",
+      "tags": [
+        "town",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cottage_0.glb",
+        "cottage_1.glb",
+        "cottage_2.glb",
+        "cottage_3.glb"
+      ],
+      "footprint": [
+        6.9,
+        5.65
+      ],
+      "height": 6.0,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            6.65,
+            6.65
+          ],
+          "height": 6.33,
+          "width": 5.75,
+          "depth": 5.75
+        },
+        {
+          "footprint": [
+            8.9,
+            6.9
+          ],
+          "height": 6.39,
+          "width": 8.0,
+          "depth": 6.0
+        },
+        {
+          "footprint": [
+            6.9,
+            6.15
+          ],
+          "height": 6.41,
+          "width": 6.0,
+          "depth": 5.25
+        },
+        {
+          "footprint": [
+            6.9,
+            5.65
+          ],
+          "height": 6.0,
+          "width": 6.0,
+          "depth": 4.75
+        }
+      ]
     }
   ]
 }

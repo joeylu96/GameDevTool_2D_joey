@@ -65,6 +65,14 @@ const DEFS := {
 	"weed": {"tex": "weed", "sway": 2.0, "snow_receive": 0.0, "caustics": 1.0},
 	# 草叶：纯白贴图，颜色全靠顶点色（根部深、尖端亮）；从根部开始随风摆
 	"blade": {"tex": "flat_snow_0", "sway": 30.0, "sway_base": 0.0, "snow_receive": 0.0, "roughness_base": 0.8},
+	"blade_dry": {"tex": "flat_snow_0", "sway": 30.0, "sway_base": 0.0, "snow_receive": 0.0, "roughness_base": 0.85},
+	"canvas_red": {"tex": "cloth_red", "snow_receive": 0.4},
+	"canvas_ochre": {"tex": "wall_ochre", "snow_receive": 0.4},
+	"canvas_teal": {"tex": "cloth_blue", "snow_receive": 0.4},
+	"fruit_red": {"tex": "cloth_red", "snow_receive": 0.0},
+	"fruit_green": {"tex": "leaf", "snow_receive": 0.0},
+	"fruit_yellow": {"tex": "wall_ochre", "snow_receive": 0.0},
+	"door": {"tex": "door_wood", "snow_receive": 0.3},
 	"blade_flower": {"tex": "flat_snow_0", "sway": 30.0, "sway_base": 0.0, "snow_receive": 0.0, "roughness_base": 0.7},
 	# 地面：puddles = 下雨时积水的程度
 	"grass": {"tex": "grass", "puddles": 0.55},
@@ -89,9 +97,9 @@ const DEFS := {
 	# 沙漠：基底还是草（只有绿洲一圈），沙地靠顶点权重铺满；岩石是红岩
 	"terrain_desert": {"tex": "grass", "terrain_mode": true, "sand_tex": "sand", "rock_tex": "rock_red",
 		"bed_tex": "lakebed", "puddles": 0.2, "caustics": 1.0},
-	# 峡谷：台地是干土，崖壁是红岩
-	"terrain_canyon": {"tex": "dirt", "terrain_mode": true, "sand_tex": "sand", "rock_tex": "rock_red",
-		"bed_tex": "lakebed", "puddles": 0.6, "caustics": 1.0},
+	# 峡谷：台地是偏红的细沙土（颗粒细、远看均匀），崖壁是一层层的岩层
+	"terrain_canyon": {"tex": "canyon_soil", "terrain_mode": true, "sand_tex": "sand", "rock_tex": "rock",
+		"bed_tex": "lakebed", "puddles": 0.6, "caustics": 1.0, "strata": 1.0},
 }
 
 static var _cache := {}

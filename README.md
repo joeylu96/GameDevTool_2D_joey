@@ -97,7 +97,8 @@ add_child(world)            # generate_on_ready 默认为 true，加入场景树
   3D 视图侧边栏（N）出现「Pixel World」标签页：选资产和种子「生成」，或「导出全部到 Godot」。
 
 代码生成器：农舍（双坡 / 四坡顶，竖木板 / 横木板 / 石墙 / 灰泥墙）、松树、阔叶树、石井、集市摊位、铸铁路灯、手推车、路牌、灯塔（`blender/pixel_world_blender/generators/`）。
-松树、阔叶树、路灯、灯塔在场景和资源库里都用 Blender 版（Godot 代码版只在没有 Blender 资产时兜底）。
+场景和资源库里的模型全部用 Blender 版（35 种：树、灌木、石头、草、水草、鱼、房屋、农舍、灯塔、风车、路灯、篱笆、长椅、木箱、木桶、草垛等），
+Godot 代码版只在没有 Blender 资产时兜底。
 规格生成的摆件：`shared/asset_specs/props/*.json`（雪人、篝火、布告栏、椰子树、仙人掌、帐篷、红岩石柱、渔船……），由 `generators/spec_parts.py` 按零件拼装，
 可以手写，也可以用 AI 资产工坊让大模型写。它们读取同一份 `shared/style/style.json`，
 像素密度 32 texel/米、只用调色板颜色；导入 Godot 后材质自动换成统一的 `pixel_world` 材质，所以积雪、潮湿、夜间窗户发光和代码生成的资产完全一样。

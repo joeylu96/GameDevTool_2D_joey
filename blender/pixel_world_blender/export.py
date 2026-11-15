@@ -132,8 +132,18 @@ def _rel(path):
         return Path(path).name
 
 
-def _entry(kind, name, category, desc, vary, files, info, tags, source="generator"):
-    return {
+def _vinfo(info):
+    """每个变体自己的尺寸（房屋等变体大小不一样的资产，Godot 按这个排布局）"""
+    v = {"footprint": [round(x, 2) for x in info.get("footprint", [1, 1])], "height": round(info.get("height", 1.0), 2)}
+    prm = info.get("params", {})
+    for k in ("width", "depth", "floors"):
+        if k in prm:
+            v[k] = prm[k]
+    return v
+
+
+def _entry(kind, name, category, desc, vary, files, info, tags, source="generator", vinfo=None):
+    e = {
         "id": "bl_" + kind,
         "kind": kind,
         "name": name,
@@ -147,6 +157,9 @@ def _entry(kind, name, category, desc, vary, files, info, tags, source="generato
         "height": round(info.get("height", 1.0), 2),
         "plant": bool(info.get("plant", False)),
     }
+    if vinfo and len({str(x) for x in vinfo}) > 1:
+        e["variant_info"] = vinfo
+    return e
 
 
 def load_prop_specs(specs_dir):
@@ -213,16 +226,18 @@ def build_all(out_dir, kinds=None, variants=4, seed0=1, specs_dir=None, preview_
         gen = GENERATORS[kind]
         files = []
         info = {}
+        vinfo = []
         for v in range(getattr(gen, "VARIANTS", variants)):  # 场景里大量出现的（树、路灯）多导出几个变体，不重样
             clear_scene()
             obj, info = generate(kind, seed0 + v)
             name = "%s_%d.glb" % (kind, v)
             export_object(obj, out / name)
             files.append(name)
+            vinfo.append(_vinfo(info))
             if preview_dir and v == 0:
                 render_preview(obj, Path(preview_dir) / ("prop_%s.png" % kind))
         catalog["assets"].append(_entry(kind, gen.NAME, gen.CATEGORY, gen.DESC, gen.VARY, files, info,
-                                        getattr(gen, "TAGS", [])))
+                                        getattr(gen, "TAGS", []), vinfo=vinfo))
     for spec in load_prop_specs(specs_dir) if specs_dir else []:
         if kinds and "spec_" + spec["id"] not in kinds:
             continue

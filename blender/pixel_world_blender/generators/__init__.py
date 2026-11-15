@@ -3,6 +3,8 @@
 info：footprint（占地宽、深，米）、height（米）、desc 等，写进 catalog.json。
 """
 from . import cottage, handcart, lighthouse, market_stall, oak, pine, signpost, street_lamp, well
+from . import (barrel, bench, birch, bush, crate, fence, fence_post, fish, grass_dry, grass_flower, grass_tuft,
+               haystack, poplar, rock, town_house, weed, windmill_blades, windmill_tower)
 
 GENERATORS = {
     "cottage": cottage,
@@ -14,4 +16,22 @@ GENERATORS = {
     "handcart": handcart,
     "signpost": signpost,
     "lighthouse": lighthouse,
+    "birch": birch,
+    "poplar": poplar,
+    "bush": bush,
+    "rock": rock,
+    "grass_tuft": grass_tuft,
+    "grass_dry": grass_dry,
+    "grass_flower": grass_flower,
+    "weed": weed,
+    "fish": fish,
+    "crate": crate,
+    "barrel": barrel,
+    "haystack": haystack,
+    "bench": bench,
+    "fence": fence,
+    "fence_post": fence_post,
+    "windmill_tower": windmill_tower,
+    "windmill_blades": windmill_blades,
+    "town_house": town_house,
 }

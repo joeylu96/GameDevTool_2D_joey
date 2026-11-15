@@ -89,10 +89,19 @@ static func _merge(a: ArrayMesh, b: ArrayMesh) -> ArrayMesh:
 	return a
 
 
-static func variants(kind: String) -> Array[ArrayMesh]:
+## 草丛变体：优先用 Blender 版（bl_grass_tuft 前 4 个是普通草、后 2 个是高草；bl_grass_dry；bl_grass_flower），
+## 没有 Blender 资产时用代码版
+static func variants(kind: String) -> Array[Mesh]:
 	if not _cache.has(kind):
-		var arr: Array[ArrayMesh] = []
-		for i in VARIANTS:
+		var arr: Array[Mesh] = []
+		var bl := PWAssetLibrary.blender_variants({"grass": "bl_grass_tuft", "tall": "bl_grass_tuft",
+			"dry": "bl_grass_dry", "flower": "bl_grass_flower"}[kind])
+		if kind == "grass":
+			bl = bl.slice(0, 4)
+		elif kind == "tall":
+			bl = bl.slice(4)
+		arr.append_array(bl)
+		for i in VARIANTS if arr.is_empty() else 0:
 			arr.append(build_tuft(7000 + KINDS.find(kind) * 100 + i, kind))
 		_cache[kind] = arr
 	return _cache[kind]

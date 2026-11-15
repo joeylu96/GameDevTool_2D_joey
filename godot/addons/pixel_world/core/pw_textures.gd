@@ -127,6 +127,8 @@ static func _make(key: String) -> Image:
 			return cobbles(801)
 		"sand":
 			return sand(705)
+		"canyon_soil":
+			return canyon_soil(711)
 		"lakebed":
 			return lakebed(706)
 		# 生物 / 人物
@@ -661,6 +663,44 @@ static func sand(seed_value: int, size := 96) -> Image:
 		_px(img, x, y, pc)
 		_px(img, x + 1, y, pc.lerp(Pal.c("stone_1"), 0.5))
 		_px(img, x, y + 1, c2)
+	img.flip_y()
+	return img
+
+
+## 峡谷台地的红土：低对比的细颗粒 + 几道浅浅的干裂纹，远看是均匀的一片（不会出现一块块的亮斑）
+static func canyon_soil(seed_value: int, size := 96) -> Image:
+	var rng := _rng(seed_value)
+	var n := fbm(size, 6, rng)
+	var base := Color(0.78, 0.52, 0.36)
+	var light := Color(0.82, 0.57, 0.40)
+	var dark := Color(0.70, 0.45, 0.31)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var v := n[y * size + x]
+			var col := base.lerp(light, smoothstep(0.45, 0.75, v))
+			var g := rng.randf()
+			if g < 0.06:
+				col = col.lerp(dark, 0.6)
+			elif g > 0.96:
+				col = col.lerp(light, 0.8)
+			img.set_pixel(x, y, col)
+	# 干裂纹：几条随机游走的暗线
+	for k in 7:
+		var px := rng.randf() * size
+		var py := rng.randf() * size
+		var a := rng.randf() * TAU
+		for step in rng.randi_range(10, 22):
+			_px(img, int(px) % size, int(py) % size, img.get_pixel(int(px) % size, int(py) % size).lerp(dark, 0.45))
+			a += rng.randf_range(-0.6, 0.6)
+			px = fposmod(px + cos(a), size)
+			py = fposmod(py + sin(a), size)
+	# 小石子
+	for i in size * size / 260:
+		var x := rng.randi_range(0, size - 2)
+		var y := rng.randi_range(0, size - 2)
+		_px(img, x, y, Color(0.62, 0.42, 0.32))
+		_px(img, x + 1, y, Color(0.86, 0.66, 0.5))
 	img.flip_y()
 	return img
 

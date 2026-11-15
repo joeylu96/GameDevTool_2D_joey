@@ -52,9 +52,32 @@ _TEX = {
     "rock_red": lambda: pixtex.bricks(["ochre_1", "ochre_2", "red_2", "ochre_3"], 623, brick_w=20, row_h=10),
     "coal": lambda: pixtex.mottle(["ink", "stone_3"], 624, size=16),
     "cloth_blue": lambda: pixtex.mottle(["cloth_blue", "teal_2"], 625, threshold=0.7),
+    # 和 Godot 端 pw_materials.gd 同名的材质（Godot 换材质后积雪、摇摆、发光行为一致）
+    "birch_bark": lambda: pixtex.bark_marks(531),
+    "leaf_birch": lambda: pixtex.foliage([S.mix("grass_0", "cloth_yellow", 0.15), S.mix("grass_0", "light_0", 0.35), S.c("grass_1")], 532),
+    "leaf_birch_dark": lambda: pixtex.foliage(["grass_1", "grass_0", "grass_2"], 533, droop=True),
+    "flowers": lambda: pixtex.flowers(534),
+    "rock": lambda: pixtex.mottle(["stone_1", "stone_0"], 535, size=64, threshold=0.55),
+    "barrel": lambda: pixtex.planks(["wood_0", "wood_1", "wood_2", "wood_3"], 536, size=32, plank_w=5),
+    "boards": lambda: np.ascontiguousarray(np.transpose(pixtex.planks(["wood_0", "wood_1", "wood_2", "wood_3"], 537, size=32, plank_w=4), (1, 0, 2))),
+    "deck": lambda: np.ascontiguousarray(np.transpose(pixtex.planks(["ochre_1", "wood_0", "wood_1", "wood_2"], 538, size=32, plank_w=4), (1, 0, 2))),
+    "curb": lambda: pixtex.mottle(["snow_3", "stone_0"], 539, threshold=0.6),
+    "weed": lambda: pixtex.foliage(["teal_1", "grass_2", "teal_2"], 540, size=32, droop=True),
+    "fish_orange": lambda: pixtex.mottle(["light_2", "ochre_0"], 541, size=16),
+    "fish_silver": lambda: pixtex.mottle(["stone_0", "snow_3"], 542, size=16),
+    "door_red": lambda: pixtex.planks(["red_0", "red_1", "red_2", "red_3"], 543, plank_w=6),
+    "door_teal": lambda: pixtex.planks(["teal_0", "teal_1", "teal_2", "teal_3"], 544, plank_w=6),
+    "door_green": lambda: pixtex.planks(["grass_1", "pine_0", "pine_1", "pine_2"], 545, plank_w=6),
+    "door_wood": lambda: pixtex.planks(["wood_0", "wood_1", "wood_2", "wood_3"], 546, plank_w=6),
+    "roof_cap": lambda: pixtex.mottle(["roof_2", "stone_3"], 547),
+    "roof_under": lambda: pixtex.planks(["wood_1", "wood_2", "wood_2", "wood_3"], 548),
+    "brass": lambda: pixtex.mottle(["light_1", "light_2"], 549, size=16),
+    # 草叶：整面铺满的竖向渐变（行 0 = 根部深绿，最后一行 = 尖端浅色），见 _STRETCH
+    "blade": lambda: pixtex.gradient(S.mix("grass_2", "grass_1", 0.3), S.mix("grass_0", "light_0", 0.25)),
+    "blade_dry": lambda: pixtex.gradient(S.mix("grass_2", "dirt_1", 0.5), "ochre_0"),
 }
 # 整张贴图铺满一个面（UV 0..1）而不是按米平铺的材质
-_STRETCH = {"glass"}
+_STRETCH = {"glass", "blade", "blade_dry"}
 
 _mat_cache = {}
 _arr_cache = {}

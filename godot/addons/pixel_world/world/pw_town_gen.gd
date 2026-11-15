@@ -355,16 +355,15 @@ func _build_path_and_pier() -> Rect2:
 	pl.add_rect(P.PATH, _pier)
 	w.overrides.append([_pier, 0.05])
 	# 码头边的货物
-	var crate := Props.build_crate()
-	var barrel := Props.build_barrel()
-	var spots := [[crate, Vector2(_path_x + 2.6, z_end - 1.6)], [crate, Vector2(_path_x + 3.4, z_end - 0.8)],
-		[barrel, Vector2(_path_x - 2.6, z_end - 1.2)], [barrel, Vector2(_path_x - 3.2, z_end - 2.0)],
-		[barrel, Vector2(_path_x + 0.6, z_end + 4.5)]]
+	var spots := [["bl_crate", Vector2(_path_x + 2.6, z_end - 1.6)], ["bl_crate", Vector2(_path_x + 3.4, z_end - 0.8)],
+		["bl_barrel", Vector2(_path_x - 2.6, z_end - 1.2)], ["bl_barrel", Vector2(_path_x - 3.2, z_end - 2.0)],
+		["bl_barrel", Vector2(_path_x + 0.6, z_end + 4.5)]]
 	for s: Array in spots:
 		var p: Vector2 = s[1]
 		var on_pier := _pier.has_point(p)
 		if on_pier or pl.can_place(P.PROP, p, 0.45):
-			batch.add_static(s[0], Transform3D(Basis(Vector3.UP, rng.randf() * 0.8), Vector3(p.x, 0.05 if on_pier else 0.0, p.y)))
+			var fb := func() -> Mesh: return Props.build_crate() if s[0] == "bl_crate" else Props.build_barrel()
+			batch.add_static(bl_pick(s[0], fb), Transform3D(Basis(Vector3.UP, rng.randf() * 0.8), Vector3(p.x, 0.05 if on_pier else 0.0, p.y)))
 			if not on_pier:
 				pl.add_circle(P.PROP, p, 0.45)
 			pl.solid_circles.append(Vector3(p.x, p.y, 0.45))
@@ -399,8 +398,8 @@ func _build_houses() -> void:
 			var u := (r.position.x if horiz else r.position.y) + rng.randf_range(0.5, 3.0)
 			var u_end := r.end.x if horiz else r.end.y
 			while u < u_end - 5.0:
-				var p := House.random_params(rng)
-				var fp := House.footprint(p)
+				var p := _house_params()
+				var fp: Vector2 = p.fp
 				var yard := rng.randf_range(2.6, 3.4)
 				if rng.randf() > clampf(0.45 + 0.4 * w.house_density, 0.0, 1.0):
 					u += fp.x * 0.6
@@ -445,7 +444,7 @@ func _try_house(road: Rect2, horiz: bool, side: int, u: float, p: Dictionary, fp
 	if not pl.can_place_rect(P.DOOR, door):
 		return false
 	var basis := Basis(Vector3.UP, yaw)
-	batch.add_static(House.build(p), Transform3D(basis, Vector3(center.x, 0, center.y)))
+	batch.add_static(bl("bl_town_house")[p.bl] if p.has("bl") else House.build(p), Transform3D(basis, Vector3(center.x, 0, center.y)))
 	pl.add_rect(P.HOUSE, rect, 0.3, true)
 	pl.add_rect(P.DOOR, door)
 	var door_pt := center + front * (fp.y * 0.5 + 0.8)  # 门前通道上、离墙 0.8 米：NPC 的家
@@ -465,7 +464,7 @@ func _try_house(road: Rect2, horiz: bool, side: int, u: float, p: Dictionary, fp
 
 
 func _house_fence(basis: Basis, center: Vector2, fp: Vector2, yard: float) -> void:
-	var style: String = Props.FENCE_STYLES[rng.randi_range(0, Props.FENCE_STYLES.size() - 1)]
+	var style_i := rng.randi_range(0, 3 if not bl("bl_fence").is_empty() else Props.FENCE_STYLES.size() - 1)
 	var half := fp.x * 0.5 - 0.3
 	var lz := fp.y * 0.5 + yard - 1.3
 	var gap := [half - 1.05, half + 1.05]  # 相对篱笆起点（-half）；比门前通道（±0.9）宽一点
@@ -482,7 +481,12 @@ func _house_fence(basis: Basis, center: Vector2, fp: Vector2, yard: float) -> vo
 			return
 		rects.append(rr)
 	var origin3 := basis * Vector3(-half, 0, lz)
-	batch.add_static(Props.build_fence(half * 2.0, [gap], style), Transform3D(basis, Vector3(center.x + origin3.x, 0, center.y + origin3.z)))
+	var xf := Transform3D(basis, Vector3(center.x + origin3.x, 0, center.y + origin3.z))
+	if bl("bl_fence").is_empty():
+		batch.add_static(Props.build_fence(half * 2.0, [gap], Props.FENCE_STYLES[style_i]), xf)
+	else:
+		for r: Vector2 in runs:
+			fence_run(xf * Transform3D(Basis(), Vector3(r.x, 0, 0)), r.y - r.x, style_i)
 	for rr in rects:
 		pl.add_rect(P.FENCE, rr)
 		pl.solid_rects.append(rr)
@@ -561,6 +565,60 @@ func _build_lamps() -> void:
 	w.content().add_child(mmi)
 
 
+# ---------------------------------------------------------------- Blender 资产
+
+var _bl_cache := {}
+
+
+## Blender 资产的全部变体（缓存）；没有 Blender 资产目录时是空数组
+func bl(id: String) -> Array[Mesh]:
+	if not _bl_cache.has(id):
+		_bl_cache[id] = PWAssetLibrary.blender_variants(id)
+	return _bl_cache[id]
+
+
+## 随机挑一个 Blender 变体；没有就用 fallback（Godot 代码版）造一个
+func bl_pick(id: String, fallback: Callable) -> Mesh:
+	var v := bl(id)
+	return v[rng.randi_range(0, v.size() - 1)] if not v.is_empty() else fallback.call()
+
+
+func weed_variants() -> Array[Mesh]:
+	var v := bl("bl_weed")
+	if v.is_empty():
+		v = [Props.build_weed(5000), Props.build_weed(5001), Props.build_weed(5002)]
+	return v
+
+
+## 房屋参数：有 Blender 小镇房屋就随机挑一个变体（尺寸来自 catalog 的 variant_info），否则用代码版的随机参数
+func _house_params() -> Dictionary:
+	var info := PWAssetLibrary.blender_variant_info("bl_town_house")
+	if info.size() == bl("bl_town_house").size() and not info.is_empty():
+		var k := rng.randi_range(0, info.size() - 1)
+		var vi: Dictionary = info[k]
+		return {"bl": k, "width": float(vi.width), "depth": float(vi.depth),
+			"fp": Vector2(float(vi.footprint[0]), float(vi.footprint[1]))}
+	var p := House.random_params(rng)
+	p["fp"] = House.footprint(p)
+	return p
+
+
+## 一排 Blender 篱笆：沿 xf 的局部 +X 从 0 到 length。每段模块 2 米（左端自带柱子），按长度微调拉伸；末尾补一根柱子。
+## style：0 白栅栏、1 木栏、2 石墙、3 深色木条
+func fence_run(xf: Transform3D, length: float, style: int) -> void:
+	var segs := bl("bl_fence")
+	var posts := bl("bl_fence_post")
+	if length > 0.7:
+		var n := maxi(1, roundi(length / 2.0))
+		var k := length / (n * 2.0)
+		for i in n:
+			batch.add_static(segs[style % segs.size()], xf * Transform3D(Basis().scaled(Vector3(k, 1, 1)), Vector3((i * 2.0 + 1.0) * k, 0, 0)))
+	elif not posts.is_empty():
+		batch.add_static(posts[style % posts.size()], xf)
+	if not posts.is_empty():
+		batch.add_static(posts[style % posts.size()], xf * Transform3D(Basis(), Vector3(length, 0, 0)))
+
+
 func _build_benches() -> void:
 	var benches := {}
 	for spot: Array in _lamp_spots:
@@ -574,9 +632,11 @@ func _build_benches() -> void:
 		var rect := Rect2(p - (Vector2(0.9, 0.35) if horiz else Vector2(0.35, 0.9)), Vector2(1.8, 0.7) if horiz else Vector2(0.7, 1.8))
 		if not pl.can_place_rect(P.BENCH, rect):
 			continue
-		var style: String = Props.BENCH_STYLES[rng.randi_range(0, Props.BENCH_STYLES.size() - 1)]
+		var si := rng.randi_range(0, Props.BENCH_STYLES.size() - 1)
+		var style: String = Props.BENCH_STYLES[si]
 		if not benches.has(style):
-			benches[style] = Props.build_bench(style)
+			var bb := bl("bl_bench")
+			benches[style] = bb[si % bb.size()] if not bb.is_empty() else Props.build_bench(style)
 		# 长椅局部 +Z 是正面：朝向道路
 		var yaw := atan2(to_road.x, to_road.y)
 		batch.add_static(benches[style], Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, 0, p.y)))
@@ -588,33 +648,38 @@ func _build_benches() -> void:
 
 var _pines: Array[Mesh] = []
 var _broads: Array[Mesh] = []
-var _bushes: Array[ArrayMesh] = []
-var _rocks: Array[ArrayMesh] = []
+var _bushes: Array[Mesh] = []
+var _rocks: Array[Mesh] = []
 var _canopy := {}  # Mesh -> 树冠半径
 
 
 func _variants() -> void:
 	if not _pines.is_empty():
 		return
-	# 松树、橡树用 Blender 版（各有 10 / 8 个变体）；白桦、杨树没有 Blender 版，继续用代码版。
-	# 没有 Blender 资产目录时全部退回代码版
-	var bl_pines := PWAssetLibrary.blender_variants("bl_pine")
-	var bl_oaks := PWAssetLibrary.blender_variants("bl_oak")
-	if bl_pines.is_empty():
+	# 全部用 Blender 版：松树 10、橡树 8、白桦 8、杨树 6、灌木 8、石头 8 个变体。
+	# 没有 Blender 资产目录时退回代码版
+	_pines.append_array(bl("bl_pine"))
+	if _pines.is_empty():
 		for i in 10:
 			_pines.append(Trees.build_pine(1000 + i))
-	else:
-		_pines.append_array(bl_pines)
 	var styles := ["oak", "oak", "birch", "poplar", "oak", "birch", "poplar", "oak", "oak", "birch", "poplar", "oak"]
-	for i in styles.size():
-		if styles[i] == "oak" and not bl_oaks.is_empty():
-			continue
-		_broads.append(Trees.build_broadleaf(2000 + i, styles[i]))
-	_broads.append_array(bl_oaks)
-	for i in 8:
-		_bushes.append(Trees.build_bush(3000 + i))
-	for i in 8:
-		_rocks.append(Trees.build_rock(4000 + i))
+	for kind in ["oak", "birch", "poplar"]:
+		var v := bl("bl_" + kind)
+		if v.is_empty():
+			for i in styles.size():
+				if styles[i] == kind:
+					_broads.append(Trees.build_broadleaf(2000 + i, kind))
+		else:
+			# 橡树多一些：白桦 / 杨树各取一半变体
+			_broads.append_array(v if kind == "oak" else v.slice(0, maxi(2, v.size() / 2)))
+	_bushes.append_array(bl("bl_bush"))
+	if _bushes.is_empty():
+		for i in 8:
+			_bushes.append(Trees.build_bush(3000 + i))
+	_rocks.append_array(bl("bl_rock"))
+	if _rocks.is_empty():
+		for i in 8:
+			_rocks.append(Trees.build_rock(4000 + i))
 	for m in _pines + _broads + _bushes + _rocks:
 		var a: AABB = m.get_aabb()
 		_canopy[m] = maxf(maxf(absf(a.position.x), absf(a.end.x)), maxf(absf(a.position.z), absf(a.end.z)))
@@ -757,7 +822,7 @@ func _build_bushes_and_rocks() -> void:
 # ---------------------------------------------------------------- 湖里
 
 func _build_lake_life() -> void:
-	var weeds: Array[ArrayMesh] = [Props.build_weed(5000), Props.build_weed(5001), Props.build_weed(5002)]
+	var weeds := weed_variants()
 	for i in int(w.size * 1.1):
 		var x := rng.randf_range(-H, H)
 		var d := rng.randf_range(1.6, 7.0)

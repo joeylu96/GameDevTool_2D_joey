@@ -442,44 +442,72 @@ func _build_poi(kind: String, p: Vector2) -> void:
 	var y := w.ground_y(p.x, p.y)
 	match kind:
 		"cabin":
-			var hp := House.random_params(rng)
-			hp.width = 6.0
-			hp.depth = 5.0
-			hp.floors = 1
-			hp.wall = "wall_wood"
-			hp.chimney = true
+			# 林间小屋：Blender 农舍里挑一个不太大的（宽 ≤ 6.5 米）；没有 Blender 资产时用代码版
 			var yaw := rng.randi_range(0, 3) * PI * 0.5
-			batch.add_static(House.build(hp), Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, y, p.y)))
-			var body := Vector2(6.5, 5.5) if int(round(yaw / (PI * 0.5))) % 2 == 0 else Vector2(5.5, 6.5)
+			var ck := _cottage(6.5)
+			var sz := Vector2(6.0, 5.0)
+			if ck >= 0:
+				var vi: Dictionary = PWAssetLibrary.blender_variant_info("bl_cottage")[ck]
+				sz = Vector2(float(vi.width), float(vi.depth))
+				batch.add_static(_town.bl("bl_cottage")[ck], Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, y, p.y)))
+			else:
+				var hp := House.random_params(rng)
+				hp.width = 6.0
+				hp.depth = 5.0
+				hp.floors = 1
+				hp.wall = "wall_wood"
+				hp.chimney = true
+				batch.add_static(House.build(hp), Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, y, p.y)))
+			sz += Vector2(0.5, 0.5)
+			var body := sz if int(round(yaw / (PI * 0.5))) % 2 == 0 else Vector2(sz.y, sz.x)
 			pl.solid_rects.append(Rect2(p - body * 0.5, body))
 		"farm":
 			# 农舍 + 一块用木栏围起来的田（里面有草垛），农舍门朝田
-			var hp := House.random_params(rng)
-			hp.width = 8.0
-			hp.depth = 6.0
-			hp.wall = ["wall_red", "wall_ochre", "wall_wood"][rng.randi_range(0, 2)]
+			# Blender 农舍里最大的一个（约 8 × 6 米），房子正面贴着田边
+			var ck := _cottage(99.0, true)
+			var sz := Vector2(8.0, 6.0)
 			var hc := p + Vector2(-4.0, -3.0)
-			batch.add_static(House.build(hp), Transform3D(Basis(), Vector3(hc.x, y, hc.y)))
-			pl.solid_rects.append(Rect2(hc - Vector2(4.25, 3.25), Vector2(8.5, 6.5)))
+			if ck >= 0:
+				var vi: Dictionary = PWAssetLibrary.blender_variant_info("bl_cottage")[ck]
+				sz = Vector2(float(vi.width), float(vi.depth))
+				hc = p + Vector2(-4.0, -sz.y * 0.5)
+				batch.add_static(_town.bl("bl_cottage")[ck], Transform3D(Basis(), Vector3(hc.x, y, hc.y)))
+			else:
+				var hp := House.random_params(rng)
+				hp.width = 8.0
+				hp.depth = 6.0
+				hp.wall = ["wall_red", "wall_ochre", "wall_wood"][rng.randi_range(0, 2)]
+				batch.add_static(House.build(hp), Transform3D(Basis(), Vector3(hc.x, y, hc.y)))
+			pl.solid_rects.append(Rect2(hc - sz * 0.5 - Vector2(0.25, 0.25), sz + Vector2(0.5, 0.5)))
 			var field := Rect2(p + Vector2(-8.0, 2.0), Vector2(16.0, 6.5))
-			var fence := Props.build_fence(field.size.x, [[field.size.x * 0.5 - 1.0, field.size.x * 0.5 + 1.0]], "rail")
-			var side := Props.build_fence(field.size.y, [], "rail")
-			batch.add_static(fence, Transform3D(Basis(), Vector3(field.position.x, y, field.position.y)))
-			batch.add_static(Props.build_fence(field.size.x, [], "rail"), Transform3D(Basis(), Vector3(field.position.x, y, field.end.y)))
-			batch.add_static(side, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(field.position.x, y, field.position.y)))
-			batch.add_static(side, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(field.end.x, y, field.position.y)))
+			if _town.bl("bl_fence").is_empty():
+				var fence := Props.build_fence(field.size.x, [[field.size.x * 0.5 - 1.0, field.size.x * 0.5 + 1.0]], "rail")
+				var side := Props.build_fence(field.size.y, [], "rail")
+				batch.add_static(fence, Transform3D(Basis(), Vector3(field.position.x, y, field.position.y)))
+				batch.add_static(Props.build_fence(field.size.x, [], "rail"), Transform3D(Basis(), Vector3(field.position.x, y, field.end.y)))
+				batch.add_static(side, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(field.position.x, y, field.position.y)))
+				batch.add_static(side, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(field.end.x, y, field.position.y)))
+			else:
+				# Blender 木栏：前边中间留 2 米的门
+				var o := Vector3(field.position.x, y, field.position.y)
+				var half := field.size.x * 0.5
+				_town.fence_run(Transform3D(Basis(), o), half - 1.0, 1)
+				_town.fence_run(Transform3D(Basis(), o + Vector3(half + 1.0, 0, 0)), half - 1.0, 1)
+				_town.fence_run(Transform3D(Basis(), Vector3(field.position.x, y, field.end.y)), field.size.x, 1)
+				_town.fence_run(Transform3D(Basis(Vector3.UP, -PI * 0.5), o), field.size.y, 1)
+				_town.fence_run(Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(field.end.x, y, field.position.y)), field.size.y, 1)
 			for rct in [Rect2(field.position.x, field.end.y - 0.15, field.size.x, 0.3),
 					Rect2(field.position.x - 0.15, field.position.y, 0.3, field.size.y),
 					Rect2(field.end.x - 0.15, field.position.y, 0.3, field.size.y)]:
 				pl.solid_rects.append(rct)
 			for k in rng.randi_range(3, 5):
 				var hs := field.position + Vector2(rng.randf_range(1.5, field.size.x - 1.5), rng.randf_range(1.5, field.size.y - 1.5))
-				batch.add_static(Props.build_haystack(rng.randi()), Transform3D(Basis(Vector3.UP, rng.randf() * TAU), Vector3(hs.x, y, hs.y)))
+				batch.add_static(_haystack(), Transform3D(Basis(Vector3.UP, rng.randf() * TAU), Vector3(hs.x, y, hs.y)))
 				pl.solid_circles.append(Vector3(hs.x, hs.y, 1.0))
 		"windmill":
-			batch.add_static(Props.build_windmill_tower(), Transform3D(Basis(), Vector3(p.x, y, p.y)))
+			batch.add_static(_town.bl_pick("bl_windmill_tower", Props.build_windmill_tower), Transform3D(Basis(), Vector3(p.x, y, p.y)))
 			var blades := MeshInstance3D.new()
-			blades.mesh = Props.build_windmill_blades()
+			blades.mesh = _town.bl_pick("bl_windmill_blades", Props.build_windmill_blades)
 			blades.set_script(Spinner)
 			blades.set("speed", 0.6)
 			blades.position = Vector3(p.x, y, p.y) + Props.windmill_hub()
@@ -487,7 +515,7 @@ func _build_poi(kind: String, p: Vector2) -> void:
 			pl.solid_circles.append(Vector3(p.x, p.y, 2.3))
 			for k in 2:
 				var hs := p + Vector2(rng.randf_range(-4.0, 4.0), rng.randf_range(2.5, 4.5))
-				batch.add_static(Props.build_haystack(rng.randi()), Transform3D(Basis(Vector3.UP, rng.randf() * TAU), Vector3(hs.x, y, hs.y)))
+				batch.add_static(_haystack(), Transform3D(Basis(Vector3.UP, rng.randf() * TAU), Vector3(hs.x, y, hs.y)))
 				pl.solid_circles.append(Vector3(hs.x, hs.y, 1.0))
 		"ruins":
 			var mb := MB.new()
@@ -515,16 +543,39 @@ func _build_poi(kind: String, p: Vector2) -> void:
 			fire.ngon_frustum("bulb", Vector3(p.x, 0, p.y), y + 0.1, y + 0.45, 0.16, 0.0, 5, 0.0, false)
 			batch.add_static(fire.commit(), Transform3D.IDENTITY)
 			pl.solid_circles.append(Vector3(p.x, p.y, 0.7))
-			var bench := Props.build_bench("log")
+			var bb: Array[Mesh] = _town.bl("bl_bench")
+			var bench: Mesh = bb[2 % bb.size()] if not bb.is_empty() else Props.build_bench("log")
 			for k in 3:
 				var a := TAU * k / 3.0 + rng.randf() * 0.5
 				var bp := p + Vector2(cos(a), sin(a)) * 2.0
 				batch.add_static(bench, Transform3D(Basis(Vector3.UP, -a + PI * 0.5), Vector3(bp.x, w.ground_y(bp.x, bp.y), bp.y)))
 				pl.solid_circles.append(Vector3(bp.x, bp.y, 0.6))
 			var cp := p + Vector2(2.8, -2.4)
-			batch.add_static(Props.build_crate(), Transform3D(Basis(Vector3.UP, 0.3), Vector3(cp.x, w.ground_y(cp.x, cp.y), cp.y)))
-			batch.add_static(Props.build_barrel(), Transform3D(Basis(), Vector3(cp.x + 0.9, w.ground_y(cp.x + 0.9, cp.y + 0.4), cp.y + 0.4)))
+			batch.add_static(_town.bl_pick("bl_crate", Props.build_crate), Transform3D(Basis(Vector3.UP, 0.3), Vector3(cp.x, w.ground_y(cp.x, cp.y), cp.y)))
+			batch.add_static(_town.bl_pick("bl_barrel", Props.build_barrel), Transform3D(Basis(), Vector3(cp.x + 0.9, w.ground_y(cp.x + 0.9, cp.y + 0.4), cp.y + 0.4)))
 			pl.solid_circles.append(Vector3(cp.x + 0.4, cp.y, 0.8))
+
+
+## Blender 农舍里挑一个：宽度不超过 max_w 的随机一个；biggest = true 时挑最宽的。没有 Blender 资产返回 -1
+func _cottage(max_w: float, biggest := false) -> int:
+	var info := PWAssetLibrary.blender_variant_info("bl_cottage")
+	if info.is_empty() or info.size() != _town.bl("bl_cottage").size():
+		return -1
+	var ok: Array[int] = []
+	var best := 0
+	for i in info.size():
+		if float(info[i].width) <= max_w:
+			ok.append(i)
+		if float(info[i].width) > float(info[best].width):
+			best = i
+	if biggest:
+		return best
+	return ok[rng.randi_range(0, ok.size() - 1)] if not ok.is_empty() else best
+
+
+func _haystack() -> Mesh:
+	var v: Array[Mesh] = _town.bl("bl_haystack")
+	return v[rng.randi_range(0, v.size() - 1)] if not v.is_empty() else Props.build_haystack(rng.randi())
 
 
 # ---------------------------------------------------------------- 小路（A* + 平滑 + 带状路面 + 木桥）
@@ -732,8 +783,13 @@ func _scatter_trees() -> void:
 		var keep: float = {FOREST: 1.0, GRASS: float(prm.get("lone_trees", 0.06)), ROCK: 0.05, SAND: 0.0, WATER: 0.0}[b]
 		if rng.randf() > keep or slope(p) > 0.45:
 			continue
+		# 林子有疏有密：低频噪声决定这一片是密林、疏林还是林间空地
+		if _jitter.get_noise_2d(p.x * 0.12, p.y * 0.12) < float(prm.get("clearings", -1.0)):
+			continue
 		var t := _random_tree()
-		_tree_at(p, t[0], rng.randf_range(0.8, 1.25), t[1])
+		var sr: Array = prm.get("tree_scale", [0.8, 1.25])
+		var sc := rng.randf_range(sr[0], sr[1])
+		_tree_at(p, t[0], sc * sc / ((sr[0] + sr[1]) * 0.5), t[1])  # 平方分布：小树多、大树少，高矮层次更自然
 	# 平原：零星的小树丛（3~7 棵，阔叶为主）
 	if prm.get("grove_trees", false):
 		var groves := int(w.size * w.size / 1600.0 * w.tree_density)
@@ -777,7 +833,7 @@ func _scatter_small() -> void:
 
 
 func _bush_at(p: Vector2, s: float) -> void:
-	var mesh: ArrayMesh = _town._bushes[rng.randi_range(0, _town._bushes.size() - 1)]
+	var mesh: Mesh = _town._bushes[rng.randi_range(0, _town._bushes.size() - 1)]
 	var r: float = _town._canopy[mesh] * s
 	if not pl.can_place(P.BUSH, p, r):
 		return
@@ -787,11 +843,11 @@ func _bush_at(p: Vector2, s: float) -> void:
 
 
 func _rock_at(p: Vector2, s: float) -> void:
-	var mesh: ArrayMesh = _town._rocks[rng.randi_range(0, _town._rocks.size() - 1)]
+	var mesh: Mesh = _town._rocks[rng.randi_range(0, _town._rocks.size() - 1)]
 	var r: float = _town._canopy[mesh] * s
 	if not pl.can_place(P.ROCK, p, r):
 		return
-	batch.add_plant(mesh, Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s * rng.randf_range(0.7, 1.1), s)), Vector3(p.x, w.ground_y(p.x, p.y) - _sink(p, r), p.y)), _town.tint(0.08))
+	batch.add_plant(mesh, Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s * rng.randf_range(0.7, 1.1), s)), Vector3(p.x, w.ground_y(p.x, p.y) - _sink(p, r), p.y)), _town.tint(0.08) * (prm.get("rock_tint", Color.WHITE) as Color))
 	pl.add_circle(P.ROCK, p, r)
 	pl.solid_circles.append(Vector3(p.x, p.y, r * 0.8))
 
@@ -867,26 +923,187 @@ func _fill_puddles(min_cells := 60) -> void:
 					w.set_h(c.x, c.y, WATER_Y + 0.12)
 
 
-## 峡谷：一条从地图一边蜿蜒到另一边的河谷。两侧是抬高的台地，谷壁是三级台阶（陡坎 + 平台），谷底中间是河
+## 峡谷（自然版）。几种让地形看起来「天然」的做法组合起来：
+##   1. 台地：Simplex 分形噪声（fBm）+ 两层域扭曲（domain warping，Inigo Quilez 的做法；FastNoiseLite 自带）
+##      —— 起伏是弯曲、不规则的，不是一个个圆包
+##   2. 峡谷网络：主河谷沿蜿蜒的河道，宽度随噪声变化；再用「反转的山脊噪声」（ridged）切出分叉的支沟
+##   3. 岩层：厚度不均、略微倾斜的地层台阶（strata），每层陡坎的宽窄不同；分层前先给高度加噪声，台阶边缘不是等高线
+##   4. 侵蚀：几千滴「水」顺坡流下的水力侵蚀，刻出冲沟、在坡脚堆积；再做一遍轻微的热力侵蚀（太尖的地方塌下来）
 func _carve_canyon() -> void:
 	var horiz := rng.randf() < 0.5
 	var off := rng.randf_range(-H * 0.25, H * 0.25)
 	var start := Vector2(-H - 6.0, off) if horiz else Vector2(off, -H - 6.0)
 	_trace_river(start, Vector2(1, 0) if horiz else Vector2(0, 1))
-	var vw: float = float(prm.get("valley_w", 11.0)) * clampf(w.size / 128.0, 0.7, 1.0)
+	var amp: float = prm.get("hill_amp", 3.0)
+	var top := WATER_Y + LAND_MIN + float(prm.get("plateau", 8.0))
 	var floor_y := WATER_Y + 0.45
-	var steps := 3.0
+	var vw: float = float(prm.get("valley_w", 13.0)) * clampf(w.size / 128.0, 0.7, 1.0)
+	var mesa := _noise(0.013, 5, FastNoiseLite.FRACTAL_FBM, 24.0)
+	var gully := _noise(0.017, 3, FastNoiseLite.FRACTAL_RIDGED, 16.0)
+	var widthn := _noise(0.028, 2, FastNoiseLite.FRACTAL_FBM, 0.0)
+	var pert := _noise(0.05, 2, FastNoiseLite.FRACTAL_FBM, 0.0)
+	# 地层表：从谷底往上，每层厚 0.7~2.4 米、陡坎占层厚的 15%~45%，整体略微倾斜
+	var edges := PackedFloat32Array()
+	var risers := PackedFloat32Array()
+	var e := floor_y + 0.25
+	while e < top + amp + 2.0:
+		edges.append(e)
+		risers.append(rng.randf_range(0.15, 0.45))
+		e += rng.randf_range(0.7, 2.4)
+	edges.append(e)
+	var tilt := Vector2(rng.randf_range(-0.035, 0.035), rng.randf_range(-0.035, 0.035))
 	for j in n + 1:
 		for i in n + 1:
-			var q := w.vert_xz(i, j)
-			var d: float = _nearest_on_river(q, vw * 2.4)[0]
-			if d > vw * 2.2:
-				continue
-			var t := clampf((d - vw * 0.5) / (vw * 1.45), 0.0, 1.0)
-			var k := t * steps
-			var f := floorf(k) + smoothstep(0.7, 0.88, k - floorf(k))  # 每级：大半是平台，最后一小段是陡坎
-			w.set_h(i, j, minf(w.get_h(i, j), lerpf(floor_y, w.get_h(i, j), clampf(f / steps, 0.0, 1.0))))
+			var p := w.vert_xz(i, j)
+			var h_top := top + amp * (mesa.get_noise_2d(p.x, p.y) * 0.5)
+			var d: float = _nearest_on_river(p, vw * 3.2)[0]
+			var ww := vw * (0.75 + 0.6 * (widthn.get_noise_2d(p.x, p.y) * 0.5 + 0.5))
+			# 谷底平、崖壁陡：主河谷在 0.55~1.3 倍宽度之间从谷底升到台地
+			var main := 1.0 - smoothstep(ww * 0.55, ww * 1.3, d)
+			# ridged 噪声在「沟线」附近接近 1：取高的一截当支沟，离主河谷越远越浅，最后消失在台地上
+			var g := gully.get_noise_2d(p.x, p.y) * 0.5 + 0.5
+			var side := smoothstep(0.8, 0.97, g) * 0.7 * (1.0 - smoothstep(vw * 3.0, vw * 6.0, d))
+			var h := lerpf(h_top, floor_y, maxf(main, side))
+			var hh := h + pert.get_noise_2d(p.x, p.y) * 0.6 + tilt.dot(p)
+			h = _stratify(hh, edges, risers) - (hh - h)
+			w.set_h(i, j, maxf(h, floor_y - 0.15))
+	_erode(int(prm.get("erosion", 3000)))
+	_smooth_heights(1, 0.5)  # 侵蚀留下的单格尖刺抹掉，坡面干净（岩石 / 土的交界不会碎成斑点）
+	_thermal(2, 1.7)
 	_carve_channel(rng.randf_range(2.0, 2.6))
+	_fill_puddles()
+
+
+## 带域扭曲的分形噪声（FastNoiseLite）：warp > 0 时开启两层渐进式域扭曲
+func _noise(freq: float, octaves: int, fractal: int, warp: float) -> FastNoiseLite:
+	var f := FastNoiseLite.new()
+	f.seed = rng.randi()
+	f.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	f.frequency = freq
+	f.fractal_type = fractal
+	f.fractal_octaves = octaves
+	if warp > 0.0:
+		f.domain_warp_enabled = true
+		f.domain_warp_type = FastNoiseLite.DOMAIN_WARP_SIMPLEX
+		f.domain_warp_amplitude = warp
+		f.domain_warp_frequency = freq * 0.9
+		f.domain_warp_fractal_type = FastNoiseLite.DOMAIN_WARP_FRACTAL_PROGRESSIVE
+		f.domain_warp_fractal_octaves = 2
+	return f
+
+
+## 地层台阶：落在第 k 层里的高度，前面大部分是平台，最后一段（risers[k]）是陡坎
+func _stratify(h: float, edges: PackedFloat32Array, risers: PackedFloat32Array) -> float:
+	if h <= edges[0] or h >= edges[edges.size() - 1]:
+		return h
+	var k := edges.bsearch(h, true) - 1
+	k = clampi(k, 0, edges.size() - 2)
+	var e0 := edges[k]
+	var e1 := edges[k + 1]
+	var t := (h - e0) / (e1 - e0)
+	return e0 + smoothstep(1.0 - risers[mini(k, risers.size() - 1)], 1.0, t) * (e1 - e0)
+
+
+## 水力侵蚀（粒子法）：每滴水从随机位置出发顺着坡度流，带走泥沙、在流速变慢的地方沉积，几千滴下来就刻出冲沟。
+## 在一份高度数组副本上算（比逐点调用 get_h / set_h 快得多），算完写回
+func _erode(drops: int) -> void:
+	var N := n + 1
+	var hm := w.heights.duplicate()
+	const INERTIA := 0.06
+	const CAPACITY := 4.0
+	const MIN_CAP := 0.01
+	const ERODE := 0.3
+	const DEPOSIT := 0.3
+	const EVAP := 0.025
+	const GRAVITY := 4.0
+	for drop in drops:
+		var x := rng.randf_range(1.0, N - 2.0)
+		var y := rng.randf_range(1.0, N - 2.0)
+		var dx := 0.0
+		var dy := 0.0
+		var speed := 1.0
+		var water := 1.0
+		var sed := 0.0
+		for life in 32:
+			var xi := int(x)
+			var yi := int(y)
+			var u := x - xi
+			var v := y - yi
+			var i0 := yi * N + xi
+			var h00 := hm[i0]
+			var h10 := hm[i0 + 1]
+			var h01 := hm[i0 + N]
+			var h11 := hm[i0 + N + 1]
+			var gx := (h10 - h00) * (1.0 - v) + (h11 - h01) * v
+			var gy := (h01 - h00) * (1.0 - u) + (h11 - h10) * u
+			var hc := h00 * (1.0 - u) * (1.0 - v) + h10 * u * (1.0 - v) + h01 * (1.0 - u) * v + h11 * u * v
+			dx = dx * INERTIA - gx * (1.0 - INERTIA)
+			dy = dy * INERTIA - gy * (1.0 - INERTIA)
+			var l := sqrt(dx * dx + dy * dy)
+			if l < 1e-6:
+				break
+			dx /= l
+			dy /= l
+			x += dx
+			y += dy
+			if x < 1.0 or y < 1.0 or x >= N - 2.0 or y >= N - 2.0:
+				break
+			var nxi := int(x)
+			var nyi := int(y)
+			var nu := x - nxi
+			var nv := y - nyi
+			var j0 := nyi * N + nxi
+			var nh := hm[j0] * (1.0 - nu) * (1.0 - nv) + hm[j0 + 1] * nu * (1.0 - nv) + hm[j0 + N] * (1.0 - nu) * nv + hm[j0 + N + 1] * nu * nv
+			var dh := nh - hc
+			var cap := maxf(-dh, MIN_CAP) * speed * water * CAPACITY
+			if sed > cap or dh > 0.0:
+				var dep := minf(dh, sed) if dh > 0.0 else (sed - cap) * DEPOSIT
+				sed -= dep
+				hm[i0] += dep * (1.0 - u) * (1.0 - v)
+				hm[i0 + 1] += dep * u * (1.0 - v)
+				hm[i0 + N] += dep * (1.0 - u) * v
+				hm[i0 + N + 1] += dep * u * v
+			else:
+				var er := minf((cap - sed) * ERODE, -dh)
+				hm[i0] -= er * (1.0 - u) * (1.0 - v)
+				hm[i0 + 1] -= er * u * (1.0 - v)
+				hm[i0 + N] -= er * (1.0 - u) * v
+				hm[i0 + N + 1] -= er * u * v
+				sed += er
+			speed = sqrt(maxf(0.01, speed * speed - dh * GRAVITY))
+			water *= 1.0 - EVAP
+	w.heights = hm
+
+
+## 平滑：每个顶点向四邻平均值靠拢 k（0..1）
+func _smooth_heights(passes: int, k: float) -> void:
+	var N := n + 1
+	for pass_i in passes:
+		var hm := w.heights.duplicate()
+		for j in range(1, N - 1):
+			for i in range(1, N - 1):
+				var c := j * N + i
+				var avg := (w.heights[c - 1] + w.heights[c + 1] + w.heights[c - N] + w.heights[c + N]) * 0.25
+				hm[c] = lerpf(w.heights[c], avg, k)
+		w.heights = hm
+
+
+## 热力侵蚀：比 talus（每米落差）还陡的地方，把一部分高度挪给低处的邻居（太尖的棱角塌下来，崖脚形成碎石坡）
+func _thermal(passes: int, talus: float) -> void:
+	var N := n + 1
+	for pass_i in passes:
+		var hm := w.heights.duplicate()
+		for j in range(1, N - 1):
+			for i in range(1, N - 1):
+				var k := j * N + i
+				var h := w.heights[k]
+				for o in [1, -1, N, -N]:
+					var diff := h - w.heights[k + o]
+					if diff > talus:
+						var mv := (diff - talus) * 0.25
+						hm[k] -= mv
+						hm[k + o] += mv
+		w.heights = hm
 
 
 ## 沙漠：离最近的湖（绿洲）有多远，以湖半径为单位（1 = 刚好在岸边）
@@ -987,7 +1204,7 @@ func _where_ok(p: Vector2, where: String) -> bool:
 func _lake_life() -> void:
 	if lakes.is_empty():
 		return
-	var weeds: Array[ArrayMesh] = [Props.build_weed(5000), Props.build_weed(5001), Props.build_weed(5002)]
+	var weeds: Array[Mesh] = _town.weed_variants()
 	var main: Dictionary = lakes[0]
 	for l in lakes:
 		if l.r > main.r:

@@ -35,6 +35,7 @@ uniform float water_level = -0.45;
 // 地形混合模式（野外地形）：albedo_tex 是草地；顶点色 R / G / B = 沙 / 岩石 / 湖底的权重（0..1），
 // 交界用噪声打乱，得到清晰但不规则的边（不是沿三角形走的锯齿）。此模式下顶点色不当色调用。
 uniform bool terrain_mode = false;
+uniform float strata = 0.0;                  // >0：岩石按高度画成一层层水平岩层（峡谷崖壁），不受贴图投影方向影响
 uniform sampler2D sand_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
 uniform sampler2D rock_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
 uniform sampler2D bed_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
@@ -75,6 +76,30 @@ vec3 sample_m(sampler2D t, vec2 uv_m, float density) {
 	return textureGrad(t, sharp / ts, dFdx(uv), dFdy(uv)).rgb;
 }
 
+// 地面贴图打散平铺（远处看不出一格一格的重复）：
+// 两套坐标——原样，以及转 90° 再错开半张——按低频噪声二选一，交界处逐贴图像素抖动（不会糊，也没有直线接缝）
+vec3 sample_bomb(sampler2D t, vec2 uv_m, vec2 wp, float seed) {
+	vec3 a = sample_m(t, uv_m, texel_density);
+	vec3 b = sample_m(t, vec2(-uv_m.y, uv_m.x) + vec2(0.53, 1.37) + seed, texel_density);
+	float n = vnoise(wp * 0.13 + seed) * 0.65 + vnoise(wp * 0.37 + seed * 2.0) * 0.35;
+	float dither = hash12(floor(uv_m * texel_density) + seed);
+	vec3 c = mix(a, b, step(0.5, n + (dither - 0.5) * 0.2));
+	// 越远越把贴图的细碎斑块淡化成平均色：2 米一张的花纹在远处会排成规律的格子
+	vec2 fw = fwidth(uv_m * texel_density);
+	vec3 avg = textureLod(t, vec2(0.5), 12.0).rgb;
+	return mix(c, avg, smoothstep(0.9, 2.6, max(fw.x, fw.y)) * 0.4);
+}
+
+// 大尺度的明暗 / 干湿起伏（几十米一个变化）：草地有深有浅、有几片偏黄的干草地
+vec3 terrain_macro(vec3 c, vec2 wp) {
+	// 都用旋转 fBm / 域扭曲噪声：明暗和干草斑是不规则的流线形，看不出方格
+	float m1 = fbm3(wp * 0.03) * 0.65 + vnoise(wp * 0.011 + 31.0) * 0.35;
+	float m2 = warp_noise(wp * 0.05 + 57.0);
+	float m3 = fbm3(wp * 0.11 + 91.0);   // 8~15 米的中等起伏
+	c *= mix(0.82, 1.14, m1) * mix(0.94, 1.06, m3);
+	return mix(c, c * vec3(1.1, 1.05, 0.8), smoothstep(0.55, 0.85, m2) * 0.55);
+}
+
 // 权重 w 加噪声后在 0.5 附近做窄过渡：边界清晰、形状不规则
 float blend_edge(float w, vec2 p, float seed) {
 	float n = vnoise(p * 2.2 + seed) * 0.6 + vnoise(p * 6.0 + seed * 3.0) * 0.4;
@@ -101,11 +126,25 @@ void fragment() {
 		col *= inst_tint.rgb;
 	}
 	if (terrain_mode) {
-		col = tex.rgb;
 		vec2 wp2 = world_pos.xz;
-		col = mix(col, sample_m(sand_tex, UV, texel_density), blend_edge(COLOR.r, wp2, 1.0));
-		col = mix(col, sample_m(bed_tex, UV, texel_density), blend_edge(COLOR.b, wp2, 7.0));
-		col = mix(col, sample_m(rock_tex, UV, texel_density), blend_edge(COLOR.g, wp2, 13.0));
+		col = sample_bomb(albedo_tex, UV, wp2, 0.0) * albedo_color.rgb;
+		col = mix(col, sample_bomb(sand_tex, UV, wp2, 4.0), blend_edge(COLOR.r, wp2, 1.0));
+		col = mix(col, sample_bomb(bed_tex, UV, wp2, 9.0), blend_edge(COLOR.b, wp2, 7.0));
+		vec3 rock = sample_bomb(rock_tex, UV, wp2, 15.0);
+		if (strata > 0.0) {
+			// 岩层：高度分层（层线用噪声轻微扭曲、略带倾斜），每层随机取一种岩色，层间一道暗线；贴图只提供明暗细节
+			float yb = world_pos.y * 1.25 + vnoise(wp2 * 0.06) * 1.6 + wp2.x * 0.02;
+			float band = floor(yb);
+			float r = hash12(vec2(band, 3.7));
+			vec3 tone = r < 0.34 ? vec3(0.68, 0.52, 0.36) : (r < 0.68 ? vec3(0.58, 0.34, 0.26) : vec3(0.49, 0.38, 0.29));
+			tone *= mix(0.9, 1.08, hash12(vec2(band, 9.1)));
+			float lum = dot(rock, vec3(0.299, 0.587, 0.114));
+			vec3 layered = tone * mix(0.88, 1.08, clamp(lum / max(dot(textureLod(rock_tex, vec2(0.5), 12.0).rgb, vec3(0.299, 0.587, 0.114)), 0.05) * 0.5, 0.0, 1.0));
+			layered *= mix(0.72, 1.0, smoothstep(0.0, 0.1, fract(yb)));
+			rock = mix(rock, layered, strata);
+		}
+		col = mix(col, rock, blend_edge(COLOR.g, wp2, 13.0));
+		col = terrain_macro(col, wp2);
 	}
 
 	// 以「贴图像素」为单位的格子坐标：积雪颗粒与贴图像素对齐
@@ -131,6 +170,11 @@ void fragment() {
 			+ hash13(cell + 41.0) * 0.12;
 		snow = step(h, cov);
 		vec3 sc = mix(snow_color.rgb, snow_color_alt.rgb, step(0.62, vnoise(cell.xy * 0.12 + cell.z * 1.7)));
+		if (terrain_mode) {
+			// 雪地也有大尺度起伏：一片片略带蓝灰的阴影雪、一片片更亮的新雪，远看不是一整块死白
+			float sm = warp_noise(world_pos.xz * 0.035 + 11.0) * 0.75 + vnoise(world_pos.xz * 0.013 + 5.0) * 0.25;
+			sc = mix(sc * vec3(0.84, 0.9, 1.0), sc * 1.04, smoothstep(0.28, 0.78, sm));
+		}
 		col = mix(col, sc, snow);
 	}
 
