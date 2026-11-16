@@ -5,7 +5,10 @@
   "hair": "bun",
   "hat": null,
   "weapon": "bag",
-  "sleeves": "short",
+  "sleeves": "layered",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
   "source": {
     "kind": "prompt",
     "prompt": "一个在港口卖鱼的大婶，系着蓝白条纹围裙，扎着发髻，挎着鱼篓",
@@ -19,6 +22,9 @@
   "beard": false,
   "vest": false,
   "sleeve_band": false,
+  "collar": true,
+  "belt": true,
+  "trim_hem": false,
   "extra_anims": [],
   "colors": {
     "hair": [
@@ -60,6 +66,11 @@
       "#c9a36a",
       "#9b7653",
       "#6f5842"
+    ],
+    "under": [
+      "#f6f2e8",
+      "#dcd5c6",
+      "#a9a08d"
     ]
   }
 }

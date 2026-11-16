@@ -5,26 +5,32 @@
   "hair": "short",
   "hat": null,
   "weapon": null,
-  "sleeves": "short",
+  "sleeves": "layered",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
   "skirt": 0.009205685929305318,
-  "height": 0.938177731994076,
-  "build": 1.1004788707906508,
+  "height": 0.9579609017631425,
+  "build": 1.0345763048888192,
   "cape": false,
   "scarf": false,
   "beard": false,
   "vest": false,
   "sleeve_band": false,
+  "collar": true,
+  "belt": false,
+  "trim_hem": false,
   "extra_anims": [],
   "colors": {
     "skin": [
-      "#a8735a",
-      "#86563f",
-      "#5e3a2b"
+      "#f7d6b8",
+      "#e8b892",
+      "#bf8466"
     ],
     "hair": [
-      "#f4f7fb",
-      "#d3dae6",
-      "#9fabbf"
+      "#3d3a40",
+      "#2a282e",
+      "#1c1b20"
     ],
     "top": [
       "#9a80b8",
@@ -42,16 +48,21 @@
       "#ada28c"
     ],
     "trim": [
-      "#d0564a",
-      "#a3352d",
-      "#6e2424"
+      "#8a8f99",
+      "#6b707c",
+      "#4c505c"
     ],
     "vest": [
-      "#6f9c94",
-      "#4f7c78",
-      "#3a5c5c"
+      "#8fb36a",
+      "#6e9652",
+      "#527a40"
     ],
     "hat": [
+      "#e2b25c",
+      "#c48f3c",
+      "#8f6230"
+    ],
+    "under": [
       "#8a8f99",
       "#6b707c",
       "#4c505c"

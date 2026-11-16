@@ -5,15 +5,21 @@
   "hair": "short",
   "hat": "helmet",
   "weapon": "spear",
-  "sleeves": "long",
+  "sleeves": "layered",
+  "armor": "cuirass",
+  "boots": "tall",
+  "beard_style": "goatee",
   "skirt": 0.26,
   "height": 1.0,
-  "build": 1.0,
+  "build": 1.1,
   "cape": false,
   "scarf": false,
   "beard": false,
   "vest": false,
   "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": false,
   "extra_anims": [],
   "colors": {
     "hair": [
@@ -40,6 +46,16 @@
       "#e0b84a",
       "#b9843a",
       "#8f6230"
+    ],
+    "armor": [
+      "#d5dae2",
+      "#9098a6",
+      "#5b616e"
+    ],
+    "under": [
+      "#6b707c",
+      "#4c505c",
+      "#353845"
     ]
   }
 }

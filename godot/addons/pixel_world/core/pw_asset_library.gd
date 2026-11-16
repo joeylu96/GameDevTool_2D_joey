@@ -268,7 +268,7 @@ static func _fix_surface(arr: Array, key: String, file: String) -> void:
 		for i in nrm.size():
 			nrm[i] = nrm[i].lerp(Vector3.UP, 0.7).normalized()
 		arr[Mesh.ARRAY_NORMAL] = nrm
-	elif key == "glass":
+	elif key.begins_with("glass"):
 		var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX] if arr[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
 		if idx.is_empty():
 			idx.resize(verts.size())
@@ -327,7 +327,7 @@ static func _convert_material(src: Material) -> Material:
 		if p == "tex" or p == "uv_in_meters" or (p.ends_with("_tex") and def[p] is String):
 			continue
 		m.set_shader_parameter(p, def[p])
-	if key == "glass":
+	if key.begins_with("glass"):
 		m.set_shader_parameter("emission_full", 1.0)
 		m.set_shader_parameter("emission_random_off", 0.3)
 	if key != "":

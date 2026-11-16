@@ -91,7 +91,7 @@ func generate() -> void:
 	if style.generator == "nature":
 		NatureGen.new(self, rng, batcher, style.params).run()
 	else:
-		TownGen.new(self, rng, batcher).run()
+		TownGen.new(self, rng, batcher, style.params).run()
 	batcher.flush(_content, theme.capitalize())
 	_build_water()
 	violations = placement.validate()

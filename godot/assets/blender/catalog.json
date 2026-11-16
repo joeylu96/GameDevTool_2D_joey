@@ -1119,6 +1119,576 @@
           "depth": 4.75
         }
       ]
+    },
+    {
+      "id": "bl_medieval_house",
+      "kind": "medieval_house",
+      "name": "中世纪木构房屋",
+      "category": "buildings",
+      "desc": "Blender 生成的中世纪半木构房屋：石砌底层或石台基，上层灰泥墙配深色木构架和斜撑，楼层向外挑出，陡坡青石板 / 红瓦 / 茅草屋顶，铅条窗、木百叶窗、铁合页木门和石烟囱。",
+      "vary": "宽 6~9 米、深 5~7 米、1~3 层、底层石砌或木构、灰泥颜色（白 / 赭）、屋顶（青石板 / 红瓦 / 茅草）、屋脊方向（平行正面 / 山墙朝街）、挑出距离、门的位置、烟囱随变体变化。",
+      "tags": [
+        "town",
+        "medieval"
+      ],
+      "source": "generator",
+      "files": [
+        "medieval_house_0.glb",
+        "medieval_house_1.glb",
+        "medieval_house_2.glb",
+        "medieval_house_3.glb",
+        "medieval_house_4.glb",
+        "medieval_house_5.glb",
+        "medieval_house_6.glb",
+        "medieval_house_7.glb"
+      ],
+      "footprint": [
+        7.7,
+        8.25
+      ],
+      "height": 11.03,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            7.2,
+            7.07
+          ],
+          "height": 9.95,
+          "width": 6.5,
+          "depth": 5.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            8.2,
+            8.21
+          ],
+          "height": 13.31,
+          "width": 7.5,
+          "depth": 6.0,
+          "floors": 3
+        },
+        {
+          "footprint": [
+            6.8,
+            7.82
+          ],
+          "height": 9.89,
+          "width": 6.0,
+          "depth": 6.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            6.7,
+            6.4
+          ],
+          "height": 7.23,
+          "width": 6.0,
+          "depth": 5.5,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            8.7,
+            8.51
+          ],
+          "height": 10.94,
+          "width": 8.0,
+          "depth": 7.0,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            7.3,
+            9.14
+          ],
+          "height": 12.79,
+          "width": 6.5,
+          "depth": 7.0,
+          "floors": 3
+        },
+        {
+          "footprint": [
+            7.7,
+            6.9
+          ],
+          "height": 6.94,
+          "width": 7.0,
+          "depth": 6.0,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            7.7,
+            8.25
+          ],
+          "height": 11.03,
+          "width": 7.0,
+          "depth": 6.5,
+          "floors": 2
+        }
+      ]
+    },
+    {
+      "id": "bl_tavern",
+      "kind": "tavern",
+      "name": "酒馆",
+      "category": "buildings",
+      "desc": "Blender 生成的中世纪酒馆：石砌底层的大号半木构楼，双开木门、门廊雨棚、铁支架上挂着酒杯招牌，门前长凳和酒桶。",
+      "vary": "宽 10~11 米、深 7.5~8 米、2 或 3 层、灰泥颜色、屋顶（青石板 / 红瓦）、屋脊方向、招牌颜色随变体变化。",
+      "tags": [
+        "town",
+        "medieval",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "tavern_0.glb",
+        "tavern_1.glb",
+        "tavern_2.glb",
+        "tavern_3.glb"
+      ],
+      "footprint": [
+        10.7,
+        10.66
+      ],
+      "height": 12.03,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            10.7,
+            10.19
+          ],
+          "height": 11.7,
+          "width": 10.0,
+          "depth": 7.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            11.7,
+            11.05
+          ],
+          "height": 13.7,
+          "width": 11.0,
+          "depth": 8.0,
+          "floors": 3
+        },
+        {
+          "footprint": [
+            11.3,
+            10.53
+          ],
+          "height": 14.94,
+          "width": 10.5,
+          "depth": 7.5,
+          "floors": 3
+        },
+        {
+          "footprint": [
+            10.7,
+            10.66
+          ],
+          "height": 12.03,
+          "width": 10.0,
+          "depth": 8.0,
+          "floors": 2
+        }
+      ]
+    },
+    {
+      "id": "bl_chapel",
+      "kind": "chapel",
+      "name": "小教堂",
+      "category": "landmarks",
+      "desc": "Blender 生成的中世纪小石头教堂：正面方形钟楼和尖顶，长条中殿配陡坡石板屋顶、尖拱铅条窗和阶梯扶壁，后面一个小圣坛。",
+      "vary": "石材（灰石 / 暖色石）、尖顶（四棱 / 八棱，青石板 / 红瓦）、中殿长度、窗户数量随变体变化。",
+      "tags": [
+        "town",
+        "medieval",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "chapel_0.glb",
+        "chapel_1.glb",
+        "chapel_2.glb"
+      ],
+      "footprint": [
+        9.0,
+        15.5
+      ],
+      "height": 18.35,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            9.0,
+            16.5
+          ],
+          "height": 18.35
+        },
+        {
+          "footprint": [
+            9.0,
+            17.5
+          ],
+          "height": 18.35
+        },
+        {
+          "footprint": [
+            9.0,
+            15.5
+          ],
+          "height": 18.35
+        }
+      ]
+    },
+    {
+      "id": "bl_smithy",
+      "kind": "smithy",
+      "name": "铁匠铺",
+      "category": "buildings",
+      "desc": "Blender 生成的中世纪铁匠铺：三面敞开的木棚、半高石后墙，石砌锻炉的炭火夜里发光，铁砧、淬火水桶、挂着锤钳的工具架。",
+      "vary": "屋顶（茅草 / 红瓦 / 青石板）、锻炉在左还是右、棚子大小随变体变化。",
+      "tags": [
+        "town",
+        "medieval",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "smithy_0.glb",
+        "smithy_1.glb",
+        "smithy_2.glb"
+      ],
+      "footprint": [
+        6.6,
+        6.0
+      ],
+      "height": 5.76,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            7.1,
+            6.2
+          ],
+          "height": 6.53,
+          "width": 6.0,
+          "depth": 5.0
+        },
+        {
+          "footprint": [
+            7.6,
+            6.7
+          ],
+          "height": 6.06,
+          "width": 6.5,
+          "depth": 5.5
+        },
+        {
+          "footprint": [
+            6.6,
+            6.0
+          ],
+          "height": 5.76,
+          "width": 5.5,
+          "depth": 4.8
+        }
+      ]
+    },
+    {
+      "id": "bl_town_wall",
+      "kind": "town_wall",
+      "name": "城墙",
+      "category": "landmarks",
+      "desc": "Blender 生成的中世纪城墙模块：6 米一段的石砌城墙，外侧垛口、顶上走道和内侧护墙，首尾相接围成城镇。",
+      "vary": "变体 0 朴素、1 带箭窗和腰线、2 内侧带扶壁和外侧排水石嘴；石材随变体变化。",
+      "tags": [
+        "town",
+        "medieval"
+      ],
+      "source": "generator",
+      "files": [
+        "town_wall_0.glb",
+        "town_wall_1.glb",
+        "town_wall_2.glb"
+      ],
+      "footprint": [
+        6.0,
+        1.95
+      ],
+      "height": 5.6,
+      "plant": false
+    },
+    {
+      "id": "bl_town_wall_tower",
+      "kind": "town_wall_tower",
+      "name": "城墙塔楼",
+      "category": "landmarks",
+      "desc": "Blender 生成的中世纪圆塔：石砌塔身、箭窗、挑出的檐口，圆锥尖顶或平顶垛口，放在城墙转角和接缝处。",
+      "vary": "变体 0 青石板尖顶、1 红瓦尖顶、2 平顶垛口。",
+      "tags": [
+        "town",
+        "medieval"
+      ],
+      "source": "generator",
+      "files": [
+        "town_wall_tower_0.glb",
+        "town_wall_tower_1.glb",
+        "town_wall_tower_2.glb"
+      ],
+      "footprint": [
+        6.1,
+        6.1
+      ],
+      "height": 9.75,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            6.1,
+            6.1
+          ],
+          "height": 14.66
+        },
+        {
+          "footprint": [
+            6.1,
+            6.1
+          ],
+          "height": 14.66
+        },
+        {
+          "footprint": [
+            6.1,
+            6.1
+          ],
+          "height": 9.75
+        }
+      ]
+    },
+    {
+      "id": "bl_town_gate",
+      "kind": "town_gate",
+      "name": "城门",
+      "category": "landmarks",
+      "desc": "Blender 生成的中世纪城门：方形门楼带圆拱门洞和向里打开的包铁木门，两侧圆塔，顶上垛口，门洞上方挂着旗帜。",
+      "vary": "塔顶（青石板尖顶 / 红瓦尖顶 / 平顶垛口）和旗帜颜色随变体变化。",
+      "tags": [
+        "town",
+        "medieval"
+      ],
+      "source": "generator",
+      "files": [
+        "town_gate_0.glb",
+        "town_gate_1.glb",
+        "town_gate_2.glb"
+      ],
+      "footprint": [
+        12.0,
+        4.3
+      ],
+      "height": 10.35,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            12.0,
+            4.3
+          ],
+          "height": 14.0
+        },
+        {
+          "footprint": [
+            12.0,
+            4.3
+          ],
+          "height": 14.0
+        },
+        {
+          "footprint": [
+            12.0,
+            4.3
+          ],
+          "height": 10.35
+        }
+      ]
+    },
+    {
+      "id": "bl_banner_pole",
+      "kind": "banner_pole",
+      "name": "旗杆",
+      "category": "street",
+      "desc": "Blender 生成的中世纪旗杆：石墩上的木杆、横杆挂着燕尾长旗，旗面有金色菱形纹章，适合城门、广场和集市。",
+      "vary": "旗帜颜色（红 / 蓝 / 绿）随变体变化。",
+      "tags": [
+        "town",
+        "medieval",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "banner_pole_0.glb",
+        "banner_pole_1.glb",
+        "banner_pole_2.glb"
+      ],
+      "footprint": [
+        1.4,
+        0.9
+      ],
+      "height": 5.5,
+      "plant": false
+    },
+    {
+      "id": "bl_lantern_post",
+      "kind": "lantern_post",
+      "name": "中世纪灯柱",
+      "category": "street",
+      "desc": "Blender 生成的中世纪灯柱：方木柱、斜撑横臂、铁链挂着铁框灯笼，夜里灯笼发出暖光，摆在中世纪小镇的街边。",
+      "vary": "柱高、横臂长度、单臂 / 双臂随变体变化。",
+      "tags": [
+        "town",
+        "medieval",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "lantern_post_0.glb",
+        "lantern_post_1.glb",
+        "lantern_post_2.glb"
+      ],
+      "footprint": [
+        0.6,
+        2.2
+      ],
+      "height": 3.02,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            0.6,
+            1.45
+          ],
+          "height": 2.92
+        },
+        {
+          "footprint": [
+            0.6,
+            1.6
+          ],
+          "height": 3.22
+        },
+        {
+          "footprint": [
+            0.6,
+            2.2
+          ],
+          "height": 3.02
+        }
+      ]
+    },
+    {
+      "id": "bl_firewood_pile",
+      "kind": "firewood_pile",
+      "name": "柴火垛",
+      "category": "props",
+      "desc": "Blender 生成的柴火垛：一层层码放的劈柴，两端木桩挡住，有的带小木板棚，靠在房屋和铁匠铺墙边。",
+      "vary": "长度、层数、有没有小棚子、劈柴的大小随变体变化。",
+      "tags": [
+        "town",
+        "medieval",
+        "yard",
+        "forest"
+      ],
+      "source": "generator",
+      "files": [
+        "firewood_pile_0.glb",
+        "firewood_pile_1.glb",
+        "firewood_pile_2.glb"
+      ],
+      "footprint": [
+        1.9,
+        0.95
+      ],
+      "height": 0.5,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.3,
+            0.95
+          ],
+          "height": 0.98
+        },
+        {
+          "footprint": [
+            2.9,
+            0.95
+          ],
+          "height": 1.12
+        },
+        {
+          "footprint": [
+            1.9,
+            0.95
+          ],
+          "height": 0.5
+        }
+      ]
+    },
+    {
+      "id": "bl_water_trough",
+      "kind": "water_trough",
+      "name": "饮水槽",
+      "category": "props",
+      "desc": "Blender 生成的中世纪饮水槽：铁箍木槽或凿出的石槽盛着水，有的旁边立着手摇水泵，摆在马厩、酒馆和广场边。",
+      "vary": "木槽 / 石槽、长度、有没有手摇水泵随变体变化。",
+      "tags": [
+        "town",
+        "medieval",
+        "yard",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "water_trough_0.glb",
+        "water_trough_1.glb",
+        "water_trough_2.glb"
+      ],
+      "footprint": [
+        2.3,
+        0.92
+      ],
+      "height": 1.55,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.0,
+            0.92
+          ],
+          "height": 0.75
+        },
+        {
+          "footprint": [
+            2.2,
+            0.92
+          ],
+          "height": 0.62
+        },
+        {
+          "footprint": [
+            2.3,
+            0.92
+          ],
+          "height": 1.55
+        }
+      ]
     }
   ]
 }

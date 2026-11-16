@@ -21,7 +21,9 @@ import random
 import re
 
 PARTS = ["skin", "eye", "hair", "top", "bottom", "skirt", "trim", "boots", "cape", "metal", "wood", "hat", "scarf",
-         "gem", "shine", "vest", "band", "glow"]
+         "gem", "shine", "vest", "band", "glow", "armor", "collar", "under", "belt", "brow", "sclera"]
+ARMORS = [None, "cuirass", "leather"]
+BEARDS = ["goatee", "short", "full"]
 
 HAIR_STYLES = ["short", "spiky", "long", "ponytail", "bun", "bald"]
 HATS = [None, "wide", "helmet", "hood", "cap"]
@@ -36,9 +38,13 @@ BASE_COLORS = {
     "gem": ["#fff3b8", "#ffd35c", "#e0952e"],
     "shine": ["#ffffff", "#ffffff", "#ffffff"],
     "glow": ["#ffffff", "#fff6c8", "#ffe08a"],
+    "collar": ["#f6f2e8", "#dcd5c6", "#a9a08d"],
+    "belt": ["#8a6446", "#654631", "#45301f"],
+    "sclera": ["#ffffff", "#efeae0", "#cfc7b8"],
 }
 # 没指定的部位借用相近部位的颜色
-FALLBACK = {"hat": "hair", "scarf": "trim", "cape": "top", "skirt": "top", "vest": "top", "band": "trim"}
+FALLBACK = {"hat": "hair", "scarf": "trim", "cape": "top", "skirt": "top", "vest": "top", "band": "trim",
+            "armor": "vest", "under": "bottom", "brow": "hair"}
 
 SKIN_RAMPS = [
     ["#f7d6b8", "#e8b892", "#bf8466"],
@@ -81,6 +87,22 @@ PRESETS = [
                 "bottom": ["#7a5a3e", "#5a412e", "#3d2c22"], "skirt": ["#a8835e", "#7a5a3e", "#5a412e"],
                 "trim": ["#6f9c94", "#4f7c78", "#3a5c5c"], "scarf": ["#c4473a", "#a3352d", "#7d2826"]}},
 ]
+
+# 2026-11-15 升级：预设角色加上分层服装（腰带、高领、内外两层袖、长靴、胸甲、下摆包边），中世纪小镇里更耐看
+_UPGRADE = {
+    "swordsman": {"collar": True, "belt": True, "boots": "tall", "trim_hem": True, "build": 1.05},
+    "merchant": {"belt": True, "collar": True},
+    "maiden": {"collar": True, "belt": True, "sleeves": "layered", "height": 0.95, "build": 0.92,
+               "colors": {"under": ["#f6f2e8", "#dcd5c6", "#a9a08d"]}},
+    "scholar": {"belt": True, "trim_hem": True, "collar": True},
+    "guard": {"armor": "cuirass", "boots": "tall", "belt": True, "sleeves": "layered", "build": 1.1,
+              "colors": {"armor": ["#d5dae2", "#9098a6", "#5b616e"], "under": ["#6b707c", "#4c505c", "#353845"]}},
+    "elder": {"belt": True, "trim_hem": True},
+}
+for _p in PRESETS:
+    _u = dict(_UPGRADE.get(_p["id"], {}))
+    _p["colors"] = dict(_p["colors"], **_u.pop("colors", {}))
+    _p.update(_u)
 
 # 随机路人用的布料色阶（取自共享调色板及其相近色）
 CLOTH_RAMPS = [
@@ -155,13 +177,16 @@ def validate(spec):
             warn.append("%s=%r 不支持，改成 %r" % (key, v, dflt))
             v = dflt
         out[key] = v
-    out["sleeves"] = _pick(spec.get("sleeves"), ["long", "short"], "long")
+    out["sleeves"] = _pick(spec.get("sleeves"), ["long", "short", "layered"], "long")
+    out["armor"] = _pick(spec.get("armor"), ARMORS, None)
+    out["boots"] = _pick(spec.get("boots"), ["short", "tall"], "short")
+    out["beard_style"] = _pick(spec.get("beard_style"), BEARDS, "goatee")
     if isinstance(spec.get("source"), dict):
         out["source"] = spec["source"]  # 来源记录（原画、生成用的模型），只存档，不参与生成
     out["skirt"] = _num(spec.get("skirt", 0.2), 0.0, 0.6, 0.2)
     out["height"] = _num(spec.get("height", 1.0), 0.85, 1.1, 1.0)
     out["build"] = _num(spec.get("build", 1.0), 0.85, 1.25, 1.0)
-    for flag in ("cape", "scarf", "beard", "vest", "sleeve_band"):
+    for flag in ("cape", "scarf", "beard", "vest", "sleeve_band", "collar", "belt", "trim_hem"):
         out[flag] = bool(spec.get(flag, False))
     extra = spec.get("extra_anims") or []
     out["extra_anims"] = [slug(x, "") for x in extra if isinstance(x, str) and slug(x, "")][:8] if isinstance(extra, list) else []
@@ -214,16 +239,21 @@ def random_villager(seed):
         "hair": hair,
         "hat": rnd.choice([None, None, None, "cap", "wide", "hood"]),
         "skirt": skirt,
-        "sleeves": rnd.choice(["long", "short"]),
+        "sleeves": rnd.choice(["long", "short", "layered"]),
         "cape": False,
         "scarf": rnd.random() < 0.25,
         "beard": (not female) and rnd.random() < 0.3,
         "vest": rnd.random() < 0.3,
         "weapon": rnd.choice([None, None, None, "bag"]),
+        "belt": rnd.random() < 0.6,
+        "collar": rnd.random() < 0.3,
+        "trim_hem": rnd.random() < 0.3,
+        "boots": "tall" if rnd.random() < 0.3 else "short",
         "height": rnd.uniform(0.9, 1.04),
         "build": rnd.uniform(0.9, 1.15),
         "colors": {"skin": rnd.choice(SKIN_RAMPS), "hair": rnd.choice(HAIR_RAMPS), "top": top, "bottom": bottom,
                    "skirt": rnd.choice([top, bottom, CLOTH_RAMPS[5]]), "trim": rnd.choice(CLOTH_RAMPS),
-                   "vest": rnd.choice(CLOTH_RAMPS), "hat": rnd.choice(CLOTH_RAMPS + HAIR_RAMPS)},
+                   "vest": rnd.choice(CLOTH_RAMPS), "hat": rnd.choice(CLOTH_RAMPS + HAIR_RAMPS),
+                   "under": rnd.choice([CLOTH_RAMPS[5], CLOTH_RAMPS[8], CLOTH_RAMPS[6]])},
     }
     return validate(spec)[0]

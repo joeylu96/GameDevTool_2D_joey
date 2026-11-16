@@ -5,7 +5,7 @@
   "hair": "bun",
   "hat": null,
   "weapon": "bag",
-  "sleeves": "short",
+  "sleeves": "layered",
   "source": {
     "kind": "prompt",
     "prompt": "一个在港口卖鱼的大婶，系着蓝白条纹围裙，扎着发髻，挎着鱼篓",
@@ -60,6 +60,13 @@
       "#c9a36a",
       "#9b7653",
       "#6f5842"
+    ],
+    "under": [
+      "#f6f2e8",
+      "#dcd5c6",
+      "#a9a08d"
     ]
-  }
+  },
+  "belt": true,
+  "collar": true
 }

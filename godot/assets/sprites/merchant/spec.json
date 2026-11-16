@@ -6,6 +6,9 @@
   "hat": "wide",
   "weapon": "bag",
   "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
   "skirt": 0.32,
   "height": 1.0,
   "build": 1.0,
@@ -14,6 +17,9 @@
   "beard": false,
   "vest": false,
   "sleeve_band": false,
+  "collar": true,
+  "belt": true,
+  "trim_hem": false,
   "extra_anims": [],
   "colors": {
     "hair": [

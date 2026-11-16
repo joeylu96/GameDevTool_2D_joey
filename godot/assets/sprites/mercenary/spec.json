@@ -1,80 +1,89 @@
 {
   "id": "mercenary",
   "name": "佣兵队长",
-  "desc": "金色短发、留山羊胡的佣兵队长，黑色皮甲背心配棕褐色内衬，袖口绑着红色臂带，腰挂长剑。",
+  "desc": "饱经风霜的北地佣兵队长：灰褐短发、络腮短胡，高领亚麻内衫外罩深棕皮质胸甲（铜色包边、肩扣），苔绿短袖外衣的袖口绣着米白与靛蓝的锯齿纹，炭灰内衬长袖，宽皮带、深色长靴，腰挂长剑。",
   "hair": "spiky",
   "hat": null,
   "weapon": "sword",
-  "sleeves": "long",
+  "sleeves": "layered",
+  "armor": "cuirass",
+  "boots": "tall",
+  "beard_style": "short",
   "source": {
     "kind": "ref_image",
-    "file": "~/Downloads/原画.jpg",
-    "colors_extracted": [
-      "#aa9c7b",
-      "#8d775c",
-      "#474b49",
-      "#343832",
-      "#6c4d37"
-    ],
-    "model": "claude-opus-5-5（当前会话手动充当模型做测试）",
-    "note": "原画是现有作品里的角色，这里只取通用特征（金发、胡子、黑背心、长剑、配色）做成原创角色，不沿用原角色的名字。"
+    "file": "res/ex.png（全身像素画参考）",
+    "model": "claude-opus-5-5（当前会话手动充当模型）",
+    "note": "参考图出自现有作品的角色，为避免版权问题只取通用的大致特征（中年佣兵、短发、络腮胡、高领、带包边和肩扣的胸甲、短袖外衣配花纹袖箍和长内衬袖、宽皮带、长靴、长剑），发色、胡型、配色、纹样都是原创的，不沿用原角色的名字和造型细节。"
   },
-  "skirt": 0.14,
+  "skirt": 0.2,
   "height": 1.04,
-  "build": 1.15,
+  "build": 1.16,
   "cape": false,
   "scarf": false,
   "beard": true,
-  "vest": true,
+  "vest": false,
   "sleeve_band": true,
+  "collar": true,
+  "belt": true,
+  "trim_hem": false,
   "extra_anims": [
     "shoulder_rest"
   ],
   "colors": {
     "hair": [
-      "#f0d27a",
-      "#cfa94e",
-      "#94723a"
+      "#9a7f5c",
+      "#6e5a43",
+      "#46392b"
     ],
     "skin": [
-      "#f2c9a6",
-      "#d9a383",
-      "#a8705a"
+      "#f0c6a2",
+      "#d49e7c",
+      "#a06a52"
     ],
-    "top": [
-      "#c9a97a",
-      "#a8835e",
-      "#7a5a3e"
-    ],
-    "vest": [
-      "#5a5d5b",
-      "#3a3d3e",
-      "#24262a"
-    ],
-    "band": [
-      "#d0564a",
-      "#a3352d",
-      "#6e2424"
-    ],
-    "bottom": [
-      "#6c6e6e",
-      "#4c505c",
-      "#353845"
+    "armor": [
+      "#7a6b60",
+      "#4b413b",
+      "#2a2320"
     ],
     "trim": [
-      "#8d775c",
-      "#6c4d37",
-      "#4a3426"
+      "#d9ab5c",
+      "#a87a38",
+      "#6e4e26"
     ],
-    "scarf": [
-      "#f3eee3",
-      "#d1ccc1",
-      "#a8a296"
+    "top": [
+      "#7f9668",
+      "#5b714b",
+      "#3d4d34"
+    ],
+    "band": [
+      "#efe6cf",
+      "#3f5a8c",
+      "#28385c"
+    ],
+    "under": [
+      "#706e73",
+      "#525056",
+      "#38363c"
+    ],
+    "bottom": [
+      "#6b5d51",
+      "#4d4239",
+      "#342c26"
     ],
     "boots": [
-      "#6c4d37",
-      "#4a3426",
-      "#2e2119"
+      "#5c4434",
+      "#3e2d22",
+      "#251a14"
+    ],
+    "belt": [
+      "#8a6446",
+      "#654631",
+      "#45301f"
+    ],
+    "collar": [
+      "#f4efe2",
+      "#d8d0bf",
+      "#a69c88"
     ]
   }
 }

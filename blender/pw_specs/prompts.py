@@ -24,13 +24,15 @@ CHARACTER = COMMON + """
 - id：小写英文 / 数字 / 下划线；name：中文名（≤ 8 字）；desc：一句话描述（中文）
 - hair：""" + " / ".join(charspec.HAIR_STYLES) + """
 - hat：null / """ + " / ".join(h for h in charspec.HATS if h) + """
-- sleeves：long / short；skirt：0..0.6（下摆 / 长裙长度，米；0 = 只穿裤子，0.15 = 短上衣下摆，0.5 = 长裙 / 长袍）
-- cape / scarf / beard / vest / sleeve_band：true / false（披风、围巾、胡子、背心或皮甲、上臂臂带）
+- sleeves：long / short / layered（layered = 内衬长袖 + 外面到肘部的短袖上衣）；skirt：0..0.6（下摆 / 长裙长度，米；0 = 只穿裤子，0.15 = 短上衣下摆，0.5 = 长裙 / 长袍）
+- cape / scarf / beard / vest / sleeve_band / collar / belt / trim_hem：true / false（披风、围巾、胡子、背心、袖箍（锯齿花纹）、高领、宽皮带、下摆包边）
+- armor：null / cuirass / leather（带包边和肩扣的胸甲 / 皮背心）；boots：short / tall（长靴带翻边）；beard_style：goatee / short / full
 - weapon：null / """ + " / ".join(w for w in charspec.WEAPONS if w) + """
 - height：0.85..1.1（身高系数）；build：0.85..1.25（体格，1.15 以上是壮汉）
 - colors：部位 → 三色色阶 [亮, 中, 暗]（也可以只给一个基色 "#rrggbb"，会自动推出色阶）。
   部位：skin 皮肤、hair 头发（胡子同色）、top 上衣和袖子、bottom 裤子、skirt 下摆 / 裙子、trim 腰带 / 袖口 / 镶边、
-  boots 靴子、cape 披风、vest 背心 / 皮甲、band 臂带、hat 帽子 / 兜帽、scarf 围巾、metal 金属、wood 木头、gem 宝石
+  boots 靴子、cape 披风、vest 背心 / 皮甲、band 臂带、hat 帽子 / 兜帽、scarf 围巾、metal 金属、wood 木头、gem 宝石、
+  armor 胸甲、collar 高领、under 内衬袖、belt 皮带
 - extra_anims：额外动作 id 列表（可省略）
 内置动作已经有：待机、走路、跑步、攻击、受击、施法、挥手，不用写。
 

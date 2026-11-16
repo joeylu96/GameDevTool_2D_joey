@@ -16,6 +16,12 @@ const STYLES := [
 		"params": {},
 	},
 	{
+		"id": "medieval", "name": "中世纪小镇", "en": "Medieval Town", "generator": "town", "size": 96, "ready": true,
+		"desc": "城墙围起来的中世纪小镇：城门和塔楼、石板广场中央的水井和集市摊位，半木结构民居、酒馆、教堂、铁匠铺，木柱提灯照亮街道。",
+		"color": Color("8a6a4a"),
+		"params": {"medieval": true, "lake": false, "trees": 0.3},
+	},
+	{
 		"id": "forest", "name": "森林", "en": "Forest", "generator": "nature", "size": 128, "ready": true,
 		"desc": "起伏的林地，松树为主；一两片大湖，常有小河流出地图；营地、木屋、废墟由林间小路相连。",
 		"color": Color("3a5f48"),

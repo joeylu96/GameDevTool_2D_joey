@@ -75,9 +75,22 @@ _TEX = {
     # 草叶：整面铺满的竖向渐变（行 0 = 根部深绿，最后一行 = 尖端浅色），见 _STRETCH
     "blade": lambda: pixtex.gradient(S.mix("grass_2", "grass_1", 0.3), S.mix("grass_0", "light_0", 0.25)),
     "blade_dry": lambda: pixtex.gradient(S.mix("grass_2", "dirt_1", 0.5), "ochre_0"),
+    # 中世纪小镇
+    "timber": lambda: pixtex.planks(["wood_2", "wood_3", S.mix("wood_3", "ink", 0.4), "ink"], 551, size=32, plank_w=8),
+    "plaster_ochre": lambda: pixtex.mottle([S.mix("ochre_0", "frame_0", 0.55), S.mix("ochre_0", "frame_1", 0.35)], 552, threshold=0.72),
+    "thatch": lambda: pixtex.thatch(553),
+    "slate": lambda: pixtex.shingles(["stone_1", "roof_1", "roof_2", "ink"], 554, row_h=6, sw=10),
+    "castle_stone": lambda: pixtex.bricks(["dirt_0", "stone_0", "stone_1", "stone_2"], 555, brick_w=20, row_h=10),
+    "cobble_wall": lambda: pixtex.bricks(["stone_0", "stone_1", "dirt_2", "stone_3"], 556, brick_w=10, row_h=7),
+    "forge_coal": lambda: pixtex.mottle(["light_2", "red_0"], 557, size=16, threshold=0.55),
+    "glass_lead": lambda: pixtex.leaded_glass(),
+    "cloth_red": lambda: pixtex.mottle(["red_1", "red_0"], 558, threshold=0.7),
+    "cloth_green": lambda: pixtex.mottle(["pine_0", "cloth_green"], 559, threshold=0.7),
+    "cloth_gold": lambda: pixtex.mottle(["cloth_yellow", "ochre_0"], 560, size=16, threshold=0.7),
+    "iron": lambda: pixtex.mottle(["stone_3", S.mix("stone_3", "ink", 0.5)], 561, size=16),
 }
 # 整张贴图铺满一个面（UV 0..1）而不是按米平铺的材质
-_STRETCH = {"glass", "blade", "blade_dry"}
+_STRETCH = {"glass", "glass_lead", "blade", "blade_dry"}
 
 _mat_cache = {}
 _arr_cache = {}
@@ -149,8 +162,14 @@ class MeshBuilder:
         u_axis /= np.linalg.norm(u_axis)
         v_axis = np.cross(u_axis, n)
         v_axis /= np.linalg.norm(v_axis)
-        if key in _STRETCH:
+        if key in _STRETCH and len(pts) <= 4:
             uvs = [(0, 1), (1, 1), (1, 0), (0, 0)][: len(pts)]
+        elif key in _STRETCH:
+            # 多边形（拱窗、尖拱窗）：按面内包围盒把整张贴图铺满
+            us = [float(np.dot(p, u_axis)) for p in pts]
+            vs = [float(np.dot(p, v_axis)) for p in pts]
+            du, dv = max(max(us) - min(us), 1e-6), max(max(vs) - min(vs), 1e-6)
+            uvs = [((uu - min(us)) / du, (vv - min(vs)) / dv) for uu, vv in zip(us, vs)]
         else:
             tw, th = tex_size(key)
             d = S.texel_density()

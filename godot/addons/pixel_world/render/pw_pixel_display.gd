@@ -3,14 +3,16 @@ class_name PWPixelDisplay
 extends SubViewportContainer
 ## 3D 渲染容器。默认是全像素风（pixel_mode）：低分辨率渲染、关掉抗锯齿，再整数倍最近邻放大，
 ## 场景、贴图、人物精灵都落在同一套像素网格上。
-## 缩放倍数按镜头距离自动选：让 1 个渲染像素 ≈ 1 个贴图像素（32 texel/米，人物精灵也是 32 像素/米），
-## 所以近处是清楚的像素画、拉远也不会把贴图细节丢掉（不会糊成大块）。
+## 缩放倍数按镜头距离自动选：让 1 个渲染像素 ≈ 1 个人物精灵像素（64 像素/米，正好是场景贴图 32 texel/米的两倍，
+## 贴图一个像素 = 2×2 渲染像素，整数对齐），人物的细节不丢，拉远也不会糊成大块。
 ## 防闪烁：镜头位置对齐到渲染像素网格（PWCameraRig.pixel_snap_m），不到 1 像素的余量用整个画面的平移补上，
 ## 镜头移动时画面平滑、静止的东西不会一闪一闪地「爬像素」。
 ## 关闭 pixel_mode 则按原生分辨率渲染并开启 4x MSAA。
 ## 3D 场景请放到 `viewport` 里（本节点的子 SubViewport）。
 
 const Style := preload("res://addons/pixel_world/style/pw_style_data.gd")
+## 人物精灵的像素密度（tools/blender_build_sprites.py 的 PX_PER_M）
+const SPRITE_DENSITY := 64.0
 
 @export var pixel_height := Style.PIXEL_HEIGHT:
 	set(v):
@@ -93,11 +95,11 @@ func _update() -> void:
 		return
 	var s := 1
 	if pixel_mode:
-		# 1 个渲染像素 ≈ 1 个贴图像素：屏幕高度 ÷（画面纵向能看到多少米 × 32），四舍五入取整
+		# 1 个渲染像素 ≈ 1 个精灵像素：屏幕高度 ÷（画面纵向能看到多少米 × 64），四舍五入取整
 		var rig := _find_rig()
 		var rows_wanted := float(pixel_height)
 		if rig != null:
-			rows_wanted = 2.0 * float(rig.distance) * tan(deg_to_rad(float(rig.fov)) * 0.5) * Style.TEXEL_DENSITY
+			rows_wanted = 2.0 * float(rig.distance) * tan(deg_to_rad(float(rig.fov)) * 0.5) * SPRITE_DENSITY
 		s = maxi(1, roundi(size.y / maxf(rows_wanted, 1.0)))
 	else:
 		var rig := _find_rig()

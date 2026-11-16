@@ -5,6 +5,8 @@ info：footprint（占地宽、深，米）、height（米）、desc 等，写�
 from . import cottage, handcart, lighthouse, market_stall, oak, pine, signpost, street_lamp, well
 from . import (barrel, bench, birch, bush, crate, fence, fence_post, fish, grass_dry, grass_flower, grass_tuft,
                haystack, poplar, rock, town_house, weed, windmill_blades, windmill_tower)
+from . import (banner_pole, chapel, firewood_pile, lantern_post, medieval_house, smithy, tavern, town_gate, town_wall,
+               town_wall_tower, water_trough)
 
 GENERATORS = {
     "cottage": cottage,
@@ -34,4 +36,15 @@ GENERATORS = {
     "windmill_tower": windmill_tower,
     "windmill_blades": windmill_blades,
     "town_house": town_house,
+    "medieval_house": medieval_house,
+    "tavern": tavern,
+    "chapel": chapel,
+    "smithy": smithy,
+    "town_wall": town_wall,
+    "town_wall_tower": town_wall_tower,
+    "town_gate": town_gate,
+    "banner_pole": banner_pole,
+    "lantern_post": lantern_post,
+    "firewood_pile": firewood_pile,
+    "water_trough": water_trough,
 }

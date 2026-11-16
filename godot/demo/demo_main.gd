@@ -30,7 +30,7 @@ var player: PWCharacter
 var npcs: Array[PWNPC] = []
 var nav: PWNavGrid
 ## 玩家用的像素精灵角色（没生成精灵表时自动退回低模身体）
-var player_sprite := "swordsman"
+var player_sprite := "mercenary"  # 玩家：佣兵队长（参考 res/ex.png 的大致特征做的原创角色）
 ## 走路模式：WASD 控制角色、镜头跟随
 var walk_mode := true:
 	set(v):

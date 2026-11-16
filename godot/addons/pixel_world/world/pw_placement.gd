@@ -26,6 +26,9 @@ const PROP := &"prop"       # 木箱、木桶、营火等
 const LANDMARK := &"landmark"
 const DOOR := &"door"       # 门前通道（保留区，什么都不能放）
 const WATER := &"water"
+const WALL := &"wall"       # 城墙、城楼（中世纪小镇）
+const PLAZA := &"plaza"     # 广场：像路一样让房屋朝向它，但摊位、水井、长椅可以摆在上面
+const STALL := &"stall"     # 广场上的摆设（水井、摊位、旗杆、布告栏）：广场本来就盖在路口上，和路、广场不互相检查
 const GRASS := &"grass"     # 草丛：只检查不登记（见 PWGrass）
 
 ## 类别之间额外的间距（米），按字母顺序的「a|b」查表；没列出的用 DEFAULT_GAP
@@ -80,6 +83,30 @@ const GAP := {
 	"grass|bench": 0.1,
 	"grass|prop": 0.1,
 	"grass|landmark": 0.2,
+	# 中世纪小镇：主街穿过城门、支路走到墙根为止；广场接着街道
+	"road|wall": -99.0,
+	"plaza|wall": -99.0,
+	"wall|wall": -99.0,
+	"house|wall": 1.0,
+	"tree|wall": 0.8,
+	"grass|wall": 0.2,
+	"plaza|road": -99.0,
+	"plaza|plaza": -99.0,
+	"path|plaza": -99.0,
+	"house|plaza": 1.2,
+	"door|plaza": -99.0,
+	"bench|plaza": -99.0,
+	"plaza|prop": -99.0,
+	"lamp|plaza": 0.0,
+	"plaza|tree": 0.6,
+	"bush|plaza": 0.2,
+	"plaza|rock": 0.4,
+	"grass|plaza": 0.15,
+	"road|stall": -99.0,
+	"plaza|stall": -99.0,
+	"door|stall": 0.6,
+	"house|stall": 0.5,
+	"grass|stall": 0.1,
 }
 ## 两棵树的树干之间至少这么远（树冠可以交叠，但树干不能贴在一起）
 const TRUNK_GAP := 1.6

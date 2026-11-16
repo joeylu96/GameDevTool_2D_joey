@@ -7,10 +7,11 @@
 shader_type spatial;
 render_mode cull_disabled, depth_draw_opaque, specular_disabled;
 
-uniform sampler2D sheet : source_color, filter_nearest, repeat_disable;
+uniform sampler2D sheet : source_color, filter_linear_mipmap, repeat_disable;
 uniform vec2 grid = vec2(10.0, 8.0);   // 精灵表的列数（帧）、行数（方向）
 uniform vec2 cell = vec2(0.0);         // 当前帧（列）、方向（行）
 uniform float wrap_min = 0.55;
+uniform float exposure = 0.88;          // 明暗已经画在精灵里了，再乘场景光会偏亮，整体压一点
 uniform float flash = 0.0;              // 受击闪白（0..1）
 uniform float shadow_skew = 0.9;        // 影子 pass 里投影板每升高 1 米、往背光方向偏多少米
 
@@ -37,8 +38,15 @@ void vertex() {
 }
 
 void fragment() {
-	vec4 t = texture(sheet, (cell + UV) / grid);
-	ALBEDO = mix(t.rgb, vec3(1.0), flash);
+	// 锐利双线性：精灵像素内部是纯色，只在像素边界上用约 1 个屏幕像素过渡。
+	// 放大倍数不是整数（比如 1080p 下 1.4 倍）也不会出现宽窄不一的像素；缩小时退化成 mipmap 过滤，远处的人物不闪
+	vec2 ts = vec2(textureSize(sheet, 0));
+	vec2 uv = (cell + UV) / grid;
+	vec2 px = uv * ts - 0.5;
+	vec2 fw = max(fwidth(px), vec2(1e-4));
+	vec2 f = clamp((fract(px) - 0.5) / fw + 0.5, 0.0, 1.0);
+	vec4 t = textureGrad(sheet, (floor(px) + 0.5 + f) / ts, dFdx(uv), dFdy(uv));
+	ALBEDO = mix(t.rgb * exposure, vec3(1.0), flash);
 	ALPHA = t.a;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 	ROUGHNESS = 1.0;

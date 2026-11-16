@@ -208,3 +208,41 @@ def gradient(top, bottom, h=16, w=4):
     b = np.array(S.c(bottom) if isinstance(bottom, str) else bottom, dtype=float)
     t = np.linspace(0, 1, h)[:, None, None]
     return np.broadcast_to(a + (b - a) * t, (h, w, 3)).copy()
+
+
+def thatch(seed, size=64, row_h=10):
+    """茅草屋顶（行 0 = 屋脊方向）：一排排下垂的草束，排底边亮、上部暗，草秆竖向细纹"""
+    rng = _rng(seed)
+    hi, a, b, dark = S.c("cloth_yellow"), S.c("ochre_0"), S.c("ochre_1"), S.c("ochre_2")
+    img = np.zeros((size, size, 3))
+    for row in range(size // row_h):
+        jag = rng.integers(-2, 3, size)
+        for x in range(size):
+            strand = _lerp(a, b, rng.random() * 0.8)
+            for ly in range(row_h):
+                y = row * row_h + ly
+                t = ly / (row_h - 1)
+                col = _lerp(dark, strand, min(1.0, 0.35 + t))
+                if ly >= row_h - 2 + (jag[x] > 1):
+                    col = _lerp(col, hi, 0.45)
+                if (x + row * 3) % 4 == 0:
+                    col = _lerp(col, dark, 0.25)
+                img[y, x] = col
+    return img
+
+
+def leaded_glass(size_w=16, size_h=24):
+    """中世纪铅条窗：深色玻璃 + 菱形铅条格 + 少量亮片（整张铺满一扇窗）"""
+    img = np.zeros((size_h, size_w, 3))
+    lead, g0, g1, hi = S.c("ink"), S.c("window_0"), S.c("window_1"), S.c("frame_1")
+    for y in range(size_h):
+        for x in range(size_w):
+            d1 = (x + y) % 6 == 0
+            d2 = (x - y) % 6 == 0
+            if d1 or d2 or x == 0 or x == size_w - 1 or y == 0 or y == size_h - 1:
+                img[y, x] = lead
+            else:
+                img[y, x] = g1 if (x * 7 + y * 3) % 11 == 0 else g0
+                if x < size_w // 2 and y < size_h // 3 and (x + y) % 5 == 1:
+                    img[y, x] = _lerp(g1, hi, 0.4)
+    return img

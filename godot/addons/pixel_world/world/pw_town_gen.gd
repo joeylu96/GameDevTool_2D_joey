@@ -39,12 +39,19 @@ var _lamp_spots: Array = []   # [Vector3 位置, 朝路方向 Vector2]
 var _path_x := 0.0
 var _path_top := 0.0
 var _pier := Rect2()
+var prm := {}               # 风格参数（PWStyles）；medieval = true 是中世纪小镇
+var medieval := false
+var plaza := Rect2()        # 中世纪小镇的中心广场（没有则为空）
 
 
-func _init(world: PWWorld, r: RandomNumberGenerator, b: PWBatcher) -> void:
+func _init(world: PWWorld, r: RandomNumberGenerator, b: PWBatcher, params := {}) -> void:
 	w = world
 	rng = r
 	batch = b
+	prm = params
+	medieval = prm.get("medieval", false)
+	if prm.has("lake"):
+		w.with_lake = prm.lake
 	pl = world.placement
 	H = world.size * 0.5
 
@@ -57,12 +64,17 @@ func run() -> void:
 		_shore_waves.append([rng.randf_range(0.6, 1.8) / (i + 1), rng.randf_range(0.05, 0.12) * (i + 1), rng.randf() * TAU])
 	_build_terrain()
 	_build_roads()
+	if medieval:
+		_build_plaza()
+		_build_walls()
 	var curb_gaps: Array[Rect2] = []
 	if w.with_lake:
 		curb_gaps.append(_build_path_and_pier())
 		_build_lighthouse()
 	_build_curbs(curb_gaps)
 	_build_houses()
+	if medieval:
+		_build_plaza_props()
 	_build_lamps()
 	_build_benches()
 	_build_blender_props()
@@ -78,7 +90,7 @@ func run() -> void:
 			break
 		sp += Vector2(0, 0.5) if w.with_lake else Vector2(0.5, 0)
 	w.spawn_point = Vector3(sp.x, w.ground_y(sp.x, sp.y), sp.y)
-	for c in [P.HOUSE, P.LAMP, P.TREE, P.BUSH, P.ROCK, P.FENCE, P.BENCH, P.ROAD]:
+	for c in [P.HOUSE, P.LAMP, P.TREE, P.BUSH, P.ROCK, P.FENCE, P.BENCH, P.ROAD, P.WALL]:
 		w.stats[String(c)] = pl.count(c)
 
 
@@ -444,7 +456,9 @@ func _try_house(road: Rect2, horiz: bool, side: int, u: float, p: Dictionary, fp
 	if not pl.can_place_rect(P.DOOR, door):
 		return false
 	var basis := Basis(Vector3.UP, yaw)
-	batch.add_static(bl("bl_town_house")[p.bl] if p.has("bl") else House.build(p), Transform3D(basis, Vector3(center.x, 0, center.y)))
+	batch.add_static(bl(p.get("asset", "bl_town_house"))[p.bl] if p.has("bl") else House.build(p), Transform3D(basis, Vector3(center.x, 0, center.y)))
+	if p.has("special"):
+		_specials.erase(p.special)
 	pl.add_rect(P.HOUSE, rect, 0.3, true)
 	pl.add_rect(P.DOOR, door)
 	var door_pt := center + front * (fp.y * 0.5 + 0.8)  # 门前通道上、离墙 0.8 米：NPC 的家
@@ -465,6 +479,8 @@ func _try_house(road: Rect2, horiz: bool, side: int, u: float, p: Dictionary, fp
 
 func _house_fence(basis: Basis, center: Vector2, fp: Vector2, yard: float) -> void:
 	var style_i := rng.randi_range(0, 3 if not bl("bl_fence").is_empty() else Props.FENCE_STYLES.size() - 1)
+	if medieval and not bl("bl_fence").is_empty():
+		style_i = [1, 2, 3][rng.randi_range(0, 2)]
 	var half := fp.x * 0.5 - 0.3
 	var lz := fp.y * 0.5 + yard - 1.3
 	var gap := [half - 1.05, half + 1.05]  # 相对篱笆起点（-half）；比门前通道（±0.9）宽一点
@@ -498,6 +514,10 @@ func _build_lamps() -> void:
 	var lamp_meshes := {}
 	# 路灯用 Blender 版（铸铁路灯，单臂 / 双臂）：灯臂沿局部 +X 伸出，转到朝向路面；光斑放在灯头正下方
 	var bl_lamps := PWAssetLibrary.blender_variants("bl_street_lamp")
+	# 中世纪小镇：木柱提灯（横臂沿局部 +Z 伸出，朝路）
+	var lantern := medieval and not bl("bl_lantern_post").is_empty()
+	if lantern:
+		bl_lamps = bl("bl_lantern_post")
 	var pool := PlaneMesh.new()
 	pool.size = Vector2(5, 5)
 	var pm := ShaderMaterial.new()
@@ -529,15 +549,19 @@ func _build_lamps() -> void:
 				if not bl_lamps.is_empty():
 					bl_mesh = bl_lamps[rng.randi_range(0, bl_lamps.size() - 1)]
 					var a := bl_mesh.get_aabb()
-					canopy = maxf(maxf(absf(a.position.x), absf(a.end.x)), 0.4)
-					# 双臂（两边都伸出）：光斑在灯柱下；单臂：在灯头下
-					bl_light = Vector3(0.0 if a.position.x < -0.3 else a.end.x - 0.22, 0, 0)
+					if lantern:
+						canopy = maxf(maxf(absf(a.position.z), absf(a.end.z)), 0.4)
+						bl_light = Vector3(0, 0, 0.0 if a.position.z < -0.3 else a.end.z - 0.2)
+					else:
+						canopy = maxf(maxf(absf(a.position.x), absf(a.end.x)), 0.4)
+						# 双臂（两边都伸出）：光斑在灯柱下；单臂：在灯头下
+						bl_light = Vector3(0.0 if a.position.x < -0.3 else a.end.x - 0.22, 0, 0)
 				if not on_land(Rect2(p - Vector2.ONE * 0.3, Vector2.ONE * 0.6), 1.0):
 					continue
 				if not pl.can_place(P.LAMP, p, 0.22, canopy, true):
 					continue
 				# 局部 +X 朝路（悬臂灯的灯头伸向路面）：绕 Y 转 θ 后 +X → (cosθ, 0, -sinθ)
-				var yaw := atan2(-to_road.y, to_road.x)
+				var yaw := atan2(to_road.x, to_road.y) if lantern else atan2(-to_road.y, to_road.x)
 				var basis := Basis(Vector3.UP, yaw)
 				if bl_mesh != null:
 					batch.add_static(bl_mesh, Transform3D(basis, Vector3(p.x, 0, p.y)))
@@ -563,6 +587,208 @@ func _build_lamps() -> void:
 	mmi.multimesh = mm
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	w.content().add_child(mmi)
+
+
+# ---------------------------------------------------------------- 中世纪小镇：广场、城墙
+
+## 中心广场：主街和离地图中线最近的竖向支路的路口，铺一块方形石板广场。
+## 广场也加进 roads，房屋会沿它的四边朝内排；水井、摊位、旗杆之后摆在广场上（_build_plaza_props）
+func _build_plaza() -> void:
+	var main: Rect2 = roads[0]
+	var cx := 0.0
+	var bd := INF
+	for r in roads:
+		if r.size.y > r.size.x and r.position.y <= main.end.y + 0.1 and r.end.y >= main.position.y - 0.1:
+			if absf(r.get_center().x) < bd:
+				bd = absf(r.get_center().x)
+				cx = r.get_center().x
+	var half := Vector2(9.0, 7.0)
+	var c := Vector2(cx, main.get_center().y)
+	c.y = clampf(c.y, -H + 12.0, H - 12.0)
+	plaza = Rect2(c - half, half * 2.0)
+	var mb := MB.new()
+	var y := 0.026  # 比路面高一点点，重叠处不闪
+	mb.face("cobble", [Vector3(plaza.position.x, y, plaza.position.y), Vector3(plaza.end.x, y, plaza.position.y),
+		Vector3(plaza.end.x, y, plaza.end.y), Vector3(plaza.position.x, y, plaza.end.y)], Vector3.UP)
+	batch.add_static(mb.commit(), Transform3D.IDENTITY, false)
+	pl.add_rect(P.PLAZA, plaza)
+	roads.append(plaza)
+
+
+## 广场上的东西：正中一口井，四周三四个摊位（朝广场中心）、四角旗杆、一块布告栏、一个水槽
+func _build_plaza_props() -> void:
+	if plaza.size == Vector2.ZERO:
+		return
+	var c := plaza.get_center()
+	var well := bl("bl_well")
+	if not well.is_empty():
+		batch.add_static(well[rng.randi_range(0, well.size() - 1)], Transform3D(Basis(Vector3.UP, rng.randi_range(0, 3) * PI * 0.5), Vector3(c.x, 0.026, c.y)))
+		var wr := Rect2(c - Vector2(1.4, 1.4), Vector2(2.8, 2.8))
+		pl.add_rect(P.STALL, wr, 0.0, true)
+		pl.solid_rects.append(wr)
+	# 摊位：贴着广场的南北两边，正面朝广场中心
+	var stalls := bl("bl_market_stall")
+	var spots: Array = []
+	for sx in [-5.0, 0.5, 5.5]:
+		spots.append([Vector2(c.x + sx, plaza.position.y + 1.6), 0.0])        # 北边，朝南（+Z）
+		spots.append([Vector2(c.x + sx, plaza.end.y - 1.6), PI])               # 南边，朝北
+	spots.shuffle()
+	var n_stall := 0
+	for sp: Array in spots:
+		if stalls.is_empty() or n_stall >= 4:
+			break
+		var q: Vector2 = sp[0]
+		var r := Rect2(q - Vector2(1.9, 1.0), Vector2(3.8, 2.0))
+		if not pl.can_place_rect(P.STALL, r, 0.0, true):
+			continue
+		batch.add_static(stalls[rng.randi_range(0, stalls.size() - 1)], Transform3D(Basis(Vector3.UP, sp[1]), Vector3(q.x, 0.026, q.y)))
+		pl.add_rect(P.STALL, r, 0.0, true)
+		pl.solid_rects.append(r)
+		n_stall += 1
+	var banners := bl("bl_banner_pole")
+	for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
+		if banners.is_empty():
+			break
+		var q := c + corner * (plaza.size * 0.5 - Vector2(0.9, 0.9))
+		if not pl.can_place(P.STALL, q, 0.5, 0.0, true):
+			continue
+		batch.add_static(banners[rng.randi_range(0, banners.size() - 1)], Transform3D(Basis(Vector3.UP, atan2(-corner.x, -corner.y)), Vector3(q.x, 0.026, q.y)))
+		pl.add_circle(P.STALL, q, 0.5, 0.0, true)
+		pl.solid_circles.append(Vector3(q.x, q.y, 0.3))
+	for id: String in ["bl_spec_notice_board", "bl_water_trough"]:
+		var v := bl(id)
+		if v.is_empty():
+			continue
+		for attempt in 12:
+			var q := c + Vector2(rng.randf_range(-6.5, 6.5), rng.randf_range(-4.5, 4.5))
+			var r := Rect2(q - Vector2(1.5, 0.7), Vector2(3.0, 1.4))
+			if r.get_center().distance_to(c) < 3.0 or not pl.can_place_rect(P.STALL, r, 0.0, true):
+				continue
+			batch.add_static(v[rng.randi_range(0, v.size() - 1)], Transform3D(Basis(Vector3.UP, rng.randi_range(0, 3) * PI * 0.5), Vector3(q.x, 0.026, q.y)))
+			pl.add_rect(P.STALL, r, 0.0, true)
+			pl.solid_rects.append(r)
+			break
+
+
+## 城墙：沿地图四边一圈（离边 2~3 米）。路穿过城墙的地方开城门（城门 12 米 = 两段墙），
+## 其余用 6 米一段的墙填满（按长度微调拉伸），四角和每隔约 24 米放一座塔楼盖住接缝。
+## Blender 约定：墙 / 城门的外侧朝 Godot +Z，墙段沿局部 X、原点在中心
+func _build_walls() -> void:
+	var walls := bl("bl_town_wall")
+	if walls.is_empty():
+		return
+	var gates := bl("bl_town_gate")
+	var towers := bl("bl_town_wall_tower")
+	var W := floorf((H - 2.0) / 3.0) * 3.0
+	# 四条边：起点、方向（沿墙）、外侧朝向（yaw：局部 +Z → 外侧）
+	var sides := [
+		[Vector2(-W, -W), Vector2(1, 0), PI],          # 北边，外侧 -Z
+		[Vector2(-W, W), Vector2(1, 0), 0.0],          # 南边，外侧 +Z
+		[Vector2(-W, -W), Vector2(0, 1), -PI * 0.5],   # 西边，外侧 -X
+		[Vector2(W, -W), Vector2(0, 1), PI * 0.5],     # 东边，外侧 +X
+	]
+	var tower_pts: Array[Vector2] = [Vector2(-W, -W), Vector2(W, -W), Vector2(-W, W), Vector2(W, W)]
+	for sd: Array in sides:
+		var o: Vector2 = sd[0]
+		var dir: Vector2 = sd[1]
+		var basis := Basis(Vector3.UP, sd[2])
+		# 哪些路穿过这条边：横着的路穿过东西两边，竖着的路穿过南北两边
+		var cuts: Array[float] = []
+		for r: Rect2 in roads:
+			if r == plaza:
+				continue
+			var horiz := r.size.x >= r.size.y
+			if dir.x != 0.0 and not horiz:   # 南北边：看竖向的路
+				var line := o.y
+				if r.position.y <= line + 0.5 and r.end.y >= line - 0.5:
+					cuts.append(r.get_center().x + W)
+			elif dir.y != 0.0 and horiz:     # 东西边：看横向的路
+				var line := o.x
+				if r.position.x <= line + 0.5 and r.end.x >= line - 0.5:
+					cuts.append(r.get_center().y + W)
+		cuts.sort()
+		# 城门（离角至少 9 米、彼此不重叠）
+		var gate_at: Array[float] = []
+		for t in cuts:
+			if gates.is_empty() or t < 9.0 or t > 2.0 * W - 9.0:
+				continue
+			if not gate_at.is_empty() and t - gate_at[-1] < 13.0:
+				continue
+			gate_at.append(t)
+		# 墙段：[0, 2W] 去掉城门占的 [t-6, t+6]
+		var segs: Array[Vector2] = []
+		var start := 0.0
+		for t in gate_at:
+			segs.append(Vector2(start, t - 6.0))
+			start = t + 6.0
+		segs.append(Vector2(start, 2.0 * W))
+		for t in gate_at:
+			var gp := o + dir * t
+			batch.add_static(gates[rng.randi_range(0, gates.size() - 1)], Transform3D(basis, Vector3(gp.x, 0, gp.y)))
+			# 城门两侧的塔是实心的，门洞（±1.6 米）留给路
+			for sx: float in [-1.0, 1.0]:
+				var tp := gp + dir * sx * 4.0
+				pl.add_circle(P.WALL, tp, 2.0, 0.0, true)
+				pl.solid_circles.append(Vector3(tp.x, tp.y, 2.0))
+			for sx: float in [-1.0, 1.0]:
+				var a := gp + dir * sx * 1.7
+				var b := gp + dir * sx * 6.0
+				var rr := Rect2(a, Vector2.ZERO).expand(b).grow(0.8)
+				pl.add_rect(P.WALL, rr, 0.0, true)
+				pl.solid_rects.append(rr)
+		for sg: Vector2 in segs:
+			var ln := sg.y - sg.x
+			if ln < 0.5:
+				continue
+			var n := maxi(1, roundi(ln / 6.0))
+			var k := ln / (n * 6.0)
+			for i in n:
+				var mid := o + dir * (sg.x + (i + 0.5) * 6.0 * k)
+				batch.add_static(walls[rng.randi_range(0, walls.size() - 1)], Transform3D(basis * Basis().scaled(Vector3(k, 1, 1)), Vector3(mid.x, 0, mid.y)))
+			var a2 := o + dir * sg.x
+			var b2 := o + dir * sg.y
+			var wr := Rect2(a2, Vector2.ZERO).expand(b2).grow(0.8)
+			pl.add_rect(P.WALL, wr, 0.0, true)
+			pl.solid_rects.append(wr)
+			# 长墙段中间加塔楼（盖在墙段接缝上）
+			if n >= 5 and not towers.is_empty():
+				var every := int(ceil(n / 2.0))
+				var tj := sg.x + every * 6.0 * k
+				tower_pts.append(o + dir * tj)
+	for tp in tower_pts:
+		if towers.is_empty():
+			break
+		batch.add_static(towers[rng.randi_range(0, towers.size() - 1)], Transform3D(Basis(Vector3.UP, rng.randi_range(0, 3) * PI * 0.5), Vector3(tp.x, 0, tp.y)))
+		pl.add_circle(P.WALL, tp, 2.7, 0.0, true)
+		pl.solid_circles.append(Vector3(tp.x, tp.y, 2.7))
+
+
+## 中世纪小镇里专门的建筑（各放一座）：教堂、酒馆、铁匠铺。放不下就留到下一个位置再试
+var _specials: Array[String] = ["bl_chapel", "bl_tavern", "bl_smithy"]
+
+
+## 一个 Blender 建筑的参数：挑一个变体，尺寸取 variant_info（没有就用 catalog 里的占地）
+func _bl_building(id: String) -> Dictionary:
+	var meshes := bl(id)
+	if meshes.is_empty():
+		return {}
+	var k := rng.randi_range(0, meshes.size() - 1)
+	var info := PWAssetLibrary.blender_variant_info(id)
+	var fp := Vector2(6, 6)
+	var wd := Vector2.ZERO
+	if info.size() == meshes.size():
+		var vi: Dictionary = info[k]
+		fp = Vector2(float(vi.footprint[0]), float(vi.footprint[1]))
+		if vi.has("width"):
+			wd = Vector2(float(vi.width), float(vi.depth))
+	else:
+		for it in PWAssetLibrary.blender_items():
+			if it.id == id:
+				var f: Array = it.get("footprint", [6, 6])
+				fp = Vector2(float(f[0]), float(f[1]))
+	if wd == Vector2.ZERO:
+		wd = fp - Vector2(0.9, 0.9)
+	return {"asset": id, "bl": k, "width": wd.x, "depth": wd.y, "fp": fp}
 
 
 # ---------------------------------------------------------------- Blender 资产
@@ -592,6 +818,15 @@ func weed_variants() -> Array[Mesh]:
 
 ## 房屋参数：有 Blender 小镇房屋就随机挑一个变体（尺寸来自 catalog 的 variant_info），否则用代码版的随机参数
 func _house_params() -> Dictionary:
+	if medieval:
+		if not _specials.is_empty() and rng.randf() < 0.45:
+			var sp := _bl_building(_specials[0])
+			if not sp.is_empty():
+				sp["special"] = _specials[0]
+				return sp
+		var mh := _bl_building("bl_medieval_house")
+		if not mh.is_empty():
+			return mh
 	var info := PWAssetLibrary.blender_variant_info("bl_town_house")
 	if info.size() == bl("bl_town_house").size() and not info.is_empty():
 		var k := rng.randi_range(0, info.size() - 1)
@@ -720,7 +955,7 @@ func _try_bush(p: Vector2, s: float) -> bool:
 
 func _build_trees() -> void:
 	_variants()
-	var attempts := int(w.size * w.size * 0.4 * w.tree_density)
+	var attempts := int(w.size * w.size * 0.4 * w.tree_density * float(prm.get("trees", 1.0)))
 	for i in attempts:
 		var p := Vector2(rng.randf_range(-H + 1.0, H - 1.0), rng.randf_range(-H + 1.0, H - 1.0))
 		if w.with_lake and p.y > shore(p.x) - 2.0:
@@ -738,7 +973,11 @@ func _build_trees() -> void:
 ## 路灯、灯塔、树、房屋有各自的生成逻辑，这里不放。
 func _build_blender_props() -> void:
 	var counts := {"bl_well": 1, "bl_market_stall": 3}
-	var exclude := ["bl_street_lamp", "bl_lighthouse", "bl_cottage", "bl_pine", "bl_oak"]
+	var exclude := ["bl_street_lamp", "bl_lighthouse", "bl_cottage", "bl_pine", "bl_oak", "bl_lantern_post"]
+	if medieval:
+		# 井和摊位已经摆在广场上；路边多放些木桶、柴堆、水槽、旗杆
+		counts = {"bl_well": 0, "bl_market_stall": 1, "bl_banner_pole": 3, "bl_firewood_pile": 3, "bl_water_trough": 2}
+		exclude.append("bl_spec_notice_board")
 	var specs := []
 	for it in PWAssetLibrary.blender_with_tags(["plaza", "roadside", "yard"], exclude):
 		if it.get("semantic", "") in ["trees", "buildings", "landmarks"]:
