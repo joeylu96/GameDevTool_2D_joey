@@ -86,7 +86,8 @@ func setup(id: String) -> bool:
 	# 精灵是按 elev_deg 俯角渲染的；公告板竖直，竖向拉长 1/cos(俯角)，从同样的俯角看过去不变形、像素一一对应
 	# 竖向拉长 1/cos(游戏镜头俯角)：从那个俯角看过去，精灵的每一行正好是一行屏幕像素（渲染俯角可以更正面一些，脸看得清）
 	var stretch := 1.0 / cos(deg_to_rad(float(cat.get("view_pitch_deg", cat.get("elev_deg", 0.0)))))
-	q.size = Vector2(f / ppm, f / ppm * stretch)
+	var fw: float = cat.get("frame_w", f)  # 帧宽（竖长方形的帧；旧目录是正方形）
+	q.size = Vector2(fw / ppm, f / ppm * stretch)
 	# 脚底（精灵表里的 origin 像素）对准节点原点
 	q.center_offset = Vector3(0, (float(cat.origin[1]) - f * 0.5) / ppm * stretch, 0)
 	mesh = q

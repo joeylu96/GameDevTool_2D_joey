@@ -2,11 +2,12 @@
   "version": 2,
   "generator": "pixel_world_blender sprites 0.4.0",
   "blender": "5.2.4 LTS",
-  "frame": 144,
-  "px_per_m": 64.0,
+  "frame": 180,
+  "frame_w": 140,
+  "px_per_m": 80.0,
   "origin": [
-    72.0,
-    138.18
+    70.0,
+    172.72
   ],
   "dirs": 8,
   "elev_deg": 10.0,

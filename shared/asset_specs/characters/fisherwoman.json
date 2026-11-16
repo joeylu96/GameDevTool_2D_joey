@@ -68,5 +68,6 @@
     ]
   },
   "belt": true,
-  "collar": true
+  "collar": true,
+  "lashes": true
 }

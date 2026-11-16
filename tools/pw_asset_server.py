@@ -650,7 +650,7 @@ def list_assets():
             actions.append({"id": a.get("id"), "name": a.get("name"), "frames": a.get("frames"), "for": a.get("for", [])})
         except ValueError:
             pass
-    return {"characters": chars, "props": props, "actions": actions, "frame": sc.get("frame", 128),
+    return {"characters": chars, "props": props, "actions": actions, "frame": sc.get("frame", 128), "frame_w": sc.get("frame_w", sc.get("frame", 128)),
             "dirs": sc.get("dirs", 8)}
 
 

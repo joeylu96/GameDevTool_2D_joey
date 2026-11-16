@@ -185,7 +185,7 @@
     <h2 id="dtitle"></h2>
     <div class="row" style="align-items:flex-start">
       <div style="flex:0 0 270px">
-        <canvas id="anim" width="80" height="80" style="width:240px;height:240px"></canvas>
+        <canvas id="anim" width="140" height="180" style="width:210px;height:270px"></canvas>
         <img id="dimg" class="pv" style="width:256px;height:256px;display:none">
         <canvas id="spin" width="192" height="192" style="width:256px;height:256px;display:none;cursor:grab"
           title="左右拖动转着看"></canvas>
@@ -398,9 +398,9 @@ async function loadAssets() {
     const a = c && c.anims.idle;
     if (!a) return;
     const img = new Image();
-    img.onload = () => { const F = assets.frame; cv.width = cv.height = F;  // 画布 = 一帧大小，CSS 按像素放大
+    img.onload = () => { const F = assets.frame, FW = assets.frame_w || F; cv.width = FW; cv.height = F;  // 画布 = 一帧大小，CSS 按像素放大
       const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
-      g.drawImage(img, 0, F, F, F, 0, 0, F, F); };
+      g.drawImage(img, 0, F, FW, F, 0, 0, FW, F); };
     img.src = "/files/sprites/" + a.file + "?t=" + Date.now();
   });
   $("props").innerHTML = assets.props.map(p => `<div class="card" onclick="showProp('${p.id}')">
@@ -420,13 +420,13 @@ function drawAnim() {
   let f = 0;
   const ctx = $("anim").getContext("2d");
   img.onload = () => {
-    $("anim").width = $("anim").height = assets.frame;  // 画布 = 一帧大小（改尺寸会重置绘图状态，之后再关平滑）
+    $("anim").width = assets.frame_w || assets.frame; $("anim").height = assets.frame;  // 画布 = 一帧大小（改尺寸会重置绘图状态，之后再关平滑）
     ctx.imageSmoothingEnabled = false;
     animTimer = setInterval(() => {
-      const F = assets.frame;
-      ctx.clearRect(0, 0, F, F);
-      ctx.fillStyle = "#9fb48a"; ctx.fillRect(0, 0, F, F);
-      ctx.drawImage(img, (f % a.count) * F, dir * F, F, F, 0, 0, F, F);
+      const F = assets.frame, FW = assets.frame_w || F;
+      ctx.clearRect(0, 0, FW, F);
+      ctx.fillStyle = "#9fb48a"; ctx.fillRect(0, 0, FW, F);
+      ctx.drawImage(img, (f % a.count) * FW, dir * F, FW, F, 0, 0, FW, F);
       f++;
     }, 1000 / a.fps);
   };

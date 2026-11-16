@@ -15,6 +15,7 @@ func _init() -> void:
 		quit(1)
 		return
 	var f: int = cat.frame
+	var fw: int = int(cat.get("frame_w", f))  # 帧宽（竖长方形帧）
 	var dirs: int = cat.dirs
 	var n := 0
 	for c: Dictionary in cat.characters:
@@ -35,7 +36,7 @@ func _init() -> void:
 				for k in int(info.count):
 					var at := AtlasTexture.new()
 					at.atlas = tex
-					at.region = Rect2(k * f, d * f, f, f)
+					at.region = Rect2(k * fw, d * f, fw, f)
 					sf.add_frame(name, at)
 		var path := DIR + "%s/frames.tres" % c.id
 		var err := ResourceSaver.save(sf, path)

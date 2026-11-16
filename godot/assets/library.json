@@ -23,25 +23,77 @@
       "id": "buildings",
       "name": "建筑",
       "builtin": true,
-      "children": []
+      "children": [
+        {
+          "id": "modern",
+          "name": "现代"
+        },
+        {
+          "id": "medieval",
+          "name": "中世纪"
+        },
+        {
+          "id": "cn_village",
+          "name": "中国乡村"
+        }
+      ]
     },
     {
       "id": "landmarks",
       "name": "地标",
       "builtin": true,
-      "children": []
+      "children": [
+        {
+          "id": "modern",
+          "name": "现代"
+        },
+        {
+          "id": "medieval",
+          "name": "中世纪"
+        },
+        {
+          "id": "cn_village",
+          "name": "中国乡村"
+        }
+      ]
     },
     {
       "id": "street",
       "name": "街道设施",
       "builtin": true,
-      "children": []
+      "children": [
+        {
+          "id": "modern",
+          "name": "现代"
+        },
+        {
+          "id": "medieval",
+          "name": "中世纪"
+        },
+        {
+          "id": "cn_village",
+          "name": "中国乡村"
+        }
+      ]
     },
     {
       "id": "props",
       "name": "杂物",
       "builtin": true,
-      "children": []
+      "children": [
+        {
+          "id": "modern",
+          "name": "现代"
+        },
+        {
+          "id": "medieval",
+          "name": "中世纪"
+        },
+        {
+          "id": "cn_village",
+          "name": "中国乡村"
+        }
+      ]
     },
     {
       "id": "water",

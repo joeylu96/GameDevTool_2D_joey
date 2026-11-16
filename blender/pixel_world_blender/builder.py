@@ -88,9 +88,38 @@ _TEX = {
     "cloth_green": lambda: pixtex.mottle(["pine_0", "cloth_green"], 559, threshold=0.7),
     "cloth_gold": lambda: pixtex.mottle(["cloth_yellow", "ochre_0"], 560, size=16, threshold=0.7),
     "iron": lambda: pixtex.mottle(["stone_3", S.mix("stone_3", "ink", 0.5)], 561, size=16),
+    # 现代风格：抹灰外墙、木 / 深色挂板、金属屋面、大玻璃、钢、混凝土、车漆
+    "render_white": lambda: pixtex.mottle(["frame_0", S.mix("frame_0", "snow_2", 0.4)], 801, size=64, threshold=0.72),
+    "render_grey": lambda: pixtex.mottle([S.mix("stone_0", "snow_1", 0.45), S.mix("stone_0", "snow_1", 0.3)], 802, size=64, threshold=0.7),
+    "render_sand": lambda: pixtex.mottle([S.mix("dirt_0", "frame_0", 0.55), S.mix("dirt_0", "frame_0", 0.4)], 803, size=64, threshold=0.7),
+    "clad_wood": lambda: np.ascontiguousarray(np.transpose(pixtex.planks(["ochre_1", "wood_0", "wood_1", "wood_2"], 804, size=32, plank_w=4), (1, 0, 2))),
+    "clad_dark": lambda: np.ascontiguousarray(np.transpose(pixtex.planks([S.mix("stone_2", "stone_1", 0.5), "stone_2", "stone_3", "ink"], 805, size=32, plank_w=4), (1, 0, 2))),
+    "metal_roof": lambda: pixtex.planks(["roof_0", "roof_1", "roof_2", "ink"], 806, size=32, plank_w=8),
+    "glass_modern": lambda: pixtex.glass_pane(),
+    "glass_car": lambda: pixtex.glass_pane(),
+    "steel": lambda: pixtex.mottle(["stone_0", S.mix("stone_0", "snow_2", 0.5)], 807, size=16),
+    "concrete": lambda: pixtex.mottle([S.mix("stone_0", "snow_2", 0.3), "stone_0"], 808, size=64, threshold=0.62),
+    "paint_red": lambda: pixtex.mottle(["red_0", S.mix("red_0", "light_0", 0.3)], 811, size=16, threshold=0.75),
+    "paint_blue": lambda: pixtex.mottle(["cloth_blue", S.mix("cloth_blue", "snow_0", 0.3)], 812, size=16, threshold=0.75),
+    "paint_white": lambda: pixtex.mottle(["snow_0", "snow_1"], 813, size=16, threshold=0.75),
+    "paint_grey": lambda: pixtex.mottle(["stone_1", "stone_0"], 814, size=16, threshold=0.75),
+    "paint_yellow": lambda: pixtex.mottle(["cloth_yellow", S.mix("cloth_yellow", "light_0", 0.4)], 815, size=16, threshold=0.75),
+    "paint_teal": lambda: pixtex.mottle(["teal_1", "teal_0"], 816, size=16, threshold=0.75),
+    "paint_black": lambda: pixtex.mottle(["stone_3", S.mix("stone_3", "ink", 0.5)], 817, size=16, threshold=0.7),
+    "paint_green": lambda: pixtex.mottle(["cloth_green", "grass_1"], 818, size=16, threshold=0.75),
+    "tyre": lambda: pixtex.mottle(["ink", S.mix("ink", "stone_3", 0.5)], 819, size=16),
+    # 八九十年代中国乡村：红砖 / 青砖 / 土坯、白灰墙、小青瓦、红纸（对联，不写字）、水泥、釉面水缸
+    "brick_red_cn": lambda: pixtex.bricks(["red_1", "red_2", "red_3", "frame_1"], 821, brick_w=14, row_h=6),
+    "brick_grey": lambda: pixtex.bricks(["stone_0", "stone_1", "stone_2", "frame_1"], 822, brick_w=14, row_h=6),
+    "mudbrick": lambda: pixtex.bricks(["dirt_0", "dirt_1", "dirt_2", "wood_2"], 823, brick_w=18, row_h=9),
+    "whitewash": lambda: pixtex.mottle(["frame_0", S.mix("frame_1", "stone_0", 0.3)], 824, size=64, threshold=0.68),
+    "tile_cn": lambda: pixtex.cn_tiles(825),
+    "red_paper": lambda: pixtex.mottle(["red_0", S.mix("red_0", "light_2", 0.3)], 826, size=16, threshold=0.75),
+    "cement": lambda: pixtex.mottle(["stone_0", S.mix("stone_0", "snow_2", 0.35)], 827, size=64, threshold=0.6),
+    "glaze": lambda: pixtex.mottle(["wood_2", S.mix("wood_2", "ochre_1", 0.4)], 828, size=16, threshold=0.7),
 }
 # 整张贴图铺满一个面（UV 0..1）而不是按米平铺的材质
-_STRETCH = {"glass", "glass_lead", "blade", "blade_dry"}
+_STRETCH = {"glass", "glass_lead", "blade", "blade_dry", "glass_modern", "glass_car"}
 
 _mat_cache = {}
 _arr_cache = {}

@@ -231,6 +231,42 @@ def thatch(seed, size=64, row_h=10):
     return img
 
 
+def glass_pane(size_w=16, size_h=24):
+    """现代大玻璃（整张铺满一块玻璃，窗框是几何体）：上浅下深的玻璃 + 两道斜高光"""
+    img = np.zeros((size_h, size_w, 3))
+    g0, g1, hi = S.c("window_0"), S.c("window_1"), S.c("water_0")
+    for y in range(size_h):
+        for x in range(size_w):
+            col = _lerp(g1, g0, 0.3 + 0.7 * y / (size_h - 1))
+            if (x + y) % 11 in (0, 1) and x + y < size_w + 6:
+                col = _lerp(col, hi, 0.45)
+            img[y, x] = col
+    return img
+
+
+def cn_tiles(seed, size=64, col_w=8, row_h=8):
+    """中式小青瓦（行 0 = 屋脊方向）：竖向一列列凸起的筒瓦（亮）和凹下的瓦沟（暗），每隔一段一道瓦片搭接的横缝"""
+    rng = _rng(seed)
+    hi, a, b, dark = S.c("stone_0"), S.c("roof_0"), S.c("roof_1"), S.c("roof_2")
+    img = np.zeros((size, size, 3))
+    for x in range(size):
+        lx = x % col_w
+        for y in range(size):
+            ly = (y + (x // col_w) * 3) % row_h
+            if lx < 3:  # 筒瓦（凸起）：中间一列高光
+                col = _lerp(a, hi, 0.5) if lx == 1 else (np.array(a) if lx == 0 else _lerp(a, b, 0.4))
+            else:  # 瓦沟
+                col = _lerp(b, dark, 0.35 if lx in (3, col_w - 1) else 0.0)
+            if ly == 0:
+                col = _lerp(col, dark, 0.55)
+            elif ly == 1:
+                col = _lerp(col, hi, 0.25)
+            img[y, x] = col
+    speck = rng.random((size, size)) < 0.04
+    img[speck] = img[speck] * 0.92
+    return img
+
+
 def leaded_glass(size_w=16, size_h=24):
     """中世纪铅条窗：深色玻璃 + 菱形铅条格 + 少量亮片（整张铺满一扇窗）"""
     img = np.zeros((size_h, size_w, 3))

@@ -50,6 +50,8 @@ func _init(world: PWWorld, r: RandomNumberGenerator, b: PWBatcher, params := {})
 	batch = b
 	prm = params
 	medieval = prm.get("medieval", false)
+	for sp: String in prm.get("specials", []):
+		_specials.append(sp)
 	if prm.has("lake"):
 		w.with_lake = prm.lake
 	pl = world.placement
@@ -68,27 +70,33 @@ func run() -> void:
 		_build_plaza()
 		_build_walls()
 	var curb_gaps: Array[Rect2] = []
-	if w.with_lake:
+	if w.with_lake and prm.get("pier", true):
 		curb_gaps.append(_build_path_and_pier())
 		_build_lighthouse()
-	_build_curbs(curb_gaps)
+	if prm.get("curbs", true):
+		_build_curbs(curb_gaps)
 	_build_houses()
 	if medieval:
 		_build_plaza_props()
 	_build_lamps()
 	_build_benches()
 	_build_blender_props()
+	if prm.get("cars", 0.0) > 0.0:
+		_build_cars()
+	if prm.get("fields", 0) > 0:
+		_build_fields()
 	_build_trees()
 	_build_bushes_and_rocks()
 	_build_grass()
 	if w.with_lake:
 		_build_lake_life()
-	var sp := Vector2(_path_x, _path_top + 3.0) if w.with_lake else roads[0].get_center()
+	var pier: bool = w.with_lake and prm.get("pier", true)
+	var sp := Vector2(_path_x, _path_top + 3.0) if pier else roads[0].get_center()
 	# 出生点必须能站人：沿土路（或主街）往前找第一个空地
 	for k in 40:
 		if w.can_stand(sp):
 			break
-		sp += Vector2(0, 0.5) if w.with_lake else Vector2(0.5, 0)
+		sp += Vector2(0, 0.5) if pier else Vector2(0.5, 0)
 	w.spawn_point = Vector3(sp.x, w.ground_y(sp.x, sp.y), sp.y)
 	for c in [P.HOUSE, P.LAMP, P.TREE, P.BUSH, P.ROCK, P.FENCE, P.BENCH, P.ROAD, P.WALL]:
 		w.stats[String(c)] = pl.count(c)
@@ -224,11 +232,36 @@ func _build_roads() -> void:
 	_split(Rect2(-H, main.end.y, H * 2.0, land_bottom - main.end.y), 0)
 	var mb := MB.new()
 	var y := 0.02
+	var road_key: String = prm.get("road", "cobble")
 	for r in roads:
-		mb.face("cobble", [Vector3(r.position.x, y, r.position.y), Vector3(r.end.x, y, r.position.y),
+		mb.face(road_key, [Vector3(r.position.x, y, r.position.y), Vector3(r.end.x, y, r.position.y),
 			Vector3(r.end.x, y, r.end.y), Vector3(r.position.x, y, r.end.y)], Vector3.UP)
 		pl.add_rect(P.ROAD, r)
+	if road_key == "asphalt":
+		_lane_markings(mb)
 	batch.add_static(mb.commit(), Transform3D.IDENTITY, false)
+
+
+## 沥青路中间的白色虚线（路口 3 米内不画）
+func _lane_markings(mb: MB) -> void:
+	for r in roads:
+		var horiz := r.size.x >= r.size.y
+		var a := r.position.x if horiz else r.position.y
+		var b := r.end.x if horiz else r.end.y
+		var c := r.get_center()
+		var t := a + 1.0
+		while t + 1.5 < b - 1.0:
+			var p := Vector2(t + 0.75, c.y) if horiz else Vector2(c.x, t + 0.75)
+			var near_cross := false
+			for o in roads:
+				if o != r and o.grow(3.0).has_point(p):
+					near_cross = true
+					break
+			if not near_cross:
+				var hw := Vector2(0.75, 0.06) if horiz else Vector2(0.06, 0.75)
+				mb.face("road_paint", [Vector3(p.x - hw.x, 0.024, p.y - hw.y), Vector3(p.x + hw.x, 0.024, p.y - hw.y),
+					Vector3(p.x + hw.x, 0.024, p.y + hw.y), Vector3(p.x - hw.x, 0.024, p.y + hw.y)], Vector3.UP)
+			t += 3.0
 
 
 ## BSP：把区域切成街区，切线就是支路。只有足够大的区域才继续切
@@ -412,7 +445,8 @@ func _build_houses() -> void:
 			while u < u_end - 5.0:
 				var p := _house_params()
 				var fp: Vector2 = p.fp
-				var yard := rng.randf_range(2.6, 3.4)
+				var yr: Array = prm.get("yard_depth", [2.6, 3.4])
+				var yard := rng.randf_range(yr[0], yr[1])
 				if rng.randf() > clampf(0.45 + 0.4 * w.house_density, 0.0, 1.0):
 					u += fp.x * 0.6
 					continue
@@ -466,7 +500,7 @@ func _try_house(road: Rect2, horiz: bool, side: int, u: float, p: Dictionary, fp
 	var body := Vector2(p.width + 0.5, p.depth + 0.5) if horiz else Vector2(p.depth + 0.5, p.width + 0.5)
 	pl.solid_rects.append(Rect2(center - body * 0.5, body))
 	# 篱笆：沿前院靠路一侧，门口留缺口
-	if rng.randf() < 0.55:
+	if rng.randf() < float(prm.get("yard_chance", 0.55)):
 		_house_fence(basis, center, fp, yard)
 	# 门两侧的灌木
 	for sx in [-1.0, 1.0]:
@@ -478,9 +512,13 @@ func _try_house(road: Rect2, horiz: bool, side: int, u: float, p: Dictionary, fp
 
 
 func _house_fence(basis: Basis, center: Vector2, fp: Vector2, yard: float) -> void:
+	if prm.get("yard", "") == "courtyard" and not bl("bl_cn_courtyard_wall").is_empty():
+		_courtyard(basis, center, fp, yard)
+		return
 	var style_i := rng.randi_range(0, 3 if not bl("bl_fence").is_empty() else Props.FENCE_STYLES.size() - 1)
-	if medieval and not bl("bl_fence").is_empty():
-		style_i = [1, 2, 3][rng.randi_range(0, 2)]
+	if prm.has("fence_styles") and not bl("bl_fence").is_empty():
+		var fs: Array = prm.fence_styles
+		style_i = fs[rng.randi_range(0, fs.size() - 1)]
 	var half := fp.x * 0.5 - 0.3
 	var lz := fp.y * 0.5 + yard - 1.3
 	var gap := [half - 1.05, half + 1.05]  # 相对篱笆起点（-half）；比门前通道（±0.9）宽一点
@@ -514,10 +552,11 @@ func _build_lamps() -> void:
 	var lamp_meshes := {}
 	# 路灯用 Blender 版（铸铁路灯，单臂 / 双臂）：灯臂沿局部 +X 伸出，转到朝向路面；光斑放在灯头正下方
 	var bl_lamps := PWAssetLibrary.blender_variants("bl_street_lamp")
-	# 中世纪小镇：木柱提灯（横臂沿局部 +Z 伸出，朝路）
-	var lantern := medieval and not bl("bl_lantern_post").is_empty()
+	# 其他风格的路灯（中世纪木柱提灯、现代 LED 路灯、乡村电线杆）：横臂沿局部 +Z 伸出，朝路
+	var lantern: bool = prm.has("lamp") and not bl(prm.lamp).is_empty()
 	if lantern:
-		bl_lamps = bl("bl_lantern_post")
+		bl_lamps = bl(prm.lamp)
+	var with_pools: bool = prm.get("lamp_pool", true)
 	var pool := PlaneMesh.new()
 	pool.size = Vector2(5, 5)
 	var pm := ShaderMaterial.new()
@@ -527,11 +566,13 @@ func _build_lamps() -> void:
 	for r in roads:
 		var horiz := r.size.x >= r.size.y
 		var length := r.size.x if horiz else r.size.y
-		var n := int(length / w.lamp_spacing)
+		var spacing: float = w.lamp_spacing * float(prm.get("lamp_spacing", 1.0))
+		var n := int(length / spacing)
+		var sides: Array = prm.get("lamp_sides", [-1, 1])
 		for i in n:
-			for side in [-1, 1]:
+			for side in sides:
 				# 两侧交错：一侧在格点上，另一侧在半格处
-				var t := (i + (0.5 if side > 0 else 0.0) + 0.25) * w.lamp_spacing
+				var t := (i + (0.5 if side > 0 else 0.0) + 0.25) * spacing
 				if t > length - 1.0:
 					continue
 				var p: Vector2
@@ -565,7 +606,8 @@ func _build_lamps() -> void:
 				var basis := Basis(Vector3.UP, yaw)
 				if bl_mesh != null:
 					batch.add_static(bl_mesh, Transform3D(basis, Vector3(p.x, 0, p.y)))
-					pools.append(Transform3D(Basis(), Vector3(p.x, 0.04, p.y) + basis * bl_light))
+					if with_pools:
+						pools.append(Transform3D(Basis(), Vector3(p.x, 0.04, p.y) + basis * bl_light))
 				else:
 					var metal: String = Trees.LAMP_METALS[rng.randi_range(0, Trees.LAMP_METALS.size() - 1)]
 					var key := style + "/" + metal
@@ -587,6 +629,120 @@ func _build_lamps() -> void:
 	mmi.multimesh = mm
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	w.content().add_child(mmi)
+
+
+# ---------------------------------------------------------------- 中国乡村：院墙、庄稼地；现代小镇：路边停车
+
+## 农家院：前院沿临街一边砌院墙，正对房门开门楼（4 米一段，门楼 4 米、门洞 3 米），两侧院墙接到房子正面
+func _courtyard(basis: Basis, center: Vector2, fp: Vector2, yard: float) -> void:
+	var walls := bl("bl_cn_courtyard_wall")
+	var gates := bl("bl_cn_courtyard_gate")
+	var half := fp.x * 0.5 - 0.2
+	var lz := fp.y * 0.5 + yard - 0.9
+	var back := fp.y * 0.5 + 0.75  # 房屋登记的占地外扩 0.3 米，再留出房屋和院墙的间距
+	var rects: Array[Rect2] = []
+	# 登记占地时侧墙在拐角前 0.9 米收住（和正面墙不互相「太近」；墙体本身照样砌到拐角）
+	for seg: Array in [[Vector3(-half, 0, lz), Vector3(-2.0, 0, lz)], [Vector3(2.0, 0, lz), Vector3(half, 0, lz)],
+			[Vector3(-half, 0, back), Vector3(-half, 0, lz - 0.9)], [Vector3(half, 0, back), Vector3(half, 0, lz - 0.9)]]:
+		var a := basis * (seg[0] as Vector3)
+		var b := basis * (seg[1] as Vector3)
+		var rr := Rect2(center + Vector2(a.x, a.z), Vector2.ZERO).expand(center + Vector2(b.x, b.z)).grow(0.2)
+		if not pl.can_place_rect(P.FENCE, rr):
+			return
+		rects.append(rr)
+	var o := Vector3(center.x, 0, center.y)
+	if not gates.is_empty():
+		var g := basis * Vector3(0, 0, lz)
+		batch.add_static(gates[rng.randi_range(0, gates.size() - 1)], Transform3D(basis, o + g))
+	var wv := walls[rng.randi_range(0, walls.size() - 1)]
+	# 正面两段（局部 X 方向）、两侧两段（局部 Z 方向，转 90°，外侧朝两边）
+	for seg: Array in [[-half, -2.0, 0.0], [2.0, half, 0.0], [back, lz, -half], [back, lz, half]]:
+		var a0: float = seg[0]
+		var a1: float = seg[1]
+		var sx: float = seg[2]
+		var ln := a1 - a0
+		if ln < 0.6:
+			continue
+		var n := maxi(1, roundi(ln / 4.0))
+		var k := ln / (n * 4.0)
+		for i in n:
+			var mid := a0 + (i + 0.5) * 4.0 * k
+			var local: Transform3D
+			if sx == 0.0:
+				local = Transform3D(Basis().scaled(Vector3(k, 1, 1)), Vector3(mid, 0, lz))
+			else:
+				local = Transform3D(Basis(Vector3.UP, PI * 0.5 * signf(sx)) * Basis().scaled(Vector3(k, 1, 1)), Vector3(sx, 0, mid))
+			batch.add_static(wv, Transform3D(basis, o) * local)
+	for rr in rects:
+		pl.add_rect(P.FENCE, rr)
+		pl.solid_rects.append(rr)
+
+
+## 庄稼地：空着的大块地里开几块菜地 / 麦地（一垄一垄的绿苗，地头是土）
+func _build_fields() -> void:
+	var n_fields := 0
+	var step := 7.0
+	var x := -H + 4.0
+	while x < H - 10.0 and n_fields < int(prm.get("fields", 0)):
+		var z := -H + 4.0
+		while z < H - 8.0 and n_fields < int(prm.get("fields", 0)):
+			var r := Rect2(x + rng.randf_range(-1.0, 1.0), z + rng.randf_range(-1.0, 1.0), rng.randf_range(7.0, 11.0), rng.randf_range(5.0, 8.0))
+			if on_land(r, 1.0) and pl.can_place_rect(P.PROP, r.grow(0.8), 0.0, true) and rng.randf() < 0.6:
+				_field(r)
+				pl.add_rect(P.PROP, r, 0.0, true)
+				n_fields += 1
+			z += step
+		x += step * 1.4
+
+
+func _field(r: Rect2) -> void:
+	var mb := MB.new()
+	mb.face("dirt", [Vector3(r.position.x, 0.03, r.position.y), Vector3(r.end.x, 0.03, r.position.y),
+		Vector3(r.end.x, 0.03, r.end.y), Vector3(r.position.x, 0.03, r.end.y)], Vector3.UP)
+	var along_x := rng.randf() < 0.5
+	var crop: String = ["leaf", "leaf_dark", "grass"][rng.randi_range(0, 2)]
+	var t := 0.45
+	var span := r.size.y if along_x else r.size.x
+	while t < span - 0.3:
+		var h := rng.randf_range(0.18, 0.32)
+		if along_x:
+			mb.box(crop, Vector3(r.position.x + 0.3, 0.03, r.position.y + t - 0.14), Vector3(r.end.x - 0.3, 0.03 + h, r.position.y + t + 0.14))
+		else:
+			mb.box(crop, Vector3(r.position.x + t - 0.14, 0.03, r.position.y + 0.3), Vector3(r.position.x + t + 0.14, 0.03 + h, r.end.y - 0.3))
+		t += 0.7
+	batch.add_static(mb.commit(), Transform3D.IDENTITY)
+
+
+## 路边停车（现代小镇）：顺着路靠边停，路口附近不停
+func _build_cars() -> void:
+	var cars := bl("bl_car")
+	if cars.is_empty():
+		return
+	for r in roads:
+		if r == plaza:
+			continue
+		var horiz := r.size.x >= r.size.y
+		var a := (r.position.x if horiz else r.position.y) + 4.0
+		var b := (r.end.x if horiz else r.end.y) - 4.0
+		var t := a
+		while t < b:
+			if rng.randf() < float(prm.get("cars", 0.0)):
+				var side := -1.0 if rng.randf() < 0.5 else 1.0
+				var c := r.get_center()
+				var p := Vector2(t, c.y + side * (ROAD_W * 0.5 - 0.95)) if horiz else Vector2(c.x + side * (ROAD_W * 0.5 - 0.95), t)
+				var near := false
+				for o in roads:
+					if o != r and o.grow(3.5).has_point(p):
+						near = true
+				var ext := Vector2(2.3, 1.0) if horiz else Vector2(1.0, 2.3)
+				var rect := Rect2(p - ext, ext * 2.0)
+				if not near and pl.can_place_rect(P.CAR, rect, 0.0, true):
+					# 车头朝 +Z：顺着路的方向（靠右行驶）
+					var yaw := (PI * 0.5 if side > 0 else -PI * 0.5) if horiz else (0.0 if side < 0 else PI)
+					batch.add_static(cars[rng.randi_range(0, cars.size() - 1)], Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, 0.02, p.y)))
+					pl.add_rect(P.CAR, rect, 0.0, true)
+					pl.solid_rects.append(rect)
+			t += rng.randf_range(6.0, 10.0)
 
 
 # ---------------------------------------------------------------- 中世纪小镇：广场、城墙
@@ -767,7 +923,7 @@ func _build_walls() -> void:
 
 
 ## 中世纪小镇里专门的建筑（各放一座）：教堂、酒馆、铁匠铺。放不下就留到下一个位置再试
-var _specials: Array[String] = ["bl_chapel", "bl_tavern", "bl_smithy"]
+var _specials: Array[String] = []
 
 
 ## 一个 Blender 建筑的参数：挑一个变体，尺寸取 variant_info（没有就用 catalog 里的占地）
@@ -821,13 +977,14 @@ func weed_variants() -> Array[Mesh]:
 
 ## 房屋参数：有 Blender 小镇房屋就随机挑一个变体（尺寸来自 catalog 的 variant_info），否则用代码版的随机参数
 func _house_params() -> Dictionary:
-	if medieval:
+	if prm.has("houses"):
 		if not _specials.is_empty() and rng.randf() < 0.45:
 			var sp := _bl_building(_specials[0])
 			if not sp.is_empty():
 				sp["special"] = _specials[0]
 				return sp
-		var mh := _bl_building("bl_medieval_house")
+		var hs: Array = prm.houses
+		var mh := _bl_building(hs[rng.randi_range(0, hs.size() - 1)])
 		if not mh.is_empty():
 			return mh
 	var info := PWAssetLibrary.blender_variant_info("bl_town_house")
@@ -858,6 +1015,9 @@ func fence_run(xf: Transform3D, length: float, style: int) -> void:
 
 
 func _build_benches() -> void:
+	if not prm.get("benches", true):
+		return
+	var bench_id: String = prm.get("bench", "bl_bench")
 	var benches := {}
 	for spot: Array in _lamp_spots:
 		if rng.randf() > 0.35:
@@ -873,7 +1033,7 @@ func _build_benches() -> void:
 		var si := rng.randi_range(0, Props.BENCH_STYLES.size() - 1)
 		var style: String = Props.BENCH_STYLES[si]
 		if not benches.has(style):
-			var bb := bl("bl_bench")
+			var bb := bl(bench_id)
 			benches[style] = bb[si % bb.size()] if not bb.is_empty() else Props.build_bench(style)
 		# 长椅局部 +Z 是正面：朝向道路
 		var yaw := atan2(to_road.x, to_road.y)
@@ -966,7 +1126,7 @@ func _build_trees() -> void:
 		var belt := p.y < -H + 12.0  # 北边林带：更密，几乎全是松树
 		if not belt and rng.randf() > 0.35:
 			continue
-		var pine := rng.randf() < (0.92 if belt else 0.55)
+		var pine := rng.randf() < (float(prm.get("pine_belt", 0.92)) if belt else float(prm.get("pine_ratio", 0.55)))
 		var mesh: Mesh = _pines[rng.randi_range(0, _pines.size() - 1)] if pine else _broads[rng.randi_range(0, _broads.size() - 1)]
 		try_tree(p, mesh, rng.randf_range(0.75, 1.2), pine)
 
@@ -976,16 +1136,27 @@ func _build_trees() -> void:
 ## 路灯、灯塔、树、房屋有各自的生成逻辑，这里不放。
 func _build_blender_props() -> void:
 	var counts := {"bl_well": 1, "bl_market_stall": 3}
-	var exclude := ["bl_street_lamp", "bl_lighthouse", "bl_cottage", "bl_pine", "bl_oak", "bl_lantern_post"]
+	var exclude := ["bl_street_lamp", "bl_lighthouse", "bl_cottage", "bl_pine", "bl_oak", "bl_lantern_post",
+		"bl_modern_street_lamp", "bl_cn_utility_pole", "bl_car", "bl_cn_courtyard_wall", "bl_cn_courtyard_gate"]
+	var style_tag: String = prm.get("style_tag", "")
 	if medieval:
 		# 井和摊位已经摆在广场上；路边多放些木桶、柴堆、水槽、旗杆
 		counts = {"bl_well": 0, "bl_market_stall": 1, "bl_banner_pole": 3, "bl_firewood_pile": 3, "bl_water_trough": 2}
 		exclude.append("bl_spec_notice_board")
+	counts.merge(prm.get("prop_counts", {}), true)
 	var specs := []
 	for it in PWAssetLibrary.blender_with_tags(["plaza", "roadside", "yard"], exclude):
 		if it.get("semantic", "") in ["trees", "buildings", "landmarks"]:
 			continue
 		if not PWAssetLibrary.fits_climate(it, w.theme):
+			continue
+		# 风格专属的道具（modern / medieval / cn_village 标签）只出现在对应风格里
+		var tags: Array = it.get("tags", [])
+		var styled := false
+		for st in ["modern", "medieval", "cn_village"]:
+			if st in tags and st != style_tag:
+				styled = true
+		if styled:
 			continue
 		var fp: Array = it.get("footprint", [2, 2])
 		specs.append([it, counts.get(it.id, rng.randi_range(1, 2)), maxf(1.6, float(fp[1]) * 0.5 + 0.9)])

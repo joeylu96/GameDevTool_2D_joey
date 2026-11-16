@@ -7,6 +7,10 @@ from . import (barrel, bench, birch, bush, crate, fence, fence_post, fish, grass
                haystack, poplar, rock, town_house, weed, windmill_blades, windmill_tower)
 from . import (banner_pole, chapel, firewood_pile, lantern_post, medieval_house, smithy, tavern, town_gate, town_wall,
                town_wall_tower, water_trough)
+from . import bus_stop, car, modern_bench, modern_house, modern_shop, modern_street_lamp, trash_bin
+from . import (cn_bicycle, cn_brick_house, cn_chicken_coop, cn_clothes_line, cn_courtyard_gate, cn_courtyard_wall,
+               cn_hand_pump, cn_loudspeaker_pole, cn_pigpen, cn_shop, cn_stone_mill, cn_threshing_ground, cn_utility_pole,
+               cn_walking_tractor, cn_water_vat)
 
 GENERATORS = {
     "cottage": cottage,
@@ -47,4 +51,28 @@ GENERATORS = {
     "lantern_post": lantern_post,
     "firewood_pile": firewood_pile,
     "water_trough": water_trough,
+    # 现代风格
+    "modern_house": modern_house,
+    "modern_shop": modern_shop,
+    "modern_street_lamp": modern_street_lamp,
+    "modern_bench": modern_bench,
+    "trash_bin": trash_bin,
+    "bus_stop": bus_stop,
+    "car": car,
+    # 八九十年代中国乡村
+    "cn_brick_house": cn_brick_house,
+    "cn_courtyard_wall": cn_courtyard_wall,
+    "cn_courtyard_gate": cn_courtyard_gate,
+    "cn_shop": cn_shop,
+    "cn_utility_pole": cn_utility_pole,
+    "cn_hand_pump": cn_hand_pump,
+    "cn_bicycle": cn_bicycle,
+    "cn_walking_tractor": cn_walking_tractor,
+    "cn_pigpen": cn_pigpen,
+    "cn_chicken_coop": cn_chicken_coop,
+    "cn_loudspeaker_pole": cn_loudspeaker_pole,
+    "cn_stone_mill": cn_stone_mill,
+    "cn_water_vat": cn_water_vat,
+    "cn_clothes_line": cn_clothes_line,
+    "cn_threshing_ground": cn_threshing_ground,
 }

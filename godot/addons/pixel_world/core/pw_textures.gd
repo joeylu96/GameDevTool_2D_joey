@@ -129,6 +129,10 @@ static func _make(key: String) -> Image:
 			return sand(705)
 		"canyon_soil":
 			return canyon_soil(711)
+		"asphalt":
+			return asphalt(713)
+		"road_paint":
+			return road_paint(714)
 		"lakebed":
 			return lakebed(706)
 		# 生物 / 人物
@@ -663,6 +667,47 @@ static func sand(seed_value: int, size := 96) -> Image:
 		_px(img, x + 1, y, pc.lerp(Pal.c("stone_1"), 0.5))
 		_px(img, x, y + 1, c2)
 	img.flip_y()
+	return img
+
+
+## 沥青路面（现代小镇）：深灰底、细碎的亮暗颗粒、几道修补过的深色裂缝，低对比
+static func asphalt(seed_value: int, size := 96) -> Image:
+	var rng := _rng(seed_value)
+	var n := fbm(size, 6, rng)
+	var base := Color(0.33, 0.34, 0.36)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var col := base.lerp(Color(0.38, 0.39, 0.41), smoothstep(0.4, 0.75, n[y * size + x]) * 0.7)
+			var g := rng.randf()
+			if g < 0.08:
+				col = col.darkened(0.12)
+			elif g > 0.95:
+				col = col.lightened(0.18)
+			img.set_pixel(x, y, col)
+	for k in 4:  # 补过的裂缝
+		var px := rng.randf() * size
+		var py := rng.randf() * size
+		var ang := rng.randf() * TAU
+		for step in rng.randi_range(12, 26):
+			_px(img, int(px), int(py), Color(0.24, 0.25, 0.27))
+			ang += rng.randf_range(-0.5, 0.5)
+			px = fposmod(px + cos(ang), size)
+			py = fposmod(py + sin(ang), size)
+	img.flip_y()
+	return img
+
+
+## 路面标线：略带磨损的白漆
+static func road_paint(seed_value: int, size := 32) -> Image:
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var c := Color(0.9, 0.9, 0.86)
+			if rng.randf() < 0.1:
+				c = c.darkened(0.15)
+			img.set_pixel(x, y, c)
 	return img
 
 

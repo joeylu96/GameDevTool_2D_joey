@@ -154,7 +154,7 @@ func _start_scene(cfg: Dictionary) -> void:
 	rig = CameraRig.new()
 	rig.name = "CameraRig"
 	rig.min_distance = 6.0
-	rig.distance = 22.0
+	rig.distance = 17.0  # 走路镜头近一些：人物约 1:1 显示，脸和发型看得清
 	rig.keyboard_pan = not walk_mode
 	vp.add_child(rig)
 	post = PostFX.new()

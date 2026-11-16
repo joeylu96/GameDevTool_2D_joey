@@ -94,7 +94,7 @@ PRESETS = [
 _UPGRADE = {
     "swordsman": {"collar": True, "belt": True, "boots": "tall", "trim_hem": True, "build": 1.05},
     "merchant": {"belt": True, "collar": True},
-    "maiden": {"collar": True, "belt": True, "sleeves": "layered", "height": 0.95, "build": 0.92,
+    "maiden": {"collar": True, "belt": True, "sleeves": "layered", "height": 0.95, "build": 0.92, "lashes": True,
                "colors": {"under": ["#f6f2e8", "#dcd5c6", "#a9a08d"]}},
     "scholar": {"belt": True, "trim_hem": True, "collar": True},
     "guard": {"armor": "cuirass", "boots": "tall", "belt": True, "sleeves": "layered", "build": 1.1,
@@ -116,7 +116,7 @@ NPCS = [
      "hair": "bald", "beard": True, "beard_style": "full", "brow": "stern", "apron": True, "sleeves": "short",
      "build": 1.22, "boots": "tall", "weapon": "axe", "skirt": 0.12,
      "colors": {"hair": "#5a3a24", "top": "#a33f3a", "apron": "#c9b9a6", "bottom": "#4f4a46", "trim": "#5a412e"}},
-    {"id": "fruit_vendor", "name": "水果小贩", "desc": "包着头巾的水果摊大姐，绿裙子配米色围裙，挎着一篮苹果。",
+    {"id": "fruit_vendor", "lashes": True, "name": "水果小贩", "desc": "包着头巾的水果摊大姐，绿裙子配米色围裙，挎着一篮苹果。",
      "hair": "long", "hat": "hood", "skirt": 0.48, "apron": True, "collar": True, "weapon": "basket", "height": 0.96, "build": 0.95,
      "colors": {"hair": "#7a4a2c", "hat": "#c85a3c", "top": "#e8d7b0", "skirt": "#5f7f4a", "bottom": "#5f7f4a",
                 "apron": "#efe4cc", "trim": "#c85a3c"}},
@@ -147,11 +147,11 @@ NPCS = [
      "weapon": "lute", "trim_hem": True,
      "colors": {"hair": "#c2683e", "hat": "#7a3a5a", "top": "#8f4fa0", "skirt": "#8f4fa0", "under": "#e8dcc8",
                 "band": ["#f3e3b0", "#c9a03c", "#7a3a5a"], "bottom": "#4a5a7a", "trim": "#c9a03c"}},
-    {"id": "noble_lady", "name": "贵族小姐", "desc": "盘发的贵族小姐，紫红色长裙配金色镶边和白色高领。",
+    {"id": "noble_lady", "lashes": True, "name": "贵族小姐", "desc": "盘发的贵族小姐，紫红色长裙配金色镶边和白色高领。",
      "hair": "bun", "collar": True, "skirt": 0.58, "trim_hem": True, "belt": True, "height": 0.95, "build": 0.9,
      "colors": {"hair": "#e3c070", "top": "#9a4a7a", "skirt": "#7a3a6a", "bottom": "#7a3a6a",
                 "trim": ["#ecd27a", "#c9a03c", "#8a6a28"], "belt": ["#ecd27a", "#c9a03c", "#8a6a28"]}},
-    {"id": "herbalist", "name": "草药师", "desc": "披着绿色兜帽的草药师，长裙，挎着装满药草的布袋。",
+    {"id": "herbalist", "lashes": True, "name": "草药师", "desc": "披着绿色兜帽的草药师，长裙，挎着装满药草的布袋。",
      "hair": "ponytail", "hat": "hood", "skirt": 0.5, "scarf": True, "weapon": "bag", "height": 0.97,
      "colors": {"hair": "#3d3a40", "hat": "#5f7f4a", "top": "#7a9a5a", "skirt": "#6a5a46", "bottom": "#6a5a46",
                 "scarf": "#c9b48a", "trim": "#c9b48a"}},
@@ -162,7 +162,7 @@ NPCS = [
      "hair": "short", "hat": "cap", "sleeves": "layered", "skirt": 0.26, "belt": True, "weapon": "book", "trim_hem": True,
      "colors": {"hair": "#5a3a24", "hat": "#a3352d", "top": "#e0b84a", "skirt": "#a3352d", "under": "#a3352d",
                 "bottom": "#4c505c", "trim": "#e0b84a"}},
-    {"id": "cloth_merchant", "name": "布商", "desc": "盘发的布商大婶，青色上衣、橙黄长裙，围巾，挎着一卷布。",
+    {"id": "cloth_merchant", "lashes": True, "name": "布商", "desc": "盘发的布商大婶，青色上衣、橙黄长裙，围巾，挎着一卷布。",
      "hair": "bun", "scarf": True, "collar": True, "skirt": 0.5, "weapon": "bag", "build": 1.08,
      "colors": {"hair": "#5a412e", "top": "#4f7c78", "skirt": "#c48f3c", "bottom": "#c48f3c", "scarf": "#c4473a",
                 "trim": "#c4473a"}},
@@ -252,7 +252,7 @@ def validate(spec):
     out["skirt"] = _num(spec.get("skirt", 0.2), 0.0, 0.6, 0.2)
     out["height"] = _num(spec.get("height", 1.0), 0.6, 1.1, 1.0)  # 0.6~0.75 是小孩
     out["build"] = _num(spec.get("build", 1.0), 0.85, 1.25, 1.0)
-    for flag in ("cape", "scarf", "beard", "vest", "sleeve_band", "collar", "belt", "trim_hem", "apron"):
+    for flag in ("cape", "scarf", "beard", "vest", "sleeve_band", "collar", "belt", "trim_hem", "apron", "lashes"):
         out[flag] = bool(spec.get(flag, False))
     extra = spec.get("extra_anims") or []
     out["extra_anims"] = [slug(x, "") for x in extra if isinstance(x, str) and slug(x, "")][:8] if isinstance(extra, list) else []
@@ -316,6 +316,7 @@ def random_villager(seed):
         "trim_hem": rnd.random() < 0.3,
         "boots": "tall" if rnd.random() < 0.3 else "short",
         "brow": "soft" if female or rnd.random() < 0.5 else "stern",
+        "lashes": female,
         "height": rnd.uniform(0.9, 1.04),
         "build": rnd.uniform(0.9, 1.15),
         "colors": {"skin": rnd.choice(SKIN_RAMPS), "hair": rnd.choice(HAIR_RAMPS), "top": top, "bottom": bottom,

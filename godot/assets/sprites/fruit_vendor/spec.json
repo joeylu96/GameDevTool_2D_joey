@@ -22,6 +22,7 @@
   "belt": false,
   "trim_hem": false,
   "apron": true,
+  "lashes": true,
   "extra_anims": [],
   "colors": {
     "hair": [

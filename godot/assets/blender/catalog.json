@@ -1689,6 +1689,1057 @@
           "height": 1.55
         }
       ]
+    },
+    {
+      "id": "bl_modern_house",
+      "kind": "modern_house",
+      "name": "现代住宅",
+      "category": "buildings",
+      "desc": "Blender 生成的现代住宅：抹灰外墙配木或深色挂板，平屋顶或单坡金属屋面，落地大玻璃窗、玻璃入户门、入口雨棚，部分带玻璃栏板阳台。",
+      "vary": "宽 7.5~11 米、深 6~9 米、一层或两层、墙色（白 / 灰 / 沙）、挂板（木 / 深色）、屋顶（平顶女儿墙 / 单坡）、阳台、窗型随变体变化。",
+      "tags": [
+        "town",
+        "modern"
+      ],
+      "source": "generator",
+      "files": [
+        "modern_house_0.glb",
+        "modern_house_1.glb",
+        "modern_house_2.glb",
+        "modern_house_3.glb",
+        "modern_house_4.glb",
+        "modern_house_5.glb",
+        "modern_house_6.glb",
+        "modern_house_7.glb"
+      ],
+      "footprint": [
+        11.4,
+        7.4
+      ],
+      "height": 4.37,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            9.9,
+            8.9
+          ],
+          "height": 6.86,
+          "width": 9.0,
+          "depth": 8.0,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            9.9,
+            9.4
+          ],
+          "height": 7.37,
+          "width": 9.0,
+          "depth": 8.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            8.9,
+            9.9
+          ],
+          "height": 6.86,
+          "width": 8.0,
+          "depth": 9.0,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            9.9,
+            8.4
+          ],
+          "height": 3.86,
+          "width": 9.0,
+          "depth": 7.5,
+          "floors": 1
+        },
+        {
+          "footprint": [
+            8.4,
+            7.4
+          ],
+          "height": 7.37,
+          "width": 7.5,
+          "depth": 6.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            8.9,
+            8.4
+          ],
+          "height": 6.86,
+          "width": 8.0,
+          "depth": 7.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            9.9,
+            6.9
+          ],
+          "height": 6.86,
+          "width": 9.0,
+          "depth": 6.0,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            11.4,
+            7.4
+          ],
+          "height": 4.37,
+          "width": 10.5,
+          "depth": 6.5,
+          "floors": 1
+        }
+      ]
+    },
+    {
+      "id": "bl_modern_shop",
+      "kind": "modern_shop",
+      "name": "街角小店",
+      "category": "buildings",
+      "desc": "Blender 生成的现代街角小店 / 咖啡馆：整面落地橱窗、玻璃门、条纹遮阳棚、门头空白招牌，咖啡馆门口有小圆桌和椅子。",
+      "vary": "宽度、墙色、遮阳棚颜色、招牌颜色、门口有没有桌椅随变体变化。",
+      "tags": [
+        "town",
+        "modern",
+        "plaza",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "modern_shop_0.glb",
+        "modern_shop_1.glb",
+        "modern_shop_2.glb"
+      ],
+      "footprint": [
+        7.9,
+        6.4
+      ],
+      "height": 4.55,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            7.4,
+            6.4
+          ],
+          "height": 4.55,
+          "width": 7.0,
+          "depth": 6.0
+        },
+        {
+          "footprint": [
+            8.4,
+            6.9
+          ],
+          "height": 4.55,
+          "width": 8.0,
+          "depth": 6.5
+        },
+        {
+          "footprint": [
+            7.9,
+            6.4
+          ],
+          "height": 4.55,
+          "width": 7.5,
+          "depth": 6.0
+        }
+      ]
+    },
+    {
+      "id": "bl_modern_street_lamp",
+      "kind": "modern_street_lamp",
+      "name": "现代路灯",
+      "category": "street",
+      "desc": "Blender 生成的现代路灯：细钢杆配扁平 LED 灯头，夜里灯头底面发光；有单臂、双臂、柱顶灯和矮柱步道灯四种。",
+      "vary": "变体 0 单臂、1 双臂、2 柱顶灯、3 矮柱灯；杆高和灯臂长度随款式不同。",
+      "tags": [
+        "town",
+        "modern",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "modern_street_lamp_0.glb",
+        "modern_street_lamp_1.glb",
+        "modern_street_lamp_2.glb",
+        "modern_street_lamp_3.glb"
+      ],
+      "footprint": [
+        0.3,
+        0.3
+      ],
+      "height": 0.96,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            0.5,
+            2.2
+          ],
+          "height": 6.1
+        },
+        {
+          "footprint": [
+            0.5,
+            3.2
+          ],
+          "height": 7.1
+        },
+        {
+          "footprint": [
+            0.5,
+            0.5
+          ],
+          "height": 4.72
+        },
+        {
+          "footprint": [
+            0.3,
+            0.3
+          ],
+          "height": 0.96
+        }
+      ]
+    },
+    {
+      "id": "bl_modern_bench",
+      "kind": "modern_bench",
+      "name": "现代长椅",
+      "category": "street",
+      "desc": "Blender 生成的现代长椅：钢架木条椅、混凝土长凳配木坐板、钢板网格椅三种，摆在街边、公交站和广场上。",
+      "vary": "三种款式（变体 0 钢架木条、1 混凝土、2 钢板）。",
+      "tags": [
+        "town",
+        "modern",
+        "roadside",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "modern_bench_0.glb",
+        "modern_bench_1.glb",
+        "modern_bench_2.glb"
+      ],
+      "footprint": [
+        1.6,
+        0.55
+      ],
+      "height": 0.82,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.8,
+            0.55
+          ],
+          "height": 0.85
+        },
+        {
+          "footprint": [
+            2.0,
+            0.55
+          ],
+          "height": 0.45
+        },
+        {
+          "footprint": [
+            1.6,
+            0.55
+          ],
+          "height": 0.82
+        }
+      ]
+    },
+    {
+      "id": "bl_trash_bin",
+      "kind": "trash_bin",
+      "name": "垃圾桶",
+      "category": "street",
+      "desc": "Blender 生成的街边垃圾桶：圆柱钢桶、木挂板方箱、两个并排的分类桶三种。",
+      "vary": "三种款式（变体 0 圆柱钢桶、1 木挂板方箱、2 分类桶）。",
+      "tags": [
+        "town",
+        "modern",
+        "roadside",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "trash_bin_0.glb",
+        "trash_bin_1.glb",
+        "trash_bin_2.glb"
+      ],
+      "footprint": [
+        1.4,
+        0.8
+      ],
+      "height": 1.01,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            0.6,
+            0.6
+          ],
+          "height": 1.0
+        },
+        {
+          "footprint": [
+            0.66,
+            0.66
+          ],
+          "height": 0.97
+        },
+        {
+          "footprint": [
+            1.4,
+            0.8
+          ],
+          "height": 1.01
+        }
+      ]
+    },
+    {
+      "id": "bl_bus_stop",
+      "kind": "bus_stop",
+      "name": "公交候车亭",
+      "category": "street",
+      "desc": "Blender 生成的公交候车亭：钢框玻璃亭、前倾顶棚、亭内长凳，一侧是夜里发光的空白灯箱。",
+      "vary": "长度（3 / 4 米）和顶棚颜色随变体变化。",
+      "tags": [
+        "town",
+        "modern",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "bus_stop_0.glb",
+        "bus_stop_1.glb"
+      ],
+      "footprint": [
+        4.3,
+        1.7
+      ],
+      "height": 2.65,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            3.3,
+            1.7
+          ],
+          "height": 2.65
+        },
+        {
+          "footprint": [
+            4.3,
+            1.7
+          ],
+          "height": 2.65
+        }
+      ]
+    },
+    {
+      "id": "bl_car",
+      "kind": "car",
+      "name": "小汽车",
+      "category": "props",
+      "desc": "Blender 生成的小汽车：两厢掀背、三厢轿车、面包车三种车型，多种车漆，停在路边和院子里。",
+      "vary": "车型（两厢 / 三厢 / 面包车）和车漆颜色（红 / 蓝 / 白 / 灰 / 黄 / 青）随变体变化。",
+      "tags": [
+        "town",
+        "modern",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "car_0.glb",
+        "car_1.glb",
+        "car_2.glb",
+        "car_3.glb",
+        "car_4.glb",
+        "car_5.glb"
+      ],
+      "footprint": [
+        2.15,
+        4.4
+      ],
+      "height": 1.9,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.05,
+            3.9
+          ],
+          "height": 1.48
+        },
+        {
+          "footprint": [
+            2.05,
+            4.5
+          ],
+          "height": 1.42
+        },
+        {
+          "footprint": [
+            2.15,
+            4.4
+          ],
+          "height": 1.9
+        },
+        {
+          "footprint": [
+            2.05,
+            3.9
+          ],
+          "height": 1.48
+        },
+        {
+          "footprint": [
+            2.05,
+            4.5
+          ],
+          "height": 1.42
+        },
+        {
+          "footprint": [
+            2.15,
+            4.4
+          ],
+          "height": 1.9
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_brick_house",
+      "kind": "cn_brick_house",
+      "name": "农村平房",
+      "category": "buildings",
+      "desc": "Blender 生成的八九十年代农村平房：红砖 / 青砖 / 土坯墙，小青瓦双坡顶，木板双开门贴着红纸对联和横批，木框玻璃窗，砖烟囱。",
+      "vary": "宽 8~12 米、深 5~6.5 米、墙（红砖 / 青砖 / 白灰墙裙 / 土坯）、屋顶（小青瓦 / 草顶）、窗户数量、烟囱位置随变体变化。",
+      "tags": [
+        "cn_village",
+        "town",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_brick_house_0.glb",
+        "cn_brick_house_1.glb",
+        "cn_brick_house_2.glb",
+        "cn_brick_house_3.glb",
+        "cn_brick_house_4.glb",
+        "cn_brick_house_5.glb",
+        "cn_brick_house_6.glb",
+        "cn_brick_house_7.glb"
+      ],
+      "footprint": [
+        10.0,
+        6.8
+      ],
+      "height": 5.4,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            9.5,
+            7.3
+          ],
+          "height": 5.53,
+          "width": 8.5,
+          "depth": 6.0
+        },
+        {
+          "footprint": [
+            10.5,
+            6.8
+          ],
+          "height": 5.4,
+          "width": 9.5,
+          "depth": 5.5
+        },
+        {
+          "footprint": [
+            9.5,
+            7.8
+          ],
+          "height": 5.66,
+          "width": 8.5,
+          "depth": 6.5
+        },
+        {
+          "footprint": [
+            10.5,
+            6.8
+          ],
+          "height": 5.4,
+          "width": 9.5,
+          "depth": 5.5
+        },
+        {
+          "footprint": [
+            12.5,
+            6.8
+          ],
+          "height": 6.31,
+          "width": 11.5,
+          "depth": 5.5
+        },
+        {
+          "footprint": [
+            12.5,
+            7.3
+          ],
+          "height": 5.53,
+          "width": 11.5,
+          "depth": 6.0
+        },
+        {
+          "footprint": [
+            10.5,
+            7.3
+          ],
+          "height": 5.53,
+          "width": 9.5,
+          "depth": 6.0
+        },
+        {
+          "footprint": [
+            10.0,
+            6.8
+          ],
+          "height": 5.4,
+          "width": 9.0,
+          "depth": 5.5
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_courtyard_wall",
+      "kind": "cn_courtyard_wall",
+      "name": "农家院墙",
+      "category": "street",
+      "desc": "Blender 生成的农家院墙：4 米一段的红砖 / 青砖 / 土坯墙，墙头一条小青瓦或草压顶，首尾相接围成院子。",
+      "vary": "变体 0 红砖、1 青砖、2 土坯墙配草压顶。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_courtyard_wall_0.glb",
+        "cn_courtyard_wall_1.glb",
+        "cn_courtyard_wall_2.glb"
+      ],
+      "footprint": [
+        4.0,
+        0.62
+      ],
+      "height": 2.32,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            4.0,
+            0.62
+          ],
+          "height": 2.28
+        },
+        {
+          "footprint": [
+            4.0,
+            0.62
+          ],
+          "height": 2.38
+        },
+        {
+          "footprint": [
+            4.0,
+            0.62
+          ],
+          "height": 2.32
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_courtyard_gate",
+      "kind": "cn_courtyard_gate",
+      "name": "农家院门",
+      "category": "street",
+      "desc": "Blender 生成的农家院门：砖垛、木过梁、小青瓦门头，两扇木板大门朝院里敞开，门垛上贴着红纸对联。",
+      "vary": "变体 0 红砖、1 青砖；门的颜色随变体变化。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_courtyard_gate_0.glb",
+        "cn_courtyard_gate_1.glb"
+      ],
+      "footprint": [
+        4.6,
+        1.5
+      ],
+      "height": 3.77,
+      "plant": false
+    },
+    {
+      "id": "bl_cn_shop",
+      "kind": "cn_shop",
+      "name": "小卖部",
+      "category": "buildings",
+      "desc": "Blender 生成的村口小卖部：砖房正面一扇撑开的木板售货窗、水泥柜台、空白招牌，门口码着几箱汽水瓶。",
+      "vary": "变体 0 红砖配小青瓦顶，1 青砖配水泥平顶；招牌颜色不同。",
+      "tags": [
+        "cn_village",
+        "town",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_shop_0.glb",
+        "cn_shop_1.glb"
+      ],
+      "footprint": [
+        6.1,
+        6.1
+      ],
+      "height": 3.75,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            6.1,
+            6.1
+          ],
+          "height": 4.7,
+          "width": 5.5,
+          "depth": 4.5
+        },
+        {
+          "footprint": [
+            6.1,
+            6.1
+          ],
+          "height": 3.75,
+          "width": 5.5,
+          "depth": 4.5
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_utility_pole",
+      "kind": "cn_utility_pole",
+      "name": "电线杆",
+      "category": "street",
+      "desc": "Blender 生成的农村电线杆：木杆或水泥杆，横担上一排白瓷瓶，有的还挂着一盏路灯。",
+      "vary": "变体 0 木杆一根横担、1 水泥杆两根横担、2 水泥杆带路灯。",
+      "tags": [
+        "cn_village",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_utility_pole_0.glb",
+        "cn_utility_pole_1.glb",
+        "cn_utility_pole_2.glb"
+      ],
+      "footprint": [
+        2.4,
+        0.6
+      ],
+      "height": 8.25,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.4,
+            0.6
+          ],
+          "height": 7.25
+        },
+        {
+          "footprint": [
+            2.4,
+            0.6
+          ],
+          "height": 8.75
+        },
+        {
+          "footprint": [
+            2.4,
+            0.6
+          ],
+          "height": 8.25
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_hand_pump",
+      "kind": "cn_hand_pump",
+      "name": "压水井",
+      "category": "props",
+      "desc": "Blender 生成的压水井：水泥井台、铸铁泵身、出水嘴和压杆，出水嘴下放着一只铁皮水桶。",
+      "vary": "变体 0 水泥井台，1 石板井台；水桶位置和压杆角度不同。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_hand_pump_0.glb",
+        "cn_hand_pump_1.glb"
+      ],
+      "footprint": [
+        1.2,
+        1.6
+      ],
+      "height": 1.57,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.2,
+            1.6
+          ],
+          "height": 1.7
+        },
+        {
+          "footprint": [
+            1.2,
+            1.6
+          ],
+          "height": 1.57
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_bicycle",
+      "kind": "cn_bicycle",
+      "name": "二八自行车",
+      "category": "props",
+      "desc": "Blender 生成的二八大杠自行车：黑色车架、28 寸大轮、后货架和链罩，撑着脚撑停在院子里或墙边。",
+      "vary": "变体 0 空车，1 后货架捆着麻袋、车把挂着布包。",
+      "tags": [
+        "cn_village",
+        "yard",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_bicycle_0.glb",
+        "cn_bicycle_1.glb"
+      ],
+      "footprint": [
+        0.7,
+        1.95
+      ],
+      "height": 1.25,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            0.7,
+            1.95
+          ],
+          "height": 1.2
+        },
+        {
+          "footprint": [
+            0.7,
+            1.95
+          ],
+          "height": 1.25
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_walking_tractor",
+      "kind": "cn_walking_tractor",
+      "name": "手扶拖拉机",
+      "category": "props",
+      "desc": "Blender 生成的手扶拖拉机：柴油机头、大飞轮、两只大驱动轮、长扶手，后面挂着木板拖斗，有的装着一堆麦秸。",
+      "vary": "变体 0 绿色机头 + 空拖斗，1 红色机头 + 拖斗装麦秸。",
+      "tags": [
+        "cn_village",
+        "yard",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_walking_tractor_0.glb",
+        "cn_walking_tractor_1.glb"
+      ],
+      "footprint": [
+        1.9,
+        4.6
+      ],
+      "height": 1.8,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.9,
+            4.6
+          ],
+          "height": 1.55
+        },
+        {
+          "footprint": [
+            1.9,
+            4.6
+          ],
+          "height": 1.8
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_pigpen",
+      "kind": "cn_pigpen",
+      "name": "猪圈",
+      "category": "props",
+      "desc": "Blender 生成的农家猪圈：矮砖墙围成的圈，后半边搭着小青瓦单坡棚，前墙边一只水泥食槽。",
+      "vary": "变体 0 红砖，1 青砖；棚子的进深不同。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_pigpen_0.glb",
+        "cn_pigpen_1.glb"
+      ],
+      "footprint": [
+        3.4,
+        3.4
+      ],
+      "height": 2.15,
+      "plant": false
+    },
+    {
+      "id": "bl_cn_chicken_coop",
+      "kind": "cn_chicken_coop",
+      "name": "鸡窝",
+      "category": "props",
+      "desc": "Blender 生成的农家鸡窝：木腿撑起的木板小窝、草顶、小门洞和带横档的斜坡板。",
+      "vary": "变体 0 草顶，1 小青瓦顶；窝的大小不同。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_chicken_coop_0.glb",
+        "cn_chicken_coop_1.glb"
+      ],
+      "footprint": [
+        1.5,
+        1.8
+      ],
+      "height": 1.78,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.7,
+            1.8
+          ],
+          "height": 1.88
+        },
+        {
+          "footprint": [
+            1.5,
+            1.8
+          ],
+          "height": 1.78
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_loudspeaker_pole",
+      "kind": "cn_loudspeaker_pole",
+      "name": "大喇叭",
+      "category": "street",
+      "desc": "Blender 生成的村头大喇叭：杆顶横担上挂着灰色号筒喇叭，号口斜朝下对着村子。",
+      "vary": "变体 0 木杆两只喇叭，1 水泥杆一只喇叭。",
+      "tags": [
+        "cn_village",
+        "roadside",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_loudspeaker_pole_0.glb",
+        "cn_loudspeaker_pole_1.glb"
+      ],
+      "footprint": [
+        1.6,
+        1.6
+      ],
+      "height": 7.05,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.6,
+            1.6
+          ],
+          "height": 6.55
+        },
+        {
+          "footprint": [
+            1.6,
+            1.6
+          ],
+          "height": 7.05
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_stone_mill",
+      "kind": "cn_stone_mill",
+      "name": "石磨",
+      "category": "props",
+      "desc": "Blender 生成的农家石磨：砖砌磨台上的两扇圆磨盘配推杆，或者带碾滚的大石碾。",
+      "vary": "变体 0 手推石磨，1 大石碾。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_stone_mill_0.glb",
+        "cn_stone_mill_1.glb"
+      ],
+      "footprint": [
+        3.2,
+        4.0
+      ],
+      "height": 1.3,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.4,
+            2.4
+          ],
+          "height": 1.1
+        },
+        {
+          "footprint": [
+            3.2,
+            4.0
+          ],
+          "height": 1.3
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_water_vat",
+      "kind": "cn_water_vat",
+      "name": "水缸",
+      "category": "props",
+      "desc": "Blender 生成的农家水缸：酱褐色釉面大陶缸，盖着木盖或敞口漂着葫芦瓢，还有小一号的腌菜坛。",
+      "vary": "变体 0 盖木盖的大缸、1 敞口大缸带水瓢、2 小坛子。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_water_vat_0.glb",
+        "cn_water_vat_1.glb",
+        "cn_water_vat_2.glb"
+      ],
+      "footprint": [
+        0.5,
+        0.5
+      ],
+      "height": 0.53,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            0.9,
+            0.9
+          ],
+          "height": 0.93
+        },
+        {
+          "footprint": [
+            0.95,
+            0.95
+          ],
+          "height": 0.92
+        },
+        {
+          "footprint": [
+            0.5,
+            0.5
+          ],
+          "height": 0.53
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_clothes_line",
+      "kind": "cn_clothes_line",
+      "name": "晾衣杆",
+      "category": "props",
+      "desc": "Blender 生成的晾衣杆：两根木杆拉一根绳，挂着床单、衬衫和裤子。",
+      "vary": "衣服的件数、颜色和顺序随变体变化。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_clothes_line_0.glb",
+        "cn_clothes_line_1.glb",
+        "cn_clothes_line_2.glb"
+      ],
+      "footprint": [
+        3.4,
+        0.5
+      ],
+      "height": 2.0,
+      "plant": false
+    },
+    {
+      "id": "bl_cn_threshing_ground",
+      "kind": "cn_threshing_ground",
+      "name": "晒场",
+      "category": "props",
+      "desc": "Blender 生成的晒场：水泥地坪上摊着晒的麦粒、堆着粮堆，边上靠着木耙和木锨。",
+      "vary": "变体 0 小麦，1 玉米（金黄）；粮堆大小不同。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_threshing_ground_0.glb",
+        "cn_threshing_ground_1.glb"
+      ],
+      "footprint": [
+        6.0,
+        5.0
+      ],
+      "height": 0.8,
+      "plant": false
     }
   ]
 }

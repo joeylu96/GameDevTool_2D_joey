@@ -28,6 +28,7 @@ const DOOR := &"door"       # 门前通道（保留区，什么都不能放）
 const WATER := &"water"
 const WALL := &"wall"       # 城墙、城楼（中世纪小镇）
 const PLAZA := &"plaza"     # 广场：像路一样让房屋朝向它，但摊位、水井、长椅可以摆在上面
+const CAR := &"car"         # 路边停的车：停在路面上，和路不互相检查
 const STALL := &"stall"     # 广场上的摆设（水井、摊位、旗杆、布告栏）：广场本来就盖在路口上，和路、广场不互相检查
 const GRASS := &"grass"     # 草丛：只检查不登记（见 PWGrass）
 
@@ -103,6 +104,9 @@ const GAP := {
 	"plaza|rock": 0.4,
 	"grass|plaza": 0.15,
 	"road|stall": -99.0,
+	"car|road": -99.0,
+	"car|car": 0.4,
+	"car|grass": 0.1,
 	"plaza|stall": -99.0,
 	"door|stall": 0.6,
 	"house|stall": 0.5,

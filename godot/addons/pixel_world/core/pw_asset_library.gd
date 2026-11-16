@@ -32,6 +32,10 @@ const DEFAULT_CATEGORIES := [
 	{"id": "water", "name": "水生"},
 	{"id": "characters", "name": "角色"},
 ]
+## 按风格分的子分类：建筑、地标、街道设施、杂物下面各有「现代 / 中世纪 / 中国乡村」。
+## 资产带 medieval / cn_village 标签的自动归到对应子分类，其余归「现代」（用户在资源库里挪过的以用户为准）
+const STYLE_SUBS := [{"id": "modern", "name": "现代"}, {"id": "medieval", "name": "中世纪"}, {"id": "cn_village", "name": "中国乡村"}]
+const STYLE_SUB_CATS := ["buildings", "landmarks", "street", "props"]
 const LIBRARY_PATH := "res://assets/library.json"
 static var _lib: Dictionary = {}
 
@@ -70,6 +74,14 @@ static func _normalize(d: Variant) -> Dictionary:
 		var dc: Dictionary = DEFAULT_CATEGORIES[i]
 		if not seen.has(dc.id):
 			out.categories.insert(mini(i, out.categories.size()), {"id": dc.id, "name": dc.name, "builtin": true, "children": []})
+	for c: Dictionary in out.categories:
+		if c.id in STYLE_SUB_CATS:
+			var have := {}
+			for k: Dictionary in c.children:
+				have[k.id] = true
+			for sub: Dictionary in STYLE_SUBS:
+				if not have.has(sub.id):
+					(c.children as Array).append({"id": sub.id, "name": sub.name})
 	if d is Dictionary and (d as Dictionary).get("assign") is Dictionary:
 		for k: String in d.assign:
 			var v: Variant = d.assign[k]
@@ -479,6 +491,9 @@ static func items() -> Array[Dictionary]:
 	var assign: Dictionary = library().assign
 	for it in out:
 		it["sub"] = ""
+		if it.cat in STYLE_SUB_CATS:
+			var tags: Array = it.get("tags", [])
+			it.sub = "medieval" if "medieval" in tags else ("cn_village" if "cn_village" in tags else "modern")
 		if assign.has(it.id):
 			var v: Array = assign[it.id]
 			var c := category(v[0])
