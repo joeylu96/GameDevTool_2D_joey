@@ -68,6 +68,8 @@ func run() -> void:
 	_build_roads()
 	if medieval:
 		_build_plaza()
+	_build_road_surface()
+	if medieval:
 		_build_walls()
 	var curb_gaps: Array[Rect2] = []
 	if w.with_lake and prm.get("pier", true):
@@ -230,16 +232,148 @@ func _build_roads() -> void:
 	roads.append(main)
 	_split(Rect2(-H, -H, H * 2.0, main.position.y + H), 0)
 	_split(Rect2(-H, main.end.y, H * 2.0, land_bottom - main.end.y), 0)
-	var mb := MB.new()
-	var y := 0.02
-	var road_key: String = prm.get("road", "cobble")
 	for r in roads:
-		mb.face(road_key, [Vector3(r.position.x, y, r.position.y), Vector3(r.end.x, y, r.position.y),
-			Vector3(r.end.x, y, r.end.y), Vector3(r.position.x, y, r.end.y)], Vector3.UP)
 		pl.add_rect(P.ROAD, r)
+
+
+## 路面网格放在广场之后建（广场也是「路」的一部分，一起算圆角）
+func _build_road_surface() -> void:
+	var mb := MB.new()
+	var road_key: String = prm.get("road", "cobble")
+	_road_contour(mb, road_key, 0.02)
 	if road_key == "asphalt":
 		_lane_markings(mb)
 	batch.add_static(mb.commit(), Transform3D.IDENTITY, false)
+
+
+# ---------------------------------------------------------------- 圆滑的道路（距离场 + marching squares）
+# 道路不再是一块块方正的矩形：每条路是圆角矩形（路端是圆头，碰到地图边的那头延伸到图外），
+# 多条路用平滑并集合起来（路口内角是半径 ROAD_FILLET 的圆弧），再按风格加一点边缘起伏（土路明显、沥青路几乎没有）。
+# 网格用 marching squares 从距离场里取出来；路缘石沿同一条轮廓线走，转角也是圆的。
+const ROAD_FILLET := 2.6
+const ROAD_END_R := 1.6
+const ROAD_GRID := 0.5
+var _road_noise: FastNoiseLite
+var _road_ready := false
+var _sdf_vals := PackedFloat32Array()   # 路面距离场缓存（on_road 查表，不用每次重算）
+var _sdf_bb := Rect2()
+var _sdf_nx := 0
+var _sdf_nz := 0
+var _road_segs: Array = []
+
+
+func road_sdf(p: Vector2) -> float:
+	if roads.is_empty():
+		return INF
+	var d := INF
+	for r in roads:
+		var rr := r
+		# 碰到地图边的路端延伸出去，免得在边上出现圆头
+		if rr.position.x <= -H + 0.1:
+			rr = rr.expand(Vector2(-H - 4.0, rr.position.y))
+		if rr.end.x >= H - 0.1:
+			rr = rr.expand(Vector2(H + 4.0, rr.end.y))
+		if rr.position.y <= -H + 0.1:
+			rr = rr.expand(Vector2(rr.position.x, -H - 4.0))
+		if rr.end.y >= H - 0.1:
+			rr = rr.expand(Vector2(rr.end.x, H + 4.0))
+		var hs := rr.size * 0.5
+		var cr := minf(ROAD_END_R, minf(hs.x, hs.y))
+		var q := (p - rr.get_center()).abs() - hs + Vector2(cr, cr)
+		var db := Vector2(maxf(q.x, 0.0), maxf(q.y, 0.0)).length() + minf(maxf(q.x, q.y), 0.0) - cr
+		if d == INF:
+			d = db
+		else:
+			var h := clampf(0.5 + 0.5 * (db - d) / ROAD_FILLET, 0.0, 1.0)
+			d = lerpf(db, d, h) - ROAD_FILLET * h * (1.0 - h)
+	if _road_noise == null:
+		_road_noise = FastNoiseLite.new()
+		_road_noise.seed = rng.randi()
+		_road_noise.frequency = 0.12
+	return d + _road_noise.get_noise_2d(p.x, p.y) * float(prm.get("road_wobble", 0.12))
+
+
+## marching squares：把距离场 < 0 的区域铺成三角形（整格都在路上的连续格合成一块，面数少）。
+## 返回边界线段（给路缘石用）
+func _road_contour(mb: MB, key: String, y: float) -> Array:
+	var bb := Rect2()
+	var first := true
+	for r in roads:
+		bb = r if first else bb.merge(r)
+		first = false
+	bb = bb.grow(ROAD_FILLET).intersection(Rect2(-H, -H, 2.0 * H, 2.0 * H))
+	var g := ROAD_GRID
+	var nx := int(ceil(bb.size.x / g))
+	var nz := int(ceil(bb.size.y / g))
+	var vals := PackedFloat32Array()
+	vals.resize((nx + 1) * (nz + 1))
+	for j in nz + 1:
+		for i in nx + 1:
+			vals[j * (nx + 1) + i] = road_sdf(bb.position + Vector2(i * g, j * g))
+	var segs: Array = []
+	for j in nz:
+		var run_start := -1
+		for i in nx + 1:
+			var full := false
+			if i < nx:
+				full = vals[j * (nx + 1) + i] < 0.0 and vals[j * (nx + 1) + i + 1] < 0.0 \
+					and vals[(j + 1) * (nx + 1) + i] < 0.0 and vals[(j + 1) * (nx + 1) + i + 1] < 0.0
+			if full:
+				if run_start < 0:
+					run_start = i
+				continue
+			if run_start >= 0:
+				var x0 := bb.position.x + run_start * g
+				var x1 := bb.position.x + i * g
+				var z0 := bb.position.y + j * g
+				mb.face(key, [Vector3(x0, y, z0), Vector3(x1, y, z0), Vector3(x1, y, z0 + g), Vector3(x0, y, z0 + g)], Vector3.UP)
+				run_start = -1
+			if i >= nx:
+				continue
+			# 边界格：沿四个角走一圈，里面的角 + 边上的交点围成多边形
+			var cs := [Vector2i(i, j), Vector2i(i + 1, j), Vector2i(i + 1, j + 1), Vector2i(i, j + 1)]
+			var poly: Array[Vector3] = []
+			var cross: Array[Vector2] = []
+			for k in 4:
+				var ca: Vector2i = cs[k]
+				var cb: Vector2i = cs[(k + 1) % 4]
+				var va := vals[ca.y * (nx + 1) + ca.x]
+				var vb := vals[cb.y * (nx + 1) + cb.x]
+				var pa := bb.position + Vector2(ca) * g
+				var pb := bb.position + Vector2(cb) * g
+				if va < 0.0:
+					poly.append(Vector3(pa.x, y, pa.y))
+				if (va < 0.0) != (vb < 0.0):
+					var t := va / (va - vb)
+					var pc := pa.lerp(pb, t)
+					poly.append(Vector3(pc.x, y, pc.y))
+					cross.append(pc)
+			if poly.size() >= 3:
+				mb.face(key, poly, Vector3.UP)
+			if cross.size() == 2:
+				segs.append([cross[0], cross[1]])
+			elif cross.size() == 4:
+				segs.append([cross[0], cross[1]])
+				segs.append([cross[2], cross[3]])
+	_road_ready = true
+	_sdf_vals = vals
+	_sdf_bb = bb
+	_sdf_nx = nx
+	_sdf_nz = nz
+	_road_segs = segs
+	return segs
+
+
+## 某处是不是压在（圆滑后的）路面上：路口圆角会比原来的矩形多出一块
+func on_road(p: Vector2, margin := 0.3) -> bool:
+	if not _road_ready:
+		return false
+	var q := (p - _sdf_bb.position) / ROAD_GRID
+	var i := int(round(q.x))
+	var j := int(round(q.y))
+	if i < 0 or j < 0 or i > _sdf_nx or j > _sdf_nz:
+		return false
+	return _sdf_vals[j * (_sdf_nx + 1) + i] < margin
 
 
 ## 沥青路中间的白色虚线（路口 3 米内不画）
@@ -297,28 +431,38 @@ func _split(region: Rect2, depth: int) -> void:
 
 ## 路缘石：每条路两侧各一条，在别的路接进来的地方断开
 func _build_curbs(extra_gaps: Array[Rect2]) -> void:
+	# 沿圆滑后的路面轮廓砌一圈路缘石（宽 CURB、高 CURB_H），转角跟着路口圆弧走；土路 / 码头小路接进来的地方断开
 	var curb := MB.new()
-	for r in roads:
-		var horiz := r.size.x >= r.size.y
-		for side in [-1, 1]:
-			var strip: Rect2
-			if horiz:
-				strip = Rect2(r.position.x, r.position.y - CURB if side < 0 else r.end.y, r.size.x, CURB)
-			else:
-				strip = Rect2(r.position.x - CURB if side < 0 else r.end.x, r.position.y, CURB, r.size.y)
-			var cuts: Array[Vector2] = []
-			for o in roads + extra_gaps:
-				if o == r:
-					continue
-				var g := o.grow(0.3)
-				if g.intersects(strip):
-					cuts.append(Vector2(g.position.x, g.end.x) if horiz else Vector2(g.position.y, g.end.y))
-			for seg in _subtract(Vector2(strip.position.x, strip.end.x) if horiz else Vector2(strip.position.y, strip.end.y), cuts):
-				if seg.y - seg.x < 0.4:
-					continue
-				var s := Rect2(seg.x, strip.position.y, seg.y - seg.x, CURB) if horiz else Rect2(strip.position.x, seg.x, CURB, seg.y - seg.x)
-				curb.box("curb", Vector3(s.position.x, 0, s.position.y), Vector3(s.end.x, CURB_H, s.end.y))
+	var segs := _road_segs
+	for sg: Array in segs:
+		var a2: Vector2 = sg[0]
+		var b2: Vector2 = sg[1]
+		var mid := (a2 + b2) * 0.5
+		var gap := false
+		for gr in extra_gaps:
+			if gr.grow(0.3).has_point(mid):
+				gap = true
+		if gap:
+			continue
+		var na := _road_normal(a2) * CURB
+		var nb := _road_normal(b2) * CURB
+		var a3 := Vector3(a2.x, CURB_H, a2.y)
+		var b3 := Vector3(b2.x, CURB_H, b2.y)
+		curb.face("curb", [a3, b3, b3 + Vector3(nb.x, 0, nb.y), a3 + Vector3(na.x, 0, na.y)], Vector3.UP)
+		var side := Vector3(-(b2 - a2).y, 0, (b2 - a2).x)
+		if side.dot(Vector3(na.x, 0, na.y)) > 0.0:
+			side = -side
+		curb.face("curb", [Vector3(a2.x, 0, a2.y), Vector3(b2.x, 0, b2.y), b3, a3], side)
 	batch.add_static(curb.commit(), Transform3D.IDENTITY)
+
+
+## 距离场的梯度方向（指向路外）
+func _road_normal(p: Vector2) -> Vector2:
+	var e := 0.15
+	var gx := road_sdf(p + Vector2(e, 0)) - road_sdf(p - Vector2(e, 0))
+	var gz := road_sdf(p + Vector2(0, e)) - road_sdf(p - Vector2(0, e))
+	var n := Vector2(gx, gz)
+	return n.normalized() if n.length() > 1e-5 else Vector2.ZERO
 
 
 static func _subtract(span: Vector2, cuts: Array[Vector2]) -> Array[Vector2]:
@@ -597,7 +741,7 @@ func _build_lamps() -> void:
 						canopy = maxf(maxf(absf(a.position.x), absf(a.end.x)), 0.4)
 						# 双臂（两边都伸出）：光斑在灯柱下；单臂：在灯头下
 						bl_light = Vector3(0.0 if a.position.x < -0.3 else a.end.x - 0.22, 0, 0)
-				if not on_land(Rect2(p - Vector2.ONE * 0.3, Vector2.ONE * 0.6), 1.0):
+				if not on_land(Rect2(p - Vector2.ONE * 0.3, Vector2.ONE * 0.6), 1.0) or on_road(p, 0.35):
 					continue
 				if not pl.can_place(P.LAMP, p, 0.22, canopy, true):
 					continue
@@ -762,12 +906,7 @@ func _build_plaza() -> void:
 	var c := Vector2(cx, main.get_center().y)
 	c.y = clampf(c.y, -H + 12.0, H - 12.0)
 	plaza = Rect2(c - half, half * 2.0)
-	var mb := MB.new()
-	var y := 0.026  # 比路面高一点点，重叠处不闪
-	mb.face("cobble", [Vector3(plaza.position.x, y, plaza.position.y), Vector3(plaza.end.x, y, plaza.position.y),
-		Vector3(plaza.end.x, y, plaza.end.y), Vector3(plaza.position.x, y, plaza.end.y)], Vector3.UP)
-	batch.add_static(mb.commit(), Transform3D.IDENTITY, false)
-	pl.add_rect(P.PLAZA, plaza)
+	pl.add_rect(P.PLAZA, plaza)  # 石板地面和道路一起铺（_build_road_surface），转角是圆的
 	roads.append(plaza)
 
 
@@ -1094,7 +1233,7 @@ func try_tree(p: Vector2, mesh: Mesh, s: float, pine: bool) -> bool:
 	var sy := s * rng.randf_range(0.9, 1.18)
 	var canopy: float = _canopy[mesh] * sxz
 	var trunk := 0.3 * sxz
-	if not pl.can_place(P.TREE, p, trunk, canopy, true):
+	if on_road(p, trunk + 0.5) or not pl.can_place(P.TREE, p, trunk, canopy, true):
 		return false
 	var xf := Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(sxz, sy, sxz)), Vector3(p.x, w.ground_y(p.x, p.y), p.y))
 	batch.add_plant(mesh, xf, tint(0.1))
@@ -1107,7 +1246,7 @@ func _try_bush(p: Vector2, s: float) -> bool:
 	_variants()
 	var mesh := _bushes[rng.randi_range(0, _bushes.size() - 1)]
 	var r: float = _canopy[mesh] * s
-	if not pl.can_place(P.BUSH, p, r):
+	if on_road(p, r) or not pl.can_place(P.BUSH, p, r):
 		return false
 	var sy := s * rng.randf_range(0.85, 1.15)
 	batch.add_plant(mesh, Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, sy, s)), Vector3(p.x, 0, p.y)), tint(0.1))
@@ -1183,7 +1322,7 @@ func _build_blender_props() -> void:
 			var half := Vector2(maxf(absf(a.position.x), absf(a.end.x)), maxf(absf(a.position.z), absf(a.end.z)))
 			var ext := half if horiz else Vector2(half.y, half.x)
 			var rect := Rect2(p - ext, ext * 2.0)
-			if not on_land(rect, 1.5) or not pl.can_place_rect(P.PROP, rect, 0.0, true):
+			if not on_land(rect, 1.5) or on_road(rect.get_center(), 0.6) or not pl.can_place_rect(P.PROP, rect, 0.0, true):
 				continue
 			# 模型正面朝 +Z：转到朝向道路
 			var yaw := atan2(to_road.x, to_road.y)

@@ -34,7 +34,7 @@ def generate(kind, seed, collection=None, **params):
     """在当前场景里生成一个资产对象，返回 (object, info)"""
     gen = GENERATORS[kind]
     mb, info = gen.build(seed, **params)
-    obj = mb.build("%s_%d" % (kind, seed), collection)
+    obj = mb.build("%s_%d" % (kind, seed), collection, plant=bool(info.get("plant", False)))
     return obj, info
 
 
@@ -190,7 +190,7 @@ def export_spec(spec, out_dir, seed0=1, preview_dir=None):
     for v in range(spec.get("variants", 4)):
         clear_scene()
         mb, info = spec_parts.build_from_spec(spec, seed0 + v)
-        obj = mb.build("%s_%d" % (kind, v))
+        obj = mb.build("%s_%d" % (kind, v), plant=bool(info.get("plant", False)))
         name = "%s_%d.glb" % (kind, v)
         export_object(obj, out / name)
         files.append(name)

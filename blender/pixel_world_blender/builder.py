@@ -4,6 +4,7 @@
 """
 import math
 
+import bmesh
 import bpy
 import numpy as np
 
@@ -160,6 +161,61 @@ def tex_size(key):
     return arr.shape[1], arr.shape[0]
 
 
+# ---------------------------------------------------------------- 圆滑规则（所有资产）
+# 场景里的模型不要棱角分明（2026-11-16 定的规则，以后新加的生成器 / AI 规格摆件都自动遵守）：
+#   1. 圆形部件（柱子、树冠、桶、管子）的边数有下限：半径 ≥ 0.15 米至少 12 边，再小的至少 8 边（细杆 4~6 边不变）
+#   2. 导出前统一「柔化」：合并重合顶点让盒子连成一体 → 硬边（两面夹角 30°~150°）倒一道圆角斜边，宽度按物体大小 1.2~5 厘米
+#      → 按 40° 平滑着色（大平面仍然平整，转折处是柔和的过渡，不再是一刀切的硬边）
+#      植物（树、灌木、草，场景里成百上千棵）不倒角，只靠足够的边数 + 平滑着色变圆润，面数不至于翻好几倍
+SOFT_MIN_SIDES_BIG = 12
+SOFT_MIN_SIDES = 8
+SOFT_BEVEL_ANGLE = (30.0, 150.0)
+SOFT_SMOOTH_ANGLE = 40.0
+
+
+def _round_sides(sides, r):
+    if sides <= 4 and r < 0.04:
+        return sides  # 很细的杆子、绳子保持原样（多了只是浪费面数）
+    if r >= 0.15:
+        return max(sides, SOFT_MIN_SIDES_BIG)
+    if r >= 0.04:
+        return max(sides, SOFT_MIN_SIDES)
+    return sides
+
+
+def soften_mesh(me, plant=False):
+    """把网格的硬边倒成小圆角并按角度平滑着色（见上面的圆滑规则）；plant = True 只平滑着色不倒角"""
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
+    if len(bm.verts) == 0:
+        bm.free()
+        return
+    xs = [v.co for v in bm.verts]
+    size = max(max(c[i] for c in xs) - min(c[i] for c in xs) for i in range(3))
+    width = min(0.05, max(0.012, size * 0.012))
+    lo, hi = (math.radians(a) for a in SOFT_BEVEL_ANGLE)
+    edges = []
+    for e in ([] if plant else bm.edges):
+        if len(e.link_faces) != 2:
+            continue
+        try:
+            ang = e.calc_face_angle()
+        except ValueError:
+            continue
+        if lo <= ang <= hi:
+            edges.append(e)
+    if edges:
+        bmesh.ops.bevel(bm, geom=edges, offset=width, offset_type="OFFSET", segments=1, profile=0.5,
+                        affect="EDGES", clamp_overlap=True)
+    bm.to_mesh(me)
+    bm.free()
+    for poly in me.polygons:
+        poly.use_smooth = True
+    me.set_sharp_from_angle(angle=math.radians(SOFT_SMOOTH_ANGLE))
+    me.update()
+
+
 class MeshBuilder:
     """按材质收集多边形；UV 自动投影（米 → 贴图重复次数）"""
 
@@ -220,6 +276,7 @@ class MeshBuilder:
             self.face(key, [(x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0)], (0, 0, -1))
 
     def frustum(self, key, cx, cy, z0, z1, r0, r1, sides=8, rot=0.0, top=True, bottom=False):
+        sides = _round_sides(sides, max(r0, r1))
         """正 N 边形棱台（Z 向上）"""
         b = [(cx + math.cos(rot + 2 * math.pi * i / sides) * r0, cy + math.sin(rot + 2 * math.pi * i / sides) * r0, z0) for i in range(sides)]
         t = [(cx + math.cos(rot + 2 * math.pi * i / sides) * r1, cy + math.sin(rot + 2 * math.pi * i / sides) * r1, z1) for i in range(sides)]
@@ -236,6 +293,7 @@ class MeshBuilder:
             self.face(key, b[::-1], (0, 0, -1))
 
     def tube(self, key, p0, p1, r0, r1, sides=6, rot=0.0, caps=True):
+        sides = _round_sides(sides, max(r0, r1))
         """任意方向的 N 边形棱台：从 p0（半径 r0）到 p1（半径 r1）。树枝、车轮、灯臂都用它。"""
         p0 = np.asarray(p0, dtype=float)
         p1 = np.asarray(p1, dtype=float)
@@ -270,7 +328,7 @@ class MeshBuilder:
         self.frustum(key, cx, cy, z1, z2, r, r * 0.9, sides, rot, top=False)
         self.frustum(key, cx, cy, z2, z3, r * 0.9, r * 0.35, sides, rot, top=True)
 
-    def build(self, name, collection=None):
+    def build(self, name, collection=None, soften=True, plant=False):
         me = bpy.data.meshes.new(name)
         me.from_pydata([tuple(v) for v in self.verts], [], [f[0] for f in self.faces])
         uv = me.uv_layers.new(name="UVMap")
@@ -284,6 +342,8 @@ class MeshBuilder:
             me.materials.append(material(key))
         me.validate()
         me.update()
+        if soften:
+            soften_mesh(me, plant)
         obj = bpy.data.objects.new(name, me)
         (collection or bpy.context.scene.collection).objects.link(obj)
         return obj

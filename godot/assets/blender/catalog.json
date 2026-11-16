@@ -6,343 +6,67 @@
   "style": "shared/style/style.json",
   "assets": [
     {
-      "id": "bl_well",
-      "kind": "well",
-      "name": "石井",
-      "category": "props",
-      "desc": "Blender 生成的石井：石砌井圈、木柱小屋顶、辘轳和吊桶，适合放在小镇广场或农舍旁。",
-      "vary": "井圈粗细、屋顶颜色（灰 / 红）、屋顶坡度随种子变化。",
+      "id": "bl_cottage",
+      "kind": "cottage",
+      "name": "农舍",
+      "category": "buildings",
+      "desc": "Blender 生成的农舍：石基、木板墙、双坡瓦顶、门窗和烟囱。",
+      "vary": "宽度、进深、墙面（红 / 赭 / 青 / 原木竖木板、白 / 黄横木板、石墙、白灰泥）、屋顶（双坡 / 四坡，灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。",
       "tags": [
-        "plaza",
-        "yard",
-        "town"
+        "town",
+        "yard"
       ],
       "source": "generator",
       "files": [
-        "well_0.glb",
-        "well_1.glb",
-        "well_2.glb",
-        "well_3.glb"
+        "cottage_0.glb",
+        "cottage_1.glb",
+        "cottage_2.glb",
+        "cottage_3.glb"
       ],
       "footprint": [
-        2.49,
-        1.59
+        6.9,
+        5.65
       ],
-      "height": 2.76,
-      "plant": false
-    },
-    {
-      "id": "bl_market_stall",
-      "kind": "market_stall",
-      "name": "集市摊位",
-      "category": "street",
-      "desc": "Blender 生成的集市摊位：木柜台、条纹帆布顶棚、水果筐和木箱，适合小镇广场。",
-      "vary": "顶棚颜色（红 / 青 / 黄条纹）、摊位宽度、水果种类和数量随种子变化。",
-      "tags": [
-        "plaza",
-        "town"
-      ],
-      "source": "generator",
-      "files": [
-        "market_stall_0.glb",
-        "market_stall_1.glb",
-        "market_stall_2.glb",
-        "market_stall_3.glb"
-      ],
-      "footprint": [
-        3.59,
-        1.9
-      ],
-      "height": 2.7,
-      "plant": false
-    },
-    {
-      "id": "bl_handcart",
-      "kind": "handcart",
-      "name": "手推车",
-      "category": "props",
-      "desc": "Blender 生成的手推车：木车斗、辐条木轮、车把和支腿，车上随机装干草、木箱或木桶。",
-      "vary": "车斗长宽、轮子大小和辐条数、装载的货物随种子变化。",
-      "tags": [
-        "roadside",
-        "yard",
-        "plains",
-        "town"
-      ],
-      "source": "generator",
-      "files": [
-        "handcart_0.glb",
-        "handcart_1.glb",
-        "handcart_2.glb",
-        "handcart_3.glb"
-      ],
-      "footprint": [
-        2.29,
-        1.27
-      ],
-      "height": 1.39,
-      "plant": false
-    },
-    {
-      "id": "bl_signpost",
-      "kind": "signpost",
-      "name": "路牌",
-      "category": "street",
-      "desc": "Blender 生成的路口指示牌：木柱上钉着几块朝向不同的箭头牌，柱脚压着石块。",
-      "vary": "指示牌数量、朝向、长度和颜色，柱子高度随种子变化。",
-      "tags": [
-        "roadside",
-        "plains",
-        "forest"
-      ],
-      "source": "generator",
-      "files": [
-        "signpost_0.glb",
-        "signpost_1.glb",
-        "signpost_2.glb",
-        "signpost_3.glb"
-      ],
-      "footprint": [
-        1.44,
-        1.44
-      ],
-      "height": 2.29,
-      "plant": false
-    },
-    {
-      "id": "bl_lighthouse",
-      "kind": "lighthouse",
-      "name": "灯塔",
-      "category": "landmarks",
-      "desc": "Blender 生成的灯塔：石砌底座、红白条纹的塔身、观景平台和玻璃灯室，夜里灯室发光。",
-      "vary": "高度、条纹数量和颜色（红白 / 灰白）、塔身收分、栏杆柱数随种子变化。",
-      "tags": [
-        "shore",
-        "island",
-        "town"
-      ],
-      "source": "generator",
-      "files": [
-        "lighthouse_0.glb",
-        "lighthouse_1.glb",
-        "lighthouse_2.glb",
-        "lighthouse_3.glb"
-      ],
-      "footprint": [
-        3.75,
-        4.75
-      ],
-      "height": 10.17,
-      "plant": false
-    },
-    {
-      "id": "bl_spec_cactus",
-      "kind": "spec_cactus",
-      "name": "仙人掌",
-      "category": "plants",
-      "desc": "沙漠里的柱状仙人掌：竖条纹的主干和一两根向上弯的侧臂，顶上开一朵小黄花。",
-      "vary": "高度、侧臂的高度和长度随变体变化。",
-      "tags": [
-        "desert",
-        "canyon"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_cactus_0.glb",
-        "spec_cactus_1.glb",
-        "spec_cactus_2.glb",
-        "spec_cactus_3.glb"
-      ],
-      "footprint": [
-        1.12,
-        0.42
-      ],
-      "height": 1.66,
-      "plant": false
-    },
-    {
-      "id": "bl_spec_campfire",
-      "kind": "spec_campfire",
-      "name": "篝火",
-      "category": "props",
-      "desc": "一圈石头围着的篝火：木柴搭成小尖塔，中间的火炭夜里发光，旁边放着一截坐人的原木。",
-      "vary": "石头数量和大小、木柴倾斜角度、旁边原木的位置随变体变化。",
-      "tags": [
-        "camp",
-        "forest",
-        "plains",
-        "desert",
-        "winter"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_campfire_0.glb",
-        "spec_campfire_1.glb",
-        "spec_campfire_2.glb",
-        "spec_campfire_3.glb"
-      ],
-      "footprint": [
-        2.23,
-        2.2
-      ],
-      "height": 0.56,
-      "plant": false
-    },
-    {
-      "id": "bl_spec_desert_rock",
-      "kind": "spec_desert_rock",
-      "name": "红岩石柱",
-      "category": "rocks",
-      "desc": "峡谷和沙漠里风化的红色岩柱：一层层错开的岩块，下宽上窄，脚下散落几块碎石。",
-      "vary": "层数高度、每层的错位和大小、碎石位置随变体变化。",
-      "tags": [
-        "desert",
-        "canyon"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_desert_rock_0.glb",
-        "spec_desert_rock_1.glb",
-        "spec_desert_rock_2.glb",
-        "spec_desert_rock_3.glb"
-      ],
-      "footprint": [
-        3.2,
-        2.38
-      ],
-      "height": 2.46,
-      "plant": false
-    },
-    {
-      "id": "bl_spec_notice_board",
-      "kind": "spec_notice_board",
-      "name": "布告栏",
-      "category": "street",
-      "desc": "小镇广场的木制布告栏：两根立柱撑着木板，钉着几张告示，顶上有一个小双坡雨棚。",
-      "vary": "木板颜色、雨棚瓦色、告示的位置随变体变化。",
-      "tags": [
-        "plaza",
-        "roadside",
-        "town"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_notice_board_0.glb",
-        "spec_notice_board_1.glb",
-        "spec_notice_board_2.glb",
-        "spec_notice_board_3.glb"
-      ],
-      "footprint": [
-        2.14,
-        0.74
-      ],
-      "height": 2.44,
-      "plant": false
-    },
-    {
-      "id": "bl_spec_palm_tree",
-      "kind": "spec_palm_tree",
-      "name": "椰子树",
-      "category": "trees",
-      "desc": "海岛和沙漠绿洲的椰子树：弯曲的分节树干，顶上一圈下垂的长叶子，叶根挂着几个椰子。",
-      "vary": "树干弯曲程度和高度、叶子下垂角度随变体变化；放进场景时再随机朝向、比例、色调。",
-      "tags": [
-        "island",
-        "desert",
-        "shore"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_palm_tree_0.glb",
-        "spec_palm_tree_1.glb",
-        "spec_palm_tree_2.glb",
-        "spec_palm_tree_3.glb"
-      ],
-      "footprint": [
-        2.89,
-        2.95
-      ],
-      "height": 3.91,
-      "plant": true
-    },
-    {
-      "id": "bl_spec_tent",
-      "kind": "spec_tent",
-      "name": "帐篷",
-      "category": "props",
-      "desc": "营地的条纹帆布帐篷：两根撑杆、斜拉的绳桩，门口的帘子掀开一角。",
-      "vary": "帆布颜色（红 / 青 / 黄条纹）和帐篷大小随变体变化。",
-      "tags": [
-        "camp",
-        "plains",
-        "desert",
-        "island"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_tent_0.glb",
-        "spec_tent_1.glb",
-        "spec_tent_2.glb",
-        "spec_tent_3.glb"
-      ],
-      "footprint": [
-        3.9,
-        2.2
-      ],
-      "height": 1.4,
-      "plant": false
-    },
-    {
-      "id": "bl_spec_snowman",
-      "kind": "spec_snowman",
-      "name": "雪人",
-      "category": "props",
-      "desc": "三个雪球堆成的雪人：煤块眼睛和纽扣、胡萝卜鼻子、树枝手臂、红围巾和小礼帽。",
-      "vary": "雪球大小、手臂角度、帽子颜色（黑 / 蓝）和围巾颜色随变体变化。",
-      "tags": [
-        "winter",
-        "yard",
-        "plaza"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_snowman_0.glb",
-        "spec_snowman_1.glb",
-        "spec_snowman_2.glb",
-        "spec_snowman_3.glb"
-      ],
-      "footprint": [
-        1.71,
-        1.07
-      ],
-      "height": 1.92,
-      "plant": false
-    },
-    {
-      "id": "bl_spec_rowboat",
-      "kind": "spec_rowboat",
-      "name": "倒扣的渔船",
-      "category": "props",
-      "desc": "倒扣在岸边晒着的小木渔船：船底朝天，两支桨斜靠在船边，旁边一卷渔网和几个红白浮球。",
-      "vary": "船身颜色（青 / 红 / 原木）、船的长度、桨和浮球的位置随变体变化。",
-      "tags": [
-        "shore",
-        "island",
-        "town"
-      ],
-      "source": "spec",
-      "files": [
-        "spec_rowboat_0.glb",
-        "spec_rowboat_1.glb",
-        "spec_rowboat_2.glb",
-        "spec_rowboat_3.glb"
-      ],
-      "footprint": [
-        3.13,
-        2.44
-      ],
-      "height": 0.83,
-      "plant": false
+      "height": 6.0,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            6.65,
+            6.65
+          ],
+          "height": 6.33,
+          "width": 5.75,
+          "depth": 5.75
+        },
+        {
+          "footprint": [
+            8.9,
+            6.9
+          ],
+          "height": 6.39,
+          "width": 8.0,
+          "depth": 6.0
+        },
+        {
+          "footprint": [
+            6.9,
+            6.15
+          ],
+          "height": 6.41,
+          "width": 6.0,
+          "depth": 5.25
+        },
+        {
+          "footprint": [
+            6.9,
+            5.65
+          ],
+          "height": 6.0,
+          "width": 6.0,
+          "depth": 4.75
+        }
+      ]
     },
     {
       "id": "bl_pine",
@@ -374,7 +98,190 @@
         2.02
       ],
       "height": 4.92,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            2.4,
+            2.4
+          ],
+          "height": 4.47
+        },
+        {
+          "footprint": [
+            2.06,
+            2.06
+          ],
+          "height": 4.31
+        },
+        {
+          "footprint": [
+            2.41,
+            2.41
+          ],
+          "height": 4.94
+        },
+        {
+          "footprint": [
+            2.21,
+            2.21
+          ],
+          "height": 4.25
+        },
+        {
+          "footprint": [
+            2.18,
+            2.18
+          ],
+          "height": 5.49
+        },
+        {
+          "footprint": [
+            2.58,
+            2.58
+          ],
+          "height": 5.89
+        },
+        {
+          "footprint": [
+            2.66,
+            2.66
+          ],
+          "height": 5.63
+        },
+        {
+          "footprint": [
+            2.26,
+            2.26
+          ],
+          "height": 4.33
+        },
+        {
+          "footprint": [
+            2.43,
+            2.43
+          ],
+          "height": 5.37
+        },
+        {
+          "footprint": [
+            2.02,
+            2.02
+          ],
+          "height": 4.92
+        }
+      ]
+    },
+    {
+      "id": "bl_well",
+      "kind": "well",
+      "name": "石井",
+      "category": "props",
+      "desc": "Blender 生成的石井：石砌井圈、木柱小屋顶、辘轳和吊桶，适合放在小镇广场或农舍旁。",
+      "vary": "井圈粗细、屋顶颜色（灰 / 红）、屋顶坡度随种子变化。",
+      "tags": [
+        "plaza",
+        "yard",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "well_0.glb",
+        "well_1.glb",
+        "well_2.glb",
+        "well_3.glb"
+      ],
+      "footprint": [
+        2.49,
+        1.59
+      ],
+      "height": 2.76,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.45,
+            1.55
+          ],
+          "height": 2.67
+        },
+        {
+          "footprint": [
+            2.78,
+            1.88
+          ],
+          "height": 2.64
+        },
+        {
+          "footprint": [
+            2.5,
+            1.6
+          ],
+          "height": 2.69
+        },
+        {
+          "footprint": [
+            2.49,
+            1.59
+          ],
+          "height": 2.76
+        }
+      ]
+    },
+    {
+      "id": "bl_market_stall",
+      "kind": "market_stall",
+      "name": "集市摊位",
+      "category": "street",
+      "desc": "Blender 生成的集市摊位：木柜台、条纹帆布顶棚、水果筐和木箱，适合小镇广场。",
+      "vary": "顶棚颜色（红 / 青 / 黄条纹）、摊位宽度、水果种类和数量随种子变化。",
+      "tags": [
+        "plaza",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "market_stall_0.glb",
+        "market_stall_1.glb",
+        "market_stall_2.glb",
+        "market_stall_3.glb"
+      ],
+      "footprint": [
+        3.59,
+        1.9
+      ],
+      "height": 2.7,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            3.51,
+            1.9
+          ],
+          "height": 2.7
+        },
+        {
+          "footprint": [
+            4.16,
+            1.9
+          ],
+          "height": 2.7
+        },
+        {
+          "footprint": [
+            3.59,
+            1.9
+          ],
+          "height": 2.7
+        },
+        {
+          "footprint": [
+            3.59,
+            1.9
+          ],
+          "height": 2.7
+        }
+      ]
     },
     {
       "id": "bl_oak",
@@ -404,7 +311,65 @@
         3.66
       ],
       "height": 4.41,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            4.05,
+            4.05
+          ],
+          "height": 4.38
+        },
+        {
+          "footprint": [
+            3.86,
+            3.86
+          ],
+          "height": 4.89
+        },
+        {
+          "footprint": [
+            4.22,
+            4.22
+          ],
+          "height": 4.41
+        },
+        {
+          "footprint": [
+            4.43,
+            4.43
+          ],
+          "height": 4.4
+        },
+        {
+          "footprint": [
+            4.05,
+            4.05
+          ],
+          "height": 4.62
+        },
+        {
+          "footprint": [
+            4.27,
+            4.27
+          ],
+          "height": 4.78
+        },
+        {
+          "footprint": [
+            3.85,
+            3.85
+          ],
+          "height": 4.44
+        },
+        {
+          "footprint": [
+            3.66,
+            3.66
+          ],
+          "height": 4.41
+        }
+      ]
     },
     {
       "id": "bl_street_lamp",
@@ -431,7 +396,220 @@
         0.6
       ],
       "height": 3.59,
-      "plant": false
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.73,
+            0.6
+          ],
+          "height": 3.64
+        },
+        {
+          "footprint": [
+            1.89,
+            0.6
+          ],
+          "height": 3.35
+        },
+        {
+          "footprint": [
+            1.79,
+            0.6
+          ],
+          "height": 3.66
+        },
+        {
+          "footprint": [
+            1.71,
+            0.6
+          ],
+          "height": 3.48
+        },
+        {
+          "footprint": [
+            1.97,
+            0.6
+          ],
+          "height": 3.75
+        },
+        {
+          "footprint": [
+            1.83,
+            0.6
+          ],
+          "height": 3.59
+        }
+      ]
+    },
+    {
+      "id": "bl_handcart",
+      "kind": "handcart",
+      "name": "手推车",
+      "category": "props",
+      "desc": "Blender 生成的手推车：木车斗、辐条木轮、车把和支腿，车上随机装干草、木箱或木桶。",
+      "vary": "车斗长宽、轮子大小和辐条数、装载的货物随种子变化。",
+      "tags": [
+        "roadside",
+        "yard",
+        "plains",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "handcart_0.glb",
+        "handcart_1.glb",
+        "handcart_2.glb",
+        "handcart_3.glb"
+      ],
+      "footprint": [
+        2.29,
+        1.27
+      ],
+      "height": 1.39,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.25,
+            1.42
+          ],
+          "height": 1.42
+        },
+        {
+          "footprint": [
+            2.58,
+            1.44
+          ],
+          "height": 1.36
+        },
+        {
+          "footprint": [
+            2.3,
+            1.36
+          ],
+          "height": 1.39
+        },
+        {
+          "footprint": [
+            2.29,
+            1.27
+          ],
+          "height": 1.39
+        }
+      ]
+    },
+    {
+      "id": "bl_signpost",
+      "kind": "signpost",
+      "name": "路牌",
+      "category": "street",
+      "desc": "Blender 生成的路口指示牌：木柱上钉着几块朝向不同的箭头牌，柱脚压着石块。",
+      "vary": "指示牌数量、朝向、长度和颜色，柱子高度随种子变化。",
+      "tags": [
+        "roadside",
+        "plains",
+        "forest"
+      ],
+      "source": "generator",
+      "files": [
+        "signpost_0.glb",
+        "signpost_1.glb",
+        "signpost_2.glb",
+        "signpost_3.glb"
+      ],
+      "footprint": [
+        1.44,
+        1.44
+      ],
+      "height": 2.29,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.45,
+            1.45
+          ],
+          "height": 2.25
+        },
+        {
+          "footprint": [
+            1.53,
+            1.53
+          ],
+          "height": 2.58
+        },
+        {
+          "footprint": [
+            1.65,
+            1.65
+          ],
+          "height": 2.3
+        },
+        {
+          "footprint": [
+            1.44,
+            1.44
+          ],
+          "height": 2.29
+        }
+      ]
+    },
+    {
+      "id": "bl_lighthouse",
+      "kind": "lighthouse",
+      "name": "灯塔",
+      "category": "landmarks",
+      "desc": "Blender 生成的灯塔：石砌底座、红白条纹的塔身、观景平台和玻璃灯室，夜里灯室发光。",
+      "vary": "高度、条纹数量和颜色（红白 / 灰白）、塔身收分、栏杆柱数随种子变化。",
+      "tags": [
+        "shore",
+        "island",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "lighthouse_0.glb",
+        "lighthouse_1.glb",
+        "lighthouse_2.glb",
+        "lighthouse_3.glb"
+      ],
+      "footprint": [
+        3.75,
+        4.75
+      ],
+      "height": 10.17,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            4.12,
+            5.12
+          ],
+          "height": 9.97
+        },
+        {
+          "footprint": [
+            4.17,
+            5.17
+          ],
+          "height": 11.61
+        },
+        {
+          "footprint": [
+            3.97,
+            4.97
+          ],
+          "height": 10.18
+        },
+        {
+          "footprint": [
+            3.75,
+            4.75
+          ],
+          "height": 10.17
+        }
+      ]
     },
     {
       "id": "bl_birch",
@@ -461,7 +639,65 @@
         2.79
       ],
       "height": 5.85,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            2.8,
+            2.8
+          ],
+          "height": 5.76
+        },
+        {
+          "footprint": [
+            2.77,
+            2.77
+          ],
+          "height": 5.75
+        },
+        {
+          "footprint": [
+            2.85,
+            2.85
+          ],
+          "height": 5.56
+        },
+        {
+          "footprint": [
+            2.76,
+            2.76
+          ],
+          "height": 5.59
+        },
+        {
+          "footprint": [
+            2.89,
+            2.89
+          ],
+          "height": 5.26
+        },
+        {
+          "footprint": [
+            2.7,
+            2.7
+          ],
+          "height": 5.85
+        },
+        {
+          "footprint": [
+            2.89,
+            2.89
+          ],
+          "height": 5.75
+        },
+        {
+          "footprint": [
+            2.79,
+            2.79
+          ],
+          "height": 5.85
+        }
+      ]
     },
     {
       "id": "bl_poplar",
@@ -489,7 +725,51 @@
         2.02
       ],
       "height": 4.51,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            1.79,
+            1.79
+          ],
+          "height": 3.89
+        },
+        {
+          "footprint": [
+            2.16,
+            2.16
+          ],
+          "height": 4.4
+        },
+        {
+          "footprint": [
+            2.07,
+            2.07
+          ],
+          "height": 4.8
+        },
+        {
+          "footprint": [
+            2.18,
+            2.18
+          ],
+          "height": 4.94
+        },
+        {
+          "footprint": [
+            1.92,
+            1.92
+          ],
+          "height": 4.48
+        },
+        {
+          "footprint": [
+            2.02,
+            2.02
+          ],
+          "height": 4.51
+        }
+      ]
     },
     {
       "id": "bl_bush",
@@ -520,7 +800,65 @@
         1.44
       ],
       "height": 0.57,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            1.65,
+            1.65
+          ],
+          "height": 0.66
+        },
+        {
+          "footprint": [
+            2.07,
+            2.07
+          ],
+          "height": 0.82
+        },
+        {
+          "footprint": [
+            1.99,
+            1.99
+          ],
+          "height": 0.79
+        },
+        {
+          "footprint": [
+            2.45,
+            2.45
+          ],
+          "height": 0.83
+        },
+        {
+          "footprint": [
+            1.61,
+            1.61
+          ],
+          "height": 0.7
+        },
+        {
+          "footprint": [
+            1.47,
+            1.47
+          ],
+          "height": 0.57
+        },
+        {
+          "footprint": [
+            1.65,
+            1.65
+          ],
+          "height": 0.59
+        },
+        {
+          "footprint": [
+            1.44,
+            1.44
+          ],
+          "height": 0.57
+        }
+      ]
     },
     {
       "id": "bl_rock",
@@ -552,7 +890,65 @@
         1.14
       ],
       "height": 0.4,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            1.6,
+            1.6
+          ],
+          "height": 0.29
+        },
+        {
+          "footprint": [
+            0.96,
+            0.96
+          ],
+          "height": 0.34
+        },
+        {
+          "footprint": [
+            0.98,
+            0.98
+          ],
+          "height": 0.53
+        },
+        {
+          "footprint": [
+            1.66,
+            1.66
+          ],
+          "height": 0.53
+        },
+        {
+          "footprint": [
+            1.01,
+            1.01
+          ],
+          "height": 0.47
+        },
+        {
+          "footprint": [
+            0.75,
+            0.75
+          ],
+          "height": 0.35
+        },
+        {
+          "footprint": [
+            1.64,
+            1.64
+          ],
+          "height": 0.38
+        },
+        {
+          "footprint": [
+            1.14,
+            1.14
+          ],
+          "height": 0.4
+        }
+      ]
     },
     {
       "id": "bl_grass_tuft",
@@ -581,7 +977,51 @@
         0.45
       ],
       "height": 0.8,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.49
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.5
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.49
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.41
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.85
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.8
+        }
+      ]
     },
     {
       "id": "bl_grass_dry",
@@ -608,7 +1048,37 @@
         0.45
       ],
       "height": 0.48,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.5
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.48
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.46
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.48
+        }
+      ]
     },
     {
       "id": "bl_grass_flower",
@@ -634,7 +1104,37 @@
         0.45
       ],
       "height": 0.5,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.46
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.43
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.47
+        },
+        {
+          "footprint": [
+            0.45,
+            0.45
+          ],
+          "height": 0.5
+        }
+      ]
     },
     {
       "id": "bl_weed",
@@ -657,7 +1157,30 @@
         0.5
       ],
       "height": 0.79,
-      "plant": true
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            0.5,
+            0.5
+          ],
+          "height": 0.77
+        },
+        {
+          "footprint": [
+            0.5,
+            0.5
+          ],
+          "height": 0.8
+        },
+        {
+          "footprint": [
+            0.5,
+            0.5
+          ],
+          "height": 0.79
+        }
+      ]
     },
     {
       "id": "bl_fish",
@@ -705,7 +1228,30 @@
         0.84
       ],
       "height": 0.74,
-      "plant": false
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            0.6,
+            0.6
+          ],
+          "height": 0.5
+        },
+        {
+          "footprint": [
+            0.72,
+            0.72
+          ],
+          "height": 0.62
+        },
+        {
+          "footprint": [
+            0.84,
+            0.84
+          ],
+          "height": 0.74
+        }
+      ]
     },
     {
       "id": "bl_barrel",
@@ -731,7 +1277,30 @@
         0.74
       ],
       "height": 1.0,
-      "plant": false
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            0.72,
+            0.72
+          ],
+          "height": 0.9
+        },
+        {
+          "footprint": [
+            0.66,
+            0.66
+          ],
+          "height": 0.78
+        },
+        {
+          "footprint": [
+            0.74,
+            0.74
+          ],
+          "height": 1.0
+        }
+      ]
     },
     {
       "id": "bl_haystack",
@@ -756,7 +1325,37 @@
         2.87
       ],
       "height": 2.72,
-      "plant": false
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.17,
+            1.45
+          ],
+          "height": 1.45
+        },
+        {
+          "footprint": [
+            2.53,
+            2.53
+          ],
+          "height": 2.4
+        },
+        {
+          "footprint": [
+            1.02,
+            1.26
+          ],
+          "height": 1.26
+        },
+        {
+          "footprint": [
+            2.87,
+            2.87
+          ],
+          "height": 2.72
+        }
+      ]
     },
     {
       "id": "bl_bench",
@@ -781,7 +1380,30 @@
         0.7
       ],
       "height": 0.48,
-      "plant": false
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.8,
+            0.7
+          ],
+          "height": 0.98
+        },
+        {
+          "footprint": [
+            1.8,
+            0.7
+          ],
+          "height": 0.95
+        },
+        {
+          "footprint": [
+            1.8,
+            0.7
+          ],
+          "height": 0.48
+        }
+      ]
     },
     {
       "id": "bl_fence",
@@ -807,7 +1429,37 @@
         0.4
       ],
       "height": 1.23,
-      "plant": false
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.0,
+            0.4
+          ],
+          "height": 1.0
+        },
+        {
+          "footprint": [
+            2.0,
+            0.4
+          ],
+          "height": 0.95
+        },
+        {
+          "footprint": [
+            2.0,
+            0.4
+          ],
+          "height": 0.7
+        },
+        {
+          "footprint": [
+            2.0,
+            0.4
+          ],
+          "height": 1.23
+        }
+      ]
     },
     {
       "id": "bl_fence_post",
@@ -1054,69 +1706,6 @@
           "width": 8.5,
           "depth": 6.0,
           "floors": 1
-        }
-      ]
-    },
-    {
-      "id": "bl_cottage",
-      "kind": "cottage",
-      "name": "农舍",
-      "category": "buildings",
-      "desc": "Blender 生成的农舍：石基、木板墙、双坡瓦顶、门窗和烟囱。",
-      "vary": "宽度、进深、墙面（红 / 赭 / 青 / 原木竖木板、白 / 黄横木板、石墙、白灰泥）、屋顶（双坡 / 四坡，灰 / 红）、坡度、窗户数量、烟囱位置随种子变化。",
-      "tags": [
-        "town",
-        "yard"
-      ],
-      "source": "generator",
-      "files": [
-        "cottage_0.glb",
-        "cottage_1.glb",
-        "cottage_2.glb",
-        "cottage_3.glb"
-      ],
-      "footprint": [
-        6.9,
-        5.65
-      ],
-      "height": 6.0,
-      "plant": false,
-      "variant_info": [
-        {
-          "footprint": [
-            6.65,
-            6.65
-          ],
-          "height": 6.33,
-          "width": 5.75,
-          "depth": 5.75
-        },
-        {
-          "footprint": [
-            8.9,
-            6.9
-          ],
-          "height": 6.39,
-          "width": 8.0,
-          "depth": 6.0
-        },
-        {
-          "footprint": [
-            6.9,
-            6.15
-          ],
-          "height": 6.41,
-          "width": 6.0,
-          "depth": 5.25
-        },
-        {
-          "footprint": [
-            6.9,
-            5.65
-          ],
-          "height": 6.0,
-          "width": 6.0,
-          "depth": 4.75
         }
       ]
     },
@@ -2739,6 +3328,215 @@
         5.0
       ],
       "height": 0.8,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_cactus",
+      "kind": "spec_cactus",
+      "name": "仙人掌",
+      "category": "plants",
+      "desc": "沙漠里的柱状仙人掌：竖条纹的主干和一两根向上弯的侧臂，顶上开一朵小黄花。",
+      "vary": "高度、侧臂的高度和长度随变体变化。",
+      "tags": [
+        "desert",
+        "canyon"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_cactus_0.glb",
+        "spec_cactus_1.glb",
+        "spec_cactus_2.glb",
+        "spec_cactus_3.glb"
+      ],
+      "footprint": [
+        1.12,
+        0.44
+      ],
+      "height": 1.66,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_campfire",
+      "kind": "spec_campfire",
+      "name": "篝火",
+      "category": "props",
+      "desc": "一圈石头围着的篝火：木柴搭成小尖塔，中间的火炭夜里发光，旁边放着一截坐人的原木。",
+      "vary": "石头数量和大小、木柴倾斜角度、旁边原木的位置随变体变化。",
+      "tags": [
+        "camp",
+        "forest",
+        "plains",
+        "desert",
+        "winter"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_campfire_0.glb",
+        "spec_campfire_1.glb",
+        "spec_campfire_2.glb",
+        "spec_campfire_3.glb"
+      ],
+      "footprint": [
+        2.23,
+        2.2
+      ],
+      "height": 0.56,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_desert_rock",
+      "kind": "spec_desert_rock",
+      "name": "红岩石柱",
+      "category": "rocks",
+      "desc": "峡谷和沙漠里风化的红色岩柱：一层层错开的岩块，下宽上窄，脚下散落几块碎石。",
+      "vary": "层数高度、每层的错位和大小、碎石位置随变体变化。",
+      "tags": [
+        "desert",
+        "canyon"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_desert_rock_0.glb",
+        "spec_desert_rock_1.glb",
+        "spec_desert_rock_2.glb",
+        "spec_desert_rock_3.glb"
+      ],
+      "footprint": [
+        3.2,
+        2.44
+      ],
+      "height": 2.46,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_notice_board",
+      "kind": "spec_notice_board",
+      "name": "布告栏",
+      "category": "street",
+      "desc": "小镇广场的木制布告栏：两根立柱撑着木板，钉着几张告示，顶上有一个小双坡雨棚。",
+      "vary": "木板颜色、雨棚瓦色、告示的位置随变体变化。",
+      "tags": [
+        "plaza",
+        "roadside",
+        "town"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_notice_board_0.glb",
+        "spec_notice_board_1.glb",
+        "spec_notice_board_2.glb",
+        "spec_notice_board_3.glb"
+      ],
+      "footprint": [
+        2.14,
+        0.74
+      ],
+      "height": 2.44,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_palm_tree",
+      "kind": "spec_palm_tree",
+      "name": "椰子树",
+      "category": "trees",
+      "desc": "海岛和沙漠绿洲的椰子树：弯曲的分节树干，顶上一圈下垂的长叶子，叶根挂着几个椰子。",
+      "vary": "树干弯曲程度和高度、叶子下垂角度随变体变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "island",
+        "desert",
+        "shore"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_palm_tree_0.glb",
+        "spec_palm_tree_1.glb",
+        "spec_palm_tree_2.glb",
+        "spec_palm_tree_3.glb"
+      ],
+      "footprint": [
+        2.89,
+        2.96
+      ],
+      "height": 3.95,
+      "plant": true
+    },
+    {
+      "id": "bl_spec_rowboat",
+      "kind": "spec_rowboat",
+      "name": "倒扣的渔船",
+      "category": "props",
+      "desc": "倒扣在岸边晒着的小木渔船：船底朝天，两支桨斜靠在船边，旁边一卷渔网和几个红白浮球。",
+      "vary": "船身颜色（青 / 红 / 原木）、船的长度、桨和浮球的位置随变体变化。",
+      "tags": [
+        "shore",
+        "island",
+        "town"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_rowboat_0.glb",
+        "spec_rowboat_1.glb",
+        "spec_rowboat_2.glb",
+        "spec_rowboat_3.glb"
+      ],
+      "footprint": [
+        3.13,
+        2.44
+      ],
+      "height": 0.83,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_snowman",
+      "kind": "spec_snowman",
+      "name": "雪人",
+      "category": "props",
+      "desc": "三个雪球堆成的雪人：煤块眼睛和纽扣、胡萝卜鼻子、树枝手臂、红围巾和小礼帽。",
+      "vary": "雪球大小、手臂角度、帽子颜色（黑 / 蓝）和围巾颜色随变体变化。",
+      "tags": [
+        "winter",
+        "yard",
+        "plaza"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_snowman_0.glb",
+        "spec_snowman_1.glb",
+        "spec_snowman_2.glb",
+        "spec_snowman_3.glb"
+      ],
+      "footprint": [
+        1.71,
+        1.07
+      ],
+      "height": 1.92,
+      "plant": false
+    },
+    {
+      "id": "bl_spec_tent",
+      "kind": "spec_tent",
+      "name": "帐篷",
+      "category": "props",
+      "desc": "营地的条纹帆布帐篷：两根撑杆、斜拉的绳桩，门口的帘子掀开一角。",
+      "vary": "帆布颜色（红 / 青 / 黄条纹）和帐篷大小随变体变化。",
+      "tags": [
+        "camp",
+        "plains",
+        "desert",
+        "island"
+      ],
+      "source": "spec",
+      "files": [
+        "spec_tent_0.glb",
+        "spec_tent_1.glb",
+        "spec_tent_2.glb",
+        "spec_tent_3.glb"
+      ],
+      "footprint": [
+        3.9,
+        2.2
+      ],
+      "height": 1.4,
       "plant": false
     }
   ]

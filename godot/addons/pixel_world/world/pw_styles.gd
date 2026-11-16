@@ -15,7 +15,7 @@ const STYLES := [
 		"color": Color("c4473a"),
 		"params": {
 			"houses": ["bl_modern_house", "bl_modern_house", "bl_modern_house", "bl_town_house"],
-			"specials": ["bl_modern_shop", "bl_modern_shop"], "lamp": "bl_modern_street_lamp", "road": "asphalt",
+			"specials": ["bl_modern_shop", "bl_modern_shop"], "lamp": "bl_modern_street_lamp", "road": "asphalt", "road_wobble": 0.03,
 			"style_tag": "modern", "cars": 0.35, "fence_styles": [3, 0], "bench": "bl_modern_bench",
 			"prop_counts": {"bl_well": 0, "bl_handcart": 0, "bl_signpost": 0, "bl_market_stall": 0, "bl_spec_notice_board": 1,
 				"bl_modern_bench": 2, "bl_trash_bin": 4, "bl_bus_stop": 1},
@@ -26,7 +26,7 @@ const STYLES := [
 		"desc": "城墙围起来的中世纪小镇：城门和塔楼、石板广场中央的水井和集市摊位，半木结构民居、酒馆、教堂、铁匠铺，木柱提灯照亮街道。",
 		"color": Color("8a6a4a"),
 		"params": {"medieval": true, "lake": false, "trees": 0.3, "houses": ["bl_medieval_house"],
-			"specials": ["bl_chapel", "bl_tavern", "bl_smithy"], "lamp": "bl_lantern_post", "style_tag": "medieval",
+			"specials": ["bl_chapel", "bl_tavern", "bl_smithy"], "lamp": "bl_lantern_post", "style_tag": "medieval", "road_wobble": 0.18,
 			"fence_styles": [1, 2, 3]},
 	},
 	{
@@ -34,7 +34,7 @@ const STYLES := [
 		"desc": "八九十年代的中国乡村：黄土路边一户户红砖瓦房，砖砌院墙和门楼围成农家院，门上贴着红对联；电线杆、大喇叭、小卖部，院里压水井、水缸、晾衣杆、鸡舍猪圈，门口停着二八自行车和手扶拖拉机；村边是菜地、麦地和池塘。",
 		"color": Color("b0563c"),
 		"params": {"houses": ["bl_cn_brick_house"], "specials": ["bl_cn_shop"], "lamp": "bl_cn_utility_pole", "lamp_pool": false,
-			"road": "dirt", "curbs": false, "pier": false, "style_tag": "cn_village", "yard": "courtyard",
+			"road": "dirt", "road_wobble": 0.45, "curbs": false, "pier": false, "style_tag": "cn_village", "yard": "courtyard",
 			"yard_depth": [5.0, 6.5], "fields": 12, "trees": 0.9, "benches": false, "yard_chance": 0.95,
 			"lamp_spacing": 2.2, "lamp_sides": [1], "pine_ratio": 0.12, "pine_belt": 0.35,
 			"prop_counts": {"bl_well": 0, "bl_market_stall": 0, "bl_bench": 0, "bl_spec_notice_board": 0, "bl_signpost": 0,
