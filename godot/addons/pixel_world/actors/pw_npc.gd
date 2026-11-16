@@ -13,6 +13,9 @@ extends PWCharacter
 @export var wake_hour := 7.0
 @export var sleep_hour := 19.5
 @export var greet_distance := 2.6
+## 守摊：站在 home 不走动，平时面朝 post_face（摊位正面）；有人走近照样挥手
+@export var post := false
+@export var post_face := Vector3.ZERO
 
 var hour: Callable
 var nav: PWNavGrid
@@ -71,6 +74,10 @@ func _process(delta: float) -> void:
 					_state = "idle"
 		"idle":
 			walk(Vector3.ZERO, delta)
+			if post:
+				if post_face != Vector3.ZERO:
+					face(post_face)
+				return
 			_wait -= delta
 			if _wait <= 0.0:
 				_pick_target()

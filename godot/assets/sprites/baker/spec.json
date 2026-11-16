@@ -1,0 +1,63 @@
+{
+  "id": "baker",
+  "name": "面包师",
+  "desc": "戴白色高帽、系白围裙的面包师，挎着一篮刚出炉的面包。",
+  "hair": "short",
+  "hat": "toque",
+  "weapon": "basket",
+  "sleeves": "layered",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.2,
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": false,
+  "apron": true,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#aa7d55",
+      "#6b4a32",
+      "#452923"
+    ],
+    "hat": [
+      "#f6f4ef",
+      "#f4f1ea",
+      "#c7ae9b"
+    ],
+    "top": [
+      "#e1cca5",
+      "#d9b77e",
+      "#bd6f41"
+    ],
+    "under": [
+      "#f3ede1",
+      "#efe6d4",
+      "#cba083"
+    ],
+    "bottom": [
+      "#a5917b",
+      "#7a6450",
+      "#4f3c36"
+    ],
+    "skirt": [
+      "#e1cca5",
+      "#d9b77e",
+      "#bd6f41"
+    ],
+    "trim": [
+      "#bea88d",
+      "#a8835e",
+      "#6e4b3f"
+    ]
+  }
+}

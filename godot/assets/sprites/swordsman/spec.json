@@ -9,6 +9,7 @@
   "armor": null,
   "boots": "tall",
   "beard_style": "goatee",
+  "brow": "soft",
   "skirt": 0.2,
   "height": 1.0,
   "build": 1.05,
@@ -20,6 +21,7 @@
   "collar": true,
   "belt": true,
   "trim_hem": true,
+  "apron": false,
   "extra_anims": [],
   "colors": {
     "hair": [

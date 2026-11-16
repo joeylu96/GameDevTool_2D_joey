@@ -642,6 +642,9 @@ func _build_plaza_props() -> void:
 		if not pl.can_place_rect(P.STALL, r, 0.0, true):
 			continue
 		batch.add_static(stalls[rng.randi_range(0, stalls.size() - 1)], Transform3D(Basis(Vector3.UP, sp[1]), Vector3(q.x, 0.026, q.y)))
+		# 摊主站在柜台后面，面朝广场（摊位正面是局部 +Z）
+		var fwd := Basis(Vector3.UP, sp[1]) * Vector3(0, 0, 1)
+		w.vendor_spots.append([Vector3(q.x, 0.026, q.y) - fwd * 1.4, fwd])
 		pl.add_rect(P.STALL, r, 0.0, true)
 		pl.solid_rects.append(r)
 		n_stall += 1

@@ -9,6 +9,7 @@
   "armor": "cuirass",
   "boots": "tall",
   "beard_style": "short",
+  "brow": "stern",
   "source": {
     "kind": "ref_image",
     "file": "res/ex.png（全身像素画参考）",
@@ -26,6 +27,7 @@
   "collar": true,
   "belt": true,
   "trim_hem": false,
+  "apron": false,
   "extra_anims": [
     "shoulder_rest"
   ],
@@ -84,6 +86,11 @@
       "#f4efe2",
       "#d8d0bf",
       "#a69c88"
+    ],
+    "eye": [
+      "#7f9cc0",
+      "#56789e",
+      "#3a5474"
     ]
   }
 }

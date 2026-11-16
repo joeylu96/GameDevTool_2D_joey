@@ -9,6 +9,7 @@
   "armor": null,
   "boots": "short",
   "beard_style": "goatee",
+  "brow": "soft",
   "source": {
     "kind": "prompt",
     "prompt": "一个在港口卖鱼的大婶，系着蓝白条纹围裙，扎着发髻，挎着鱼篓",
@@ -25,6 +26,7 @@
   "collar": true,
   "belt": true,
   "trim_hem": false,
+  "apron": false,
   "extra_anims": [],
   "colors": {
     "hair": [

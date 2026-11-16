@@ -6,10 +6,10 @@
   "px_per_m": 64.0,
   "origin": [
     72.0,
-    135.15
+    138.18
   ],
   "dirs": 8,
-  "elev_deg": 20.0,
+  "elev_deg": 10.0,
   "view_pitch_deg": 40.0,
   "dir_order": "第 d 行 = 相机从角色正面逆时针（俯视）转 d×45°",
   "characters": [
@@ -349,6 +349,398 @@
         },
         "wave": {
           "file": "elder/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "baker",
+      "name": "面包师",
+      "desc": "戴白色高帽、系白围裙的面包师，挎着一篮刚出炉的面包。",
+      "anims": {
+        "idle": {
+          "file": "baker/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "baker/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "baker/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "butcher",
+      "name": "屠夫",
+      "desc": "膀大腰圆的光头屠夫，络腮胡，红上衣外系一条沾了污渍的围裙，手提剁骨刀。",
+      "anims": {
+        "idle": {
+          "file": "butcher/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "butcher/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "butcher/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "fruit_vendor",
+      "name": "水果小贩",
+      "desc": "包着头巾的水果摊大姐，绿裙子配米色围裙，挎着一篮苹果。",
+      "anims": {
+        "idle": {
+          "file": "fruit_vendor/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "fruit_vendor/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "fruit_vendor/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "blacksmith",
+      "name": "铁匠",
+      "desc": "胳膊粗壮的铁匠，系着厚皮围裙，络腮胡，手里拎着锻锤。",
+      "anims": {
+        "idle": {
+          "file": "blacksmith/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "blacksmith/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "blacksmith/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "innkeeper",
+      "name": "酒馆老板",
+      "desc": "圆滚滚的酒馆老板，山羊胡，背心外系围裙，手里端着一杯麦酒。",
+      "anims": {
+        "idle": {
+          "file": "innkeeper/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "innkeeper/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "innkeeper/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "friar",
+      "name": "修士",
+      "desc": "穿棕色连帽长袍的修士，腰系麻绳，怀里抱着一本厚书。",
+      "anims": {
+        "idle": {
+          "file": "friar/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "friar/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "friar/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "knight",
+      "name": "骑士",
+      "desc": "戴铁盔、穿钢胸甲的骑士，蓝色罩袍和披风，腰挂长剑。",
+      "anims": {
+        "idle": {
+          "file": "knight/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "knight/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "knight/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "farmer",
+      "name": "农夫",
+      "desc": "戴草帽的农夫，短袖衫外套皮背心，扛着一把草叉。",
+      "anims": {
+        "idle": {
+          "file": "farmer/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "farmer/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "farmer/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "bard",
+      "name": "吟游诗人",
+      "desc": "帽子上插着羽毛的吟游诗人，紫色短外衣、锯齿花纹袖箍，背着一把鲁特琴。",
+      "anims": {
+        "idle": {
+          "file": "bard/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "bard/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "bard/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "noble_lady",
+      "name": "贵族小姐",
+      "desc": "盘发的贵族小姐，紫红色长裙配金色镶边和白色高领。",
+      "anims": {
+        "idle": {
+          "file": "noble_lady/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "noble_lady/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "noble_lady/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "herbalist",
+      "name": "草药师",
+      "desc": "披着绿色兜帽的草药师，长裙，挎着装满药草的布袋。",
+      "anims": {
+        "idle": {
+          "file": "herbalist/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "herbalist/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "herbalist/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "child",
+      "name": "小孩",
+      "desc": "在广场上跑来跑去的小孩，翘头发，短袖衫。",
+      "anims": {
+        "idle": {
+          "file": "child/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "child/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "child/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "town_crier",
+      "name": "传令官",
+      "desc": "戴红帽、穿红黄罩袍的传令官，手里拿着告示卷轴。",
+      "anims": {
+        "idle": {
+          "file": "town_crier/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "town_crier/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "town_crier/wave.png",
+          "count": 4,
+          "fps": 6,
+          "loop": true,
+          "name": "挥手"
+        }
+      }
+    },
+    {
+      "id": "cloth_merchant",
+      "name": "布商",
+      "desc": "盘发的布商大婶，青色上衣、橙黄长裙，围巾，挎着一卷布。",
+      "anims": {
+        "idle": {
+          "file": "cloth_merchant/idle.png",
+          "count": 4,
+          "fps": 4,
+          "loop": true,
+          "name": "待机"
+        },
+        "walk": {
+          "file": "cloth_merchant/walk.png",
+          "count": 6,
+          "fps": 10,
+          "loop": true,
+          "name": "走路"
+        },
+        "wave": {
+          "file": "cloth_merchant/wave.png",
           "count": 4,
           "fps": 6,
           "loop": true,

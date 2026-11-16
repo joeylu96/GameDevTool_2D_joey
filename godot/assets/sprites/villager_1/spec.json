@@ -9,6 +9,7 @@
   "armor": null,
   "boots": "short",
   "beard_style": "goatee",
+  "brow": "soft",
   "skirt": 0.46742365971831074,
   "height": 0.9974166013475821,
   "build": 0.9665826401143149,
@@ -20,6 +21,7 @@
   "collar": false,
   "belt": false,
   "trim_hem": false,
+  "apron": false,
   "extra_anims": [],
   "colors": {
     "skin": [

@@ -1,0 +1,63 @@
+{
+  "id": "fruit_vendor",
+  "name": "水果小贩",
+  "desc": "包着头巾的水果摊大姐，绿裙子配米色围裙，挎着一篮苹果。",
+  "hair": "long",
+  "hat": "hood",
+  "weapon": "basket",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.48,
+  "height": 0.96,
+  "build": 0.95,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": true,
+  "belt": false,
+  "trim_hem": false,
+  "apron": true,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#b97d4e",
+      "#7a4a2c",
+      "#4e2720"
+    ],
+    "hat": [
+      "#d39177",
+      "#c85a3c",
+      "#812b2b"
+    ],
+    "top": [
+      "#ede2c8",
+      "#e8d7b0",
+      "#ca9064"
+    ],
+    "skirt": [
+      "#8fab75",
+      "#5f7f4a",
+      "#375233"
+    ],
+    "bottom": [
+      "#8fab75",
+      "#5f7f4a",
+      "#375233"
+    ],
+    "apron": [
+      "#f2ecdb",
+      "#efe4cc",
+      "#cf9d79"
+    ],
+    "trim": [
+      "#d39177",
+      "#c85a3c",
+      "#812b2b"
+    ]
+  }
+}

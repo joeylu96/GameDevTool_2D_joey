@@ -1,0 +1,63 @@
+{
+  "id": "knight",
+  "name": "骑士",
+  "desc": "戴铁盔、穿钢胸甲的骑士，蓝色罩袍和披风，腰挂长剑。",
+  "hair": "short",
+  "hat": "helmet",
+  "weapon": "sword",
+  "sleeves": "layered",
+  "armor": "cuirass",
+  "boots": "tall",
+  "beard_style": "goatee",
+  "brow": "stern",
+  "skirt": 0.22,
+  "height": 1.0,
+  "build": 1.15,
+  "cape": true,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": true,
+  "apron": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#9c7755",
+      "#5a412e",
+      "#3a2520"
+    ],
+    "armor": [
+      "#e3e7ee",
+      "#a0a8b6",
+      "#5e6573"
+    ],
+    "under": [
+      "#a0a8ac",
+      "#7a808c",
+      "#51545c"
+    ],
+    "top": [
+      "#6a9fb7",
+      "#3f5a8c",
+      "#2c3a5a"
+    ],
+    "cape": [
+      "#6a9fb7",
+      "#3f5a8c",
+      "#2c3a5a"
+    ],
+    "trim": [
+      "#ecd27a",
+      "#c9a03c",
+      "#8a6a28"
+    ],
+    "bottom": [
+      "#79868f",
+      "#4c505c",
+      "#33353c"
+    ]
+  }
+}

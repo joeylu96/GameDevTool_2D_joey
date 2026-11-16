@@ -1,0 +1,58 @@
+{
+  "id": "innkeeper",
+  "name": "酒馆老板",
+  "desc": "圆滚滚的酒馆老板，山羊胡，背心外系围裙，手里端着一杯麦酒。",
+  "hair": "bald",
+  "hat": null,
+  "weapon": "mug",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.14,
+  "height": 1.0,
+  "build": 1.25,
+  "cape": false,
+  "scarf": false,
+  "beard": true,
+  "vest": true,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": false,
+  "apron": true,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#bc8b5c",
+      "#8a5a34",
+      "#583025"
+    ],
+    "top": [
+      "#eee6d8",
+      "#e8dcc8",
+      "#c3977d"
+    ],
+    "vest": [
+      "#b9694e",
+      "#7a3a2c",
+      "#4e2021"
+    ],
+    "apron": [
+      "#f1ecdf",
+      "#ece4d2",
+      "#c6a084"
+    ],
+    "bottom": [
+      "#947e66",
+      "#5a4a3c",
+      "#3a2d29"
+    ],
+    "trim": [
+      "#9c7755",
+      "#5a412e",
+      "#3a2520"
+    ]
+  }
+}

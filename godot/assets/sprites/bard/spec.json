@@ -1,0 +1,68 @@
+{
+  "id": "bard",
+  "name": "吟游诗人",
+  "desc": "帽子上插着羽毛的吟游诗人，紫色短外衣、锯齿花纹袖箍，背着一把鲁特琴。",
+  "hair": "ponytail",
+  "hat": "feather",
+  "weapon": "lute",
+  "sleeves": "layered",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.2,
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": true,
+  "collar": false,
+  "belt": true,
+  "trim_hem": true,
+  "apron": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#cf9978",
+      "#c2683e",
+      "#7c342d"
+    ],
+    "hat": [
+      "#af617c",
+      "#7a3a5a",
+      "#4e2841"
+    ],
+    "top": [
+      "#bc7fba",
+      "#8f4fa0",
+      "#593767"
+    ],
+    "skirt": [
+      "#bc7fba",
+      "#8f4fa0",
+      "#593767"
+    ],
+    "under": [
+      "#eee6d8",
+      "#e8dcc8",
+      "#c3977d"
+    ],
+    "band": [
+      "#f3e3b0",
+      "#c9a03c",
+      "#7a3a5a"
+    ],
+    "bottom": [
+      "#7497a7",
+      "#4a5a7a",
+      "#323b4f"
+    ],
+    "trim": [
+      "#d4ba77",
+      "#c9a03c",
+      "#82512a"
+    ]
+  }
+}

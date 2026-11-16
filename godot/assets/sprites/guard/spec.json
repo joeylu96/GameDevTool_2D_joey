@@ -9,6 +9,7 @@
   "armor": "cuirass",
   "boots": "tall",
   "beard_style": "goatee",
+  "brow": "soft",
   "skirt": 0.26,
   "height": 1.0,
   "build": 1.1,
@@ -20,6 +21,7 @@
   "collar": false,
   "belt": true,
   "trim_hem": false,
+  "apron": false,
   "extra_anims": [],
   "colors": {
     "hair": [

@@ -67,6 +67,8 @@ for a in load_json_dir(Path(args.specs_dir) / "actions"):
 specs = {}
 for s in charspec.PRESETS:
     specs[s["id"]] = (s, None)
+for s in charspec.NPCS:  # 中世纪小镇的商人小贩和镇民：只要待机 / 走路 / 挥手
+    specs[s["id"]] = (s, poses.VILLAGER_ANIMS)
 for s in load_json_dir(Path(args.specs_dir) / "characters"):
     specs[charspec.slug(s.get("id") or s.get("name"))] = (s, None)
 for i in range(1, args.villagers + 1):

@@ -41,6 +41,8 @@ var placement: PWPlacement
 var spawn_point := Vector3.ZERO
 ## NPC 的家：小镇是每栋房子门口，野外是营地 / 兴趣点旁。NPC 白天在附近闲逛、天黑回这里
 var homes: Array[Vector3] = []
+## 守摊的位置（中世纪小镇广场的摊位后面）：[Vector3 站的位置, Vector3 面朝的方向]，小贩 NPC 站在这里不乱走
+var vendor_spots: Array = []
 var fish: PWFishSchool
 var water_y := -0.45
 var violations := PackedStringArray()
@@ -74,6 +76,7 @@ func _ready() -> void:
 func generate() -> void:
 	clear()
 	homes.clear()
+	vendor_spots.clear()
 	var t0 := Time.get_ticks_msec()
 	placement = PWPlacement.new()
 	_content = Node3D.new()

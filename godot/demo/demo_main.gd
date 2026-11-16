@@ -222,6 +222,32 @@ func _spawn_npcs(count: int) -> void:
 		var t: Vector3 = homes[i]
 		homes[i] = homes[j]
 		homes[j] = t
+	# 先让小贩去守摊（中世纪小镇广场的摊位后面），剩下的角色在镇上走动
+	var vendors: Array[String] = []
+	for v in ["fruit_vendor", "baker", "butcher", "cloth_merchant", "merchant"]:
+		if v in ids:
+			vendors.append(v)
+	for k in mini(world.vendor_spots.size(), vendors.size()):
+		var spot: Array = world.vendor_spots[k]
+		var vn := PWNPC.new()
+		vn.name = "Vendor_%d" % k
+		vn.sprite_id = vendors[k]
+		vn.home = spot[0]
+		vn.post = true
+		vn.post_face = spot[1]
+		vn.wake_hour = rng.randf_range(6.0, 7.5)
+		vn.sleep_hour = rng.randf_range(18.0, 19.5)
+		vn.ground_height = world.ground_y
+		vn.can_stand = world.can_stand
+		vn.water_depth = world.water_depth
+		vn.hour = func() -> float: return tod.hour if tod != null else 12.0
+		vn.nav = nav
+		vn.player = player
+		display.viewport.add_child(vn)
+		npcs.append(vn)
+		ids.erase(vendors[k])
+	if ids.is_empty():
+		return
 	for i in mini(count, homes.size()):
 		var npc := PWNPC.new()
 		npc.name = "NPC_%d" % i

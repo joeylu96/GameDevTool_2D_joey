@@ -1,0 +1,58 @@
+{
+  "id": "cloth_merchant",
+  "name": "布商",
+  "desc": "盘发的布商大婶，青色上衣、橙黄长裙，围巾，挎着一卷布。",
+  "hair": "bun",
+  "hat": null,
+  "weapon": "bag",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.5,
+  "height": 1.0,
+  "build": 1.08,
+  "cape": false,
+  "scarf": true,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": true,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#9c7755",
+      "#5a412e",
+      "#3a2520"
+    ],
+    "top": [
+      "#7aa798",
+      "#4f7c78",
+      "#365050"
+    ],
+    "skirt": [
+      "#d1b077",
+      "#c48f3c",
+      "#7d492c"
+    ],
+    "bottom": [
+      "#d1b077",
+      "#c48f3c",
+      "#7d492c"
+    ],
+    "scarf": [
+      "#d18675",
+      "#c4473a",
+      "#7d2b34"
+    ],
+    "trim": [
+      "#d18675",
+      "#c4473a",
+      "#7d2b34"
+    ]
+  }
+}

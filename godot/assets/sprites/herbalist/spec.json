@@ -1,0 +1,63 @@
+{
+  "id": "herbalist",
+  "name": "草药师",
+  "desc": "披着绿色兜帽的草药师，长裙，挎着装满药草的布袋。",
+  "hair": "ponytail",
+  "hat": "hood",
+  "weapon": "bag",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.5,
+  "height": 0.97,
+  "build": 1.0,
+  "cape": false,
+  "scarf": true,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#766e79",
+      "#3d3a40",
+      "#28262a"
+    ],
+    "hat": [
+      "#8fab75",
+      "#5f7f4a",
+      "#375233"
+    ],
+    "top": [
+      "#a3b688",
+      "#7a9a5a",
+      "#47643e"
+    ],
+    "skirt": [
+      "#9d8b70",
+      "#6a5a46",
+      "#45362f"
+    ],
+    "bottom": [
+      "#9d8b70",
+      "#6a5a46",
+      "#45362f"
+    ],
+    "scarf": [
+      "#d6c9ad",
+      "#c9b48a",
+      "#a77654"
+    ],
+    "trim": [
+      "#d6c9ad",
+      "#c9b48a",
+      "#a77654"
+    ]
+  }
+}
