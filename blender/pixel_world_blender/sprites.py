@@ -36,13 +36,13 @@ SS = 4
 PX_PER_M = 96.0
 ELEV = math.radians(10.0)   # 接近正视（像立绘），脸、胸甲的塑形都看得清
 VIEW_PITCH = 40.0   # 游戏镜头俯角：公告板竖向拉长 1/cos(VIEW_PITCH)
-TARGET_Z = 1.1
+TARGET_Z = 1.12
 
 # 身体比例：写实的 7.5 头身（参考 res/ 里的人物立绘），身高系数 h = 1 时约 1.82 米、头高 0.24 米。资产工坊动作编辑器（tools/workshop/index.html aeJoints）用同一组数
 HIP_Z = 0.95
 SH_Z = 1.52
-HEAD_UP = 0.245     # 头部中心比肩高多少（缩放前；头的轮廓从中心往下 0.2 是下巴）
-HEAD_SCALE = 0.56   # 头（连同头发、帽子、五官）以下巴为中心缩放
+HEAD_UP = 0.30      # 头部中心比肩高多少（缩放前；头的轮廓从中心往下 0.2 是下巴）
+HEAD_SCALE = 0.61   # 头（连同头发、帽子、五官）以下巴为中心缩放
 THIGH = 0.47
 SHIN = 0.46
 UPPER_ARM = 0.32
@@ -52,6 +52,7 @@ INK = np.array([0x1a, 0x18, 0x22]) / 255.0
 
 # 光照：法线遍解码后自己算，主光从左上前方照来（所有方向的帧光照一致，不会转个身就变暗）
 LIGHT_DIR = np.array([-0.45, 0.65, 0.62]) / np.linalg.norm([-0.45, 0.65, 0.62])
+SKIN_LIGHT = np.array([-0.28, 0.42, 0.86]) / np.linalg.norm([-0.28, 0.42, 0.86])  # 皮肤：光更正面，脸上明暗柔和
 HALF_DIR = (LIGHT_DIR + np.array([0.0, 0.0, 1.0])) / np.linalg.norm(LIGHT_DIR + np.array([0.0, 0.0, 1.0]))
 TONES = (0.8, 0.32, -0.12)   # N·L 高于这些值：高光 / 亮 / 中，其余是暗
 SHINY = {"metal": 0.9, "armor": 0.962, "gem": 0.88, "belt": 0.965, "boots": 0.97, "hair": 0.93}  # 镜面高光门槛
@@ -390,7 +391,7 @@ def build_character(spec, pose):
     mb.stack("skin", 0, 0, [(head_z + dz, r) for dz, r in head], 16, sy=0.94)  # 16 边：脸是圆的，不是一块方板
     front = -0.2 * 0.94 * math.cos(math.pi / 16)  # 正面那个面到中心的距离（y）
     # 鼻子、耳朵：有了它们，脸上才有一两个像素的明暗（鼻梁亮、鼻底暗）
-    mb.box("skin", (-0.024, front - 0.04, head_z - 0.115), (0.024, front + 0.01, head_z - 0.04))
+    mb.box("skin", (-0.022, front - 0.035, head_z - 0.1), (0.022, front + 0.01, head_z - 0.02))
     for sx in (-1, 1):
         mb.box("skin", (sx * 0.2 - 0.025, -0.035, head_z - 0.11), (sx * 0.2 + 0.025, 0.045, head_z - 0.01))
     _hair(mb, spec, head_z, front, pose)
@@ -406,9 +407,9 @@ def build_character(spec, pose):
                      8, sy=0.7)
         mb.box("hair", (-0.06, front - 0.014, head_z - 0.15), (0.06, front + 0.02, head_z - 0.122))  # 上唇胡
     # 五官定位点：跟着头一起缩放、转动，渲染后投影到画面上，在像素层逐像素画眼睛、眉毛、鼻底、嘴（_stamp_face）
-    marks = {"head": (0.0, 0.0, head_z - 0.05), "eye_l": (0.082, front - 0.004, head_z - 0.056),
-             "eye_r": (-0.082, front - 0.004, head_z - 0.056), "nose": (0.0, front - 0.035, head_z - 0.112),
-             "mouth": (0.0, front - 0.004, head_z - 0.152), "fwd": (0.0, front - 0.4, head_z - 0.05)}
+    marks = {"head": (0.0, 0.0, head_z - 0.03), "eye_l": (0.085, front - 0.004, head_z - 0.022),
+             "eye_r": (-0.085, front - 0.004, head_z - 0.022), "nose": (0.0, front - 0.03, head_z - 0.092),
+             "mouth": (0.0, front - 0.004, head_z - 0.14), "fwd": (0.0, front - 0.4, head_z - 0.03)}
     m0 = len(mb.verts)
     mb.verts.extend(np.array(v, dtype=float) for v in marks.values())
     end = len(mb.verts)
@@ -733,30 +734,31 @@ def _project_marks(marks, cam):
 
 
 def _stamp_face(out, pid, alpha, dpx, pal, face, spec):
-    """在像素层画五官（只画在露出来的皮肤上）。80 像素 / 米下脸约 21 像素宽：
-      正面眼睛 4×3：上眼睑（睫毛）一行 + 眼白 / 瞳孔 / 眼白 + 瞳孔下半；瞳孔 2×2，左上角一个高光点
-      侧前方眼睛 3×3；女性（lashes）外眼角多一根上翘的睫毛
-      眉毛 4~5 像素（stern：往眉心压低的怒眉，眉心那头加粗）；鼻梁 1 像素亮、鼻底 1 像素暗；嘴 2~3 像素
-    这些都只有几个像素，用几何体渲染再缩小会糊成一团，直接按像素画才干净有神"""
+    """在像素层画五官（只画在露出来的皮肤上）。96 像素 / 米、头宽约 20 像素：
+      眼睛：上眼睑一行（男性是深棕、女性 lashes 是近黑并在外眼角上翘）+ 眼白 / 2 格瞳孔（左上高光）+ 瞳孔下半一行
+      眉毛：用发色的中间调（不是黑线，和眼睑分得开）；stern 的眉心一头压低贴着眼睑
+      鼻子：背光一侧 2 像素的鼻梁阴影 + 鼻底 1 像素；嘴：3 像素唇线（偏红）+ 下唇阴影；女性两颊各 2 像素腮红"""
     nh, nw = out.shape[:2]
     skin = PARTS.index("skin")
     hair = pal[PARTS.index("hair")]
-    lash = hair[3] * 0.35 + INK * 0.65
-    brow = hair[3] * 0.7 + INK * 0.3
-    white = pal[PARTS.index("sclera")][1]
-    iris_l = pal[PARTS.index("eye")][1]
-    iris_d = pal[PARTS.index("eye")][2] * 0.7 + INK * 0.3
-    shine = np.array([1.0, 1.0, 1.0])
     sk = pal[skin]
-    stern = spec.get("brow", "soft") == "stern"
     lashes = bool(spec.get("lashes"))
+    lid = (hair[3] * 0.3 + INK * 0.7) if lashes else (sk[3] * 0.55 + INK * 0.45)
+    brow = hair[2] * 0.78 + INK * 0.22
+    white = pal[PARTS.index("sclera")][1] * 0.97
+    iris_l = pal[PARTS.index("eye")][1]
+    iris_d = pal[PARTS.index("eye")][2] * 0.65 + INK * 0.35
+    shine = np.array([1.0, 1.0, 1.0])
+    lip = sk[3] * 0.55 + np.array([0.36, 0.1, 0.1])
+    blush = sk[1] * 0.72 + np.array([0.26, 0.1, 0.1])
+    stern = spec.get("brow", "soft") == "stern"
 
-    def ok(x, y, need_skin=True):
-        return 0 <= x < nw and 0 <= y < nh and alpha[y, x] and (pid[y, x] == skin or not need_skin)
+    def ok(x, y):
+        return 0 <= x < nw and 0 <= y < nh and alpha[y, x] and pid[y, x] == skin
 
-    def put(x, y, col, need_skin=True):
+    def put(x, y, col):
         x, y = int(x), int(y)
-        if ok(x, y, need_skin):
+        if ok(x, y):
             out[y, x, :3] = col
 
     def visible(m, tol=0.035):
@@ -776,51 +778,51 @@ def _stamp_face(out, pid, alpha, dpx, pal, face, spec):
         inner = 1 if cx_face > m["x"] else -1   # 眉心在这只眼睛的哪一侧
         if front:
             xs = [x0 - 1, x0, x0 + 1, x0 + 2]
-            ix = x0 + (1 if fx > 0 else 0) if fx else x0   # 瞳孔两格：x0、x0+1（往脸朝的方向偏一格）
+            ix = x0 + (1 if fx > 0 else 0) if fx else x0
             ix = min(max(ix, xs[0]), xs[-2])
         else:
             xs = [x0, x0 + 1, x0 + 2] if fx >= 0 else [x0 - 2, x0 - 1, x0]
             ix = xs[1] if fx >= 0 else xs[0]
         outer = xs[0] if inner > 0 else xs[-1]
         for x in xs:
-            put(x, y0 - 1, lash)                      # 上眼睑
-        for x in xs:
-            put(x, y0, white)                         # 眼白
+            put(x, y0 - 1, lid)
+            put(x, y0, white)
         put(ix, y0, iris_d)
         put(ix + 1, y0, iris_l)
-        put(ix, y0 + 1, iris_d)                       # 瞳孔下半
-        put(ix + 1, y0 + 1, iris_d * 0.8 + iris_l * 0.2)
-        put(ix, y0, shine)                            # 高光点（左上）
+        put(ix, y0 + 1, iris_d)
+        put(ix + 1, y0 + 1, iris_d * 0.75 + iris_l * 0.25)
+        put(ix, y0, shine * 0.6 + iris_l * 0.4)
+        put(outer - inner, y0, sk[2])                 # 外眼角一点阴影，眼型不是方块
         if lashes:
-            put(outer - inner, y0 - 2, lash)          # 外眼角上翘的睫毛
-            put(outer - inner, y0 - 1, lash)
-        # 眉毛：眼睑上方两格
-        bx = list(xs) + [xs[-1] + 1 if inner < 0 else xs[0] - 1]
-        bx.sort()
+            put(outer - inner, y0 - 2, lid)
+            put(xs[0] if inner < 0 else xs[-1], y0 + 2, blush)   # 腮红（外侧脸颊）
+            put(outer, y0 + 3, blush)
+            put(outer + inner, y0 + 3, blush)
+        # 眉毛：比眼睛宽 1 格，离眼睑隔一行；stern 眉心一头压到眼睑上
+        bx = sorted(list(xs) + [outer - inner])
         for x in bx:
-            yb = y0 - 3
-            toward_center = (x - m["x"]) * inner > 0.5
-            if stern and toward_center:
-                yb = y0 - 2                           # 怒眉：眉心那头压低一格
-            put(x, yb, brow, need_skin=False)
-            if stern and toward_center:
-                put(x, yb - 1, brow, need_skin=False)  # 眉心加粗
+            near_center = (x - m["x"]) * inner > 0.5
+            put(x, y0 - (2 if (stern and near_center) else 3), brow)
     nm = face["nose"]
-    if face["fwd_dot"] > 0.3 and visible(nm, 0.05):
+    if face["fwd_dot"] > 0.3 and visible(nm, 0.06):
         nx, ny = int(round(nm["x"] - 0.5)), int(round(nm["y"]))
-        put(nx + (fx if fx else 0), ny + 1, sk[3])      # 鼻底阴影
-        put(nx - (fx if fx else 0), ny - 2, sk[0])      # 鼻梁高光
+        sd = fx if fx else 1                          # 鼻梁阴影在背光 / 远离镜头的一侧
+        put(nx + sd, ny - 2, sk[2])
+        put(nx + sd, ny - 1, sk[2])
+        put(nx + sd, ny, sk[3])
+        put(nx, ny, sk[2])
+        put(nx - sd, ny - 3, sk[0])
     mm = face["mouth"]
     if face["fwd_dot"] > 0.35:
         x0, y0 = int(round(mm["x"] - 0.5)), int(round(mm["y"]))
         beard = spec.get("beard") and spec.get("beard_style", "goatee") in ("short", "full")
-        col = hair[3] * 0.5 + INK * 0.5 if beard else sk[3] * 0.8 + np.array([0.14, 0.02, 0.02])
+        col = hair[3] * 0.5 + INK * 0.5 if beard else lip
         xs = [x0 - 1, x0, x0 + 1] if face["fwd_dot"] > 0.7 else ([x0, x0 + 1] if fx >= 0 else [x0 - 1, x0])
         for x in xs:
-            if 0 <= x < nw and 0 <= y0 < nh and alpha[y0, x] and dpx[y0, x] <= mm["t"] + 0.05:
+            if 0 <= x < nw and 0 <= y0 < nh and alpha[y0, x] and dpx[y0, x] <= mm["t"] + 0.05 and pid[y0, x] in (skin, PARTS.index("hair")):
                 out[y0, x, :3] = col
-        if not beard and face["fwd_dot"] > 0.7:
-            put(x0, y0 + 1, sk[2])                      # 下唇的一点阴影
+        if not beard:
+            put(x0, y0 + 1, sk[2])
 
 
 def _compose(idimg, nrm, dep, pal, face=None, spec=None):
@@ -849,6 +851,8 @@ def _compose(idimg, nrm, dep, pal, face=None, spec=None):
     dv = (dep[..., 0] - 0.5) * DEPTH_RANGE
     dpx = np.where(mine, dv, -9.0).reshape(nh, S, nw, S).max(axis=(1, 3))
     lum = ns @ LIGHT_DIR
+    skin_i = PARTS.index("skin")
+    lum = np.where(pid == skin_i, (ns @ SKIN_LIGHT) * 0.75 + 0.2, lum)
     tone = np.select([lum > TONES[0], lum > TONES[1], lum > TONES[2]], [0, 1, 2], 3)
     gloss = ns @ HALF_DIR
     for part, thr in SHINY.items():
