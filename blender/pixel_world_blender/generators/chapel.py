@@ -9,8 +9,8 @@ from ._medieval import Wall, box, door_m, gable_roof, recenter_y, walls_box, win
 
 NAME = "小教堂"
 CATEGORY = "landmarks"
-DESC = "Blender 生成的中世纪小石头教堂：正面方形钟楼和尖顶，长条中殿配陡坡石板屋顶、尖拱铅条窗和阶梯扶壁，后面一个小圣坛。"
-VARY = "石材（灰石 / 暖色石）、尖顶（四棱 / 八棱，青石板 / 红瓦）、中殿长度、窗户数量随变体变化。"
+DESC = "Blender 生成的中世纪小教堂：米白石墙，正面高高的方形钟楼和深红陡尖顶，长条中殿配红瓦屋顶、尖拱铅条窗和阶梯扶壁，后面一个小圣坛。"
+VARY = "墙面（米白石 / 奶油灰泥）、深红陡尖顶（四棱 / 八棱）、中殿长度、窗户数量随变体变化。"
 TAGS = ["town", "medieval", "plaza"]
 VARIANTS = 3
 
@@ -41,8 +41,8 @@ def build(seed, **over):
     r = random.Random(seed * 401 + 9)
     k = seed - 1
     p = {
-        "stone": ["castle_stone", "cobble_wall", "castle_stone"][k % 3],
-        "spire": ["slate", "slate", "roof_red"][k % 3],
+        "stone": ["castle_stone", "plaster_cream", "castle_stone"][k % 3],
+        "spire": ["tile_darkred", "tile_darkred", "tile_red"][k % 3],
         "spire_sides": [4, 8, 8][k % 3],
         "nave_len": [11.0, 12.0, 10.0][k % 3],
         "nave_w": 7.0,
@@ -57,7 +57,7 @@ def build(seed, **over):
     ny0, ny1 = -L * 0.5, L * 0.5
     box(mb, "cobble_wall", -hw - 0.2, ny0 - 0.2, 0.0, hw + 0.2, ny1 + 0.2, 0.25)
     ws = walls_box(mb, st, -hw, ny0, 0.2, hw, ny1, 0.2 + wall_h)
-    ridge, gables = gable_roof(mb, "slate", ny0, ny1, -hw, hw, 0.2 + wall_h, 56.0, axis="y", eave=0.5, gable=0.25)
+    ridge, gables = gable_roof(mb, "tile_red", ny0, ny1, -hw, hw, 0.2 + wall_h, 48.0, axis="y", eave=0.5, gable=0.25, fascia="cobble_wall", cap="tile_darkred")
     for sa, tri in gables:
         mb.face(st, tri, (0, sa, 0))
     # 侧窗 + 扶壁
@@ -77,7 +77,7 @@ def build(seed, **over):
     # 后墙圆窗 + 圣坛（更窄更矮）
     cw, cl, ch = 4.6, 3.2, 4.2
     ws2 = walls_box(mb, st, -cw * 0.5, ny1, 0.2, cw * 0.5, ny1 + cl, 0.2 + ch)
-    r2, g2 = gable_roof(mb, "slate", ny1 - 0.3, ny1 + cl, -cw * 0.5, cw * 0.5, 0.2 + ch, 56.0, axis="y", eave=0.4, gable=0.2)
+    r2, g2 = gable_roof(mb, "tile_red", ny1 - 0.3, ny1 + cl, -cw * 0.5, cw * 0.5, 0.2 + ch, 48.0, axis="y", eave=0.4, gable=0.2, fascia="cobble_wall", cap="tile_darkred")
     for sa, tri in g2:
         if sa > 0:
             mb.face(st, tri, (0, 1, 0))
@@ -120,7 +120,7 @@ def build(seed, **over):
     sides = p["spire_sides"]
     rad = (t * 0.5 + 0.1) * (math.sqrt(2) if sides == 4 else 1.08)
     rot = math.pi / 4 if sides == 4 else math.pi / 8
-    spire_h = 5.6
+    spire_h = 7.8
     mb.frustum(p["spire"], 0.0, cy, th + 0.25, th + 0.25 + spire_h, rad, 0.0, sides, rot, top=False, bottom=True)
     tip = th + 0.25 + spire_h
     box(mb, "iron", -0.04, cy - 0.04, tip - 0.1, 0.04, cy + 0.04, tip + 1.0)

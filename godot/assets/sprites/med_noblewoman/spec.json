@@ -1,0 +1,68 @@
+{
+  "id": "med_noblewoman",
+  "name": "贵族小姐",
+  "desc": "金发的贵族小姐，蓝色长裙配金色镶边和白色高领。",
+  "hair": "long",
+  "hat": null,
+  "weapon": null,
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.78,
+  "style": "medieval",
+  "height": 0.94,
+  "build": 0.88,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": true,
+  "belt": true,
+  "trim_hem": true,
+  "apron": false,
+  "lashes": true,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#f0d98a",
+      "#d2b45c",
+      "#9a7c3a"
+    ],
+    "top": [
+      "#6daebf",
+      "#3f6a9c",
+      "#2d4364"
+    ],
+    "skirt": [
+      "#5ca4bc",
+      "#34588a",
+      "#253858"
+    ],
+    "bottom": [
+      "#5ca4bc",
+      "#34588a",
+      "#253858"
+    ],
+    "trim": [
+      "#ecd27a",
+      "#c9a03c",
+      "#8a6a28"
+    ],
+    "belt": [
+      "#ecd27a",
+      "#c9a03c",
+      "#8a6a28"
+    ]
+  }
+}

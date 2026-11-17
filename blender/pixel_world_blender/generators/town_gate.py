@@ -10,7 +10,7 @@ from ._medieval import Wall, box, crenellations, round_tower
 NAME = "城门"
 CATEGORY = "landmarks"
 DESC = "Blender 生成的中世纪城门：方形门楼带圆拱门洞和向里打开的包铁木门，两侧圆塔，顶上垛口，门洞上方挂着旗帜。"
-VARY = "塔顶（青石板尖顶 / 红瓦尖顶 / 平顶垛口）和旗帜颜色随变体变化。"
+VARY = "塔顶（红瓦高尖顶 / 平顶垛口）和旗帜颜色随变体变化。"
 TAGS = ["town", "medieval"]
 VARIANTS = 3
 
@@ -28,7 +28,7 @@ def _arch_pts(n=12):
 
 def build(seed, **over):
     k = seed - 1
-    roof = ["slate", "roof_red", "battlement"][k % 3]
+    roof = ["tile_red", "tile_red", "battlement"][k % 3]
     banner = ["cloth_red", "cloth_blue", "cloth_green"][k % 3]
     mb = MeshBuilder()
     st = "castle_stone"

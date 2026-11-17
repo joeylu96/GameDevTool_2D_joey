@@ -1,0 +1,93 @@
+{
+  "id": "hunter",
+  "name": "猎人",
+  "desc": "戴毛皮帽的年轻猎人：灰色棉袄，毛领、毛袖口，皮背带和皮挎包，深蓝棉裤，膝上裹着毛皮护膝，黑色系带靴，背着猎枪。",
+  "hair": "short",
+  "hat": "fur",
+  "weapon": "rifle",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.2,
+  "style": "cn_village",
+  "height": 0.98,
+  "build": 1.08,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": true,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": true,
+  "fur_trim": true,
+  "fur_collar": true,
+  "straps": true,
+  "satchel": true,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#3a3432",
+      "#262221",
+      "#161413"
+    ],
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "eye": [
+      "#4a3a32",
+      "#33261f",
+      "#1f1612"
+    ],
+    "top": [
+      "#a9a8a6",
+      "#868583",
+      "#5f5e5d"
+    ],
+    "skirt": [
+      "#a9a8a6",
+      "#868583",
+      "#5f5e5d"
+    ],
+    "trim": [
+      "#d6cab8",
+      "#a39582",
+      "#6e6152"
+    ],
+    "fur": [
+      "#d9cdb9",
+      "#a69783",
+      "#6f6253"
+    ],
+    "bottom": [
+      "#3f5a6e",
+      "#2c4254",
+      "#1c2c3a"
+    ],
+    "boots": [
+      "#3a3a3e",
+      "#26262a",
+      "#151518"
+    ],
+    "belt": [
+      "#9a6a48",
+      "#734c33",
+      "#4c3222"
+    ],
+    "strap": [
+      "#9a6a48",
+      "#734c33",
+      "#4c3222"
+    ]
+  }
+}

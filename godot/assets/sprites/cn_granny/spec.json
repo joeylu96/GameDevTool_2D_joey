@@ -1,0 +1,78 @@
+{
+  "id": "cn_granny",
+  "name": "老奶奶",
+  "desc": "花白头发盘在脑后的老奶奶，藏青色斜襟褂子、黑裤布鞋，系着围裙。",
+  "hair": "bun",
+  "hat": null,
+  "weapon": null,
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.2,
+  "style": "cn_village",
+  "height": 0.84,
+  "build": 0.95,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": true,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#e8c0a0",
+      "#cf9c80",
+      "#9c6c58"
+    ],
+    "hair": [
+      "#d8d8dc",
+      "#a8a8b0",
+      "#74747c"
+    ],
+    "top": [
+      "#5c8499",
+      "#34405a",
+      "#242a3a"
+    ],
+    "skirt": [
+      "#5c8499",
+      "#34405a",
+      "#242a3a"
+    ],
+    "apron": [
+      "#75909f",
+      "#4a556e",
+      "#323847"
+    ],
+    "bottom": [
+      "#67636f",
+      "#2c2c32",
+      "#1d1d21"
+    ],
+    "boots": [
+      "#605d67",
+      "#232327",
+      "#17171a"
+    ],
+    "trim": [
+      "#55788c",
+      "#2a3348",
+      "#1d212f"
+    ]
+  }
+}

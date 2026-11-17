@@ -21,7 +21,7 @@ def build(seed, **over):
     p = {
         "width": [6.0, 6.5, 5.5][k % 3],
         "depth": [5.0, 5.5, 4.8][k % 3],
-        "roof": ["thatch", "roof_red", "slate"][k % 3],
+        "roof": ["tile_red", "thatch", "tile_red"][k % 3],
         "forge_side": [1, -1, 1][k % 3],
     }
     p.update(over)

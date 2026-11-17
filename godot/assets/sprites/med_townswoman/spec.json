@@ -1,0 +1,73 @@
+{
+  "id": "med_townswoman",
+  "name": "镇上妇人",
+  "desc": "盘发的镇上妇人，白衬衣、红色长裙配米色围裙，挎着一篮面包。",
+  "hair": "bun",
+  "hat": null,
+  "weapon": "basket",
+  "sleeves": "layered",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.72,
+  "style": "medieval",
+  "height": 0.93,
+  "build": 0.9,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": true,
+  "belt": false,
+  "trim_hem": false,
+  "apron": true,
+  "lashes": true,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#c17c51",
+      "#8a4a2c",
+      "#582520"
+    ],
+    "top": [
+      "#cd8070",
+      "#b8443a",
+      "#752a33"
+    ],
+    "under": [
+      "#f4f1e7",
+      "#f1ebdd",
+      "#caa78b"
+    ],
+    "skirt": [
+      "#cd8070",
+      "#b8443a",
+      "#752a33"
+    ],
+    "bottom": [
+      "#cd8070",
+      "#b8443a",
+      "#752a33"
+    ],
+    "apron": [
+      "#f3edde",
+      "#efe6d0",
+      "#cda17e"
+    ],
+    "trim": [
+      "#be5644",
+      "#7a2a26",
+      "#4e1c23"
+    ]
+  }
+}

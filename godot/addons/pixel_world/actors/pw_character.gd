@@ -190,6 +190,17 @@ func _emit(p: Vector2, strength: float) -> void:
 
 # ---------------------------------------------------------------- 模型
 
+## 换一个精灵角色（切换场景风格时玩家跟着换装）
+func set_sprite(id: String) -> void:
+	if id == sprite_id or not PWSpriteVisual.has_character(id):
+		return
+	sprite_id = id
+	if _sprite != null:
+		_sprite.queue_free()
+		_sprite = PWSpriteVisual.create(id)
+		add_child(_sprite)
+
+
 func _build() -> void:
 	if sprite_id != "" and PWSpriteVisual.has_character(sprite_id):
 		_sprite = PWSpriteVisual.create(sprite_id)

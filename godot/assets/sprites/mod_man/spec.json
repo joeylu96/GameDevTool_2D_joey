@@ -1,0 +1,73 @@
+{
+  "id": "mod_man",
+  "name": "小镇青年",
+  "desc": "穿连帽外套和牛仔裤的小镇青年。",
+  "hair": "short",
+  "hat": null,
+  "weapon": null,
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.1,
+  "style": "modern",
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": true,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#806653",
+      "#3a2c24",
+      "#261a18"
+    ],
+    "top": [
+      "#8aa58e",
+      "#5f7f6a",
+      "#40534a"
+    ],
+    "skirt": [
+      "#8aa58e",
+      "#5f7f6a",
+      "#40534a"
+    ],
+    "bottom": [
+      "#689bab",
+      "#3f5878",
+      "#2b394d"
+    ],
+    "boots": [
+      "#eeede9",
+      "#e8e6e0",
+      "#b4a89d"
+    ],
+    "trim": [
+      "#759c7c",
+      "#4a6a56",
+      "#32453c"
+    ]
+  }
+}

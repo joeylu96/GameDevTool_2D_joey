@@ -30,7 +30,13 @@ var player: PWCharacter
 var npcs: Array[PWNPC] = []
 var nav: PWNavGrid
 ## 玩家用的像素精灵角色（没生成精灵表时自动退回低模身体）
-var player_sprite := "mercenary"  # 玩家：佣兵队长（参考 res/ex.png 的大致特征做的原创角色）
+var player_sprite := "warrior"  # 玩家：随场景风格换（中世纪 = 佣兵战士，中国乡村 = 猎人，现代 = 小镇青年）
+const STYLE_PLAYER := {"medieval": "warrior", "cn_village": "hunter", "modern": "mod_man"}
+
+
+## 当前场景属于哪个人物风格：小镇类风格看 style_tag，野外风格（森林、平原、雪原……）用中世纪的人物
+func _char_style() -> String:
+	return PWStyles.get_style(world.theme).params.get("style_tag", "medieval")
 ## 走路模式：WASD 控制角色、镜头跟随
 var walk_mode := true:
 	set(v):
@@ -138,6 +144,7 @@ func _start_scene(cfg: Dictionary) -> void:
 	player = PWCharacter.new()
 	player.name = "Player"
 	if not _args().has("model3d"):
+		player_sprite = STYLE_PLAYER.get(_char_style(), "warrior")
 		player.sprite_id = player_sprite
 	player.ground_height = world.ground_y
 	player.can_stand = world.can_stand
@@ -182,6 +189,9 @@ func regenerate(theme := "", new_seed := -1) -> void:
 	if new_seed >= 0:
 		world.seed_value = new_seed
 	world.generate()
+	if player != null and player.sprite_id != "":
+		player_sprite = STYLE_PLAYER.get(_char_style(), "warrior")
+		player.set_sprite(player_sprite)
 	_after_generate()
 
 
@@ -206,8 +216,9 @@ func _spawn_npcs(count: int) -> void:
 			n.queue_free()
 	npcs.clear()
 	var ids: Array[String] = []
+	var style := _char_style()
 	for c: Dictionary in PWSpriteVisual.characters():
-		if c.id != player_sprite:
+		if c.id != player_sprite and c.id not in STYLE_PLAYER.values() and c.get("style", "") == style:
 			ids.append(c.id)
 	if ids.is_empty() or world.homes.is_empty() or count <= 0:
 		return
@@ -224,7 +235,7 @@ func _spawn_npcs(count: int) -> void:
 		homes[j] = t
 	# 先让小贩去守摊（中世纪小镇广场的摊位后面），剩下的角色在镇上走动
 	var vendors: Array[String] = []
-	for v in ["fruit_vendor", "baker", "butcher", "cloth_merchant", "merchant"]:
+	for v in ["med_merchant", "med_townswoman", "med_sailor"]:
 		if v in ids:
 			vendors.append(v)
 	for k in mini(world.vendor_spots.size(), vendors.size()):

@@ -1,0 +1,68 @@
+{
+  "id": "med_merchant",
+  "name": "港口商人",
+  "desc": "戴宽檐帽的港口商人，赭黄长外衣、宽皮带，挎着货袋。",
+  "hair": "short",
+  "hat": "wide",
+  "weapon": "bag",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "short",
+  "brow": "soft",
+  "skirt": 0.42,
+  "style": "medieval",
+  "height": 1.0,
+  "build": 1.08,
+  "cape": false,
+  "scarf": false,
+  "beard": true,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": true,
+  "belt": true,
+  "trim_hem": true,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#916c4f",
+      "#4a3426",
+      "#301e1a"
+    ],
+    "hat": [
+      "#ad8a66",
+      "#7a5a3e",
+      "#4f332b"
+    ],
+    "top": [
+      "#d3b278",
+      "#c8923e",
+      "#824a2b"
+    ],
+    "skirt": [
+      "#d3b278",
+      "#c8923e",
+      "#824a2b"
+    ],
+    "trim": [
+      "#b9694e",
+      "#7a3a2c",
+      "#4e2021"
+    ],
+    "bottom": [
+      "#947e66",
+      "#5a4a3c",
+      "#3a2d29"
+    ]
+  }
+}

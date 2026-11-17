@@ -1,4 +1,4 @@
-"""酒馆 / 客栈：大号的半木构楼（约 10 × 8 米、2~3 层），石砌底层，双开木门上方一个木雨棚（两根柱子撑着），
+"""酒馆 / 客栈：大号的米白石砌楼（约 10 × 8 米、2~3 层），石砌底层，双开木门上方一个木雨棚（两根柱子撑着），
 门边铁支架上挂着画了酒杯的招牌，门前摆长凳和木桶。正门朝 -Y（导出后 Godot +Z）。整体按外廓（含门廊）居中，门底边中点见 info.door。"""
 import random
 
@@ -8,8 +8,8 @@ from .medieval_house import build_house, params as house_params
 
 NAME = "酒馆"
 CATEGORY = "buildings"
-DESC = "Blender 生成的中世纪酒馆：石砌底层的大号半木构楼，双开木门、门廊雨棚、铁支架上挂着酒杯招牌，门前长凳和酒桶。"
-VARY = "宽 10~11 米、深 7.5~8 米、2 或 3 层、灰泥颜色、屋顶（青石板 / 红瓦）、屋脊方向、招牌颜色随变体变化。"
+DESC = "Blender 生成的中世纪酒馆：米白石墙、红瓦顶的大号石砌楼，双开木门、门廊雨棚、铁支架上挂着酒杯招牌，门前长凳和酒桶。"
+VARY = "宽 10~11 米、深 7.5~8 米、2 或 3 层、墙面（石砌 / 灰泥）、屋顶形式（双坡 / 四坡）、转角圆塔、招牌颜色随变体变化。"
 TAGS = ["town", "medieval", "plaza"]
 VARIANTS = 4
 
@@ -22,12 +22,15 @@ def build(seed, **over):
         "depth": [7.5, 8.0, 7.5, 8.0][(seed - 1) % 4],
         "floors": [2, 3, 3, 2][(seed - 1) % 4],
         "ground": "stone",
-        "roof": ["slate", "roof_red", "slate", "roof_red"][(seed - 1) % 4],
-        "plaster": ["plaster_white", "plaster_ochre", "plaster_white", "plaster_ochre"][(seed - 1) % 4],
+        "roof": "tile_red",
+        "plaster": ["plaster_cream", "castle_stone", "plaster_cream", "plaster_cream"][(seed - 1) % 4],
+        "roof_type": ["gable", "hip", "gable_front", "hip"][(seed - 1) % 4],
         "gable_front": (seed - 1) % 4 == 2,
         "door_x": 0.0,
         "chimney": True,
-        "jetty": r.uniform(0.3, 0.4),
+        "jetty": 0.0,
+        "turret": (seed - 1) % 4 in (1, 3),
+        "shop": False,
     })
     p.update(over)
     mb = MeshBuilder()
@@ -42,7 +45,7 @@ def build(seed, **over):
         box(mb, "timber", x - 0.09, cy1 + 0.05, 0.0, x + 0.09, cy1 + 0.23, z_lo)
         prism(mb, "timber", [(x - 0.06, cy1 + 0.14, z_lo - 0.6), (x - 0.06, yf - 0.02, z_hi - 0.05),
                              (x - 0.06, yf - 0.02, z_hi - 0.25), (x - 0.06, cy1 + 0.14, z_lo - 0.8)], None, None, (1, 0, 0), 0.12)
-    roof = p["roof"] if p["roof"] != "thatch" else "slate"
+    roof = "tile_red"
     mb.face(roof, [(-1.9, cy0, z_hi + 0.1), (1.9, cy0, z_hi + 0.1), (1.9, cy1 - 0.15, z_lo), (-1.9, cy1 - 0.15, z_lo)], (0, -0.4, 1))
     mb.face("roof_under", [(-1.9, cy0, z_hi - 0.02), (1.9, cy0, z_hi - 0.02), (1.9, cy1 - 0.15, z_lo - 0.12), (-1.9, cy1 - 0.15, z_lo - 0.12)], (0, 0.3, -1))
     mb.face("timber", [(-1.9, cy1 - 0.15, z_lo), (1.9, cy1 - 0.15, z_lo), (1.9, cy1 - 0.15, z_lo - 0.12), (-1.9, cy1 - 0.15, z_lo - 0.12)], (0, -1, 0))

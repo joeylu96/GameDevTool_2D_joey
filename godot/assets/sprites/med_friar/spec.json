@@ -1,0 +1,73 @@
+{
+  "id": "med_friar",
+  "name": "修士",
+  "desc": "穿棕色连帽长袍的修士，腰系麻绳，抱着一本厚书。",
+  "hair": "bald",
+  "hat": "hood",
+  "weapon": "book",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.78,
+  "style": "medieval",
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#aa7d55",
+      "#6b4a32",
+      "#452923"
+    ],
+    "hat": [
+      "#a08a70",
+      "#6e5a46",
+      "#473630"
+    ],
+    "top": [
+      "#a08a70",
+      "#6e5a46",
+      "#473630"
+    ],
+    "skirt": [
+      "#a08a70",
+      "#6e5a46",
+      "#473630"
+    ],
+    "bottom": [
+      "#947e66",
+      "#5a4a3c",
+      "#3a2d29"
+    ],
+    "belt": [
+      "#d6c9ad",
+      "#c9b48a",
+      "#a77654"
+    ],
+    "trim": [
+      "#a8835e",
+      "#7a5a3e",
+      "#5a412e"
+    ]
+  }
+}

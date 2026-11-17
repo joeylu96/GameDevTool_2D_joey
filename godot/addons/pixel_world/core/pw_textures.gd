@@ -129,6 +129,8 @@ static func _make(key: String) -> Image:
 			return sand(705)
 		"canyon_soil":
 			return canyon_soil(711)
+		"flagstone":
+			return flagstone(715)
 		"asphalt":
 			return asphalt(713)
 		"road_paint":
@@ -666,6 +668,45 @@ static func sand(seed_value: int, size := 96) -> Image:
 		_px(img, x, y, pc)
 		_px(img, x + 1, y, pc.lerp(Pal.c("stone_1"), 0.5))
 		_px(img, x, y + 1, c2)
+	img.flip_y()
+	return img
+
+
+## 米色石板路（中世纪海边小镇的滨海大道，参考 res/中世纪海边小镇.jpg）：大小不一的长方石板错缝铺，
+## 每块略有深浅（低对比），缝是稍深的暖灰；石板四角略圆
+static func flagstone(seed_value: int, size := 128) -> Image:
+	var rng := _rng(seed_value)
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var joint := Color(0.56, 0.5, 0.41)
+	img.fill(joint)
+	var base := Color(0.76, 0.7, 0.58)
+	var row_h := 16
+	for row in size / row_h:
+		var x0 := rng.randi_range(0, 23)
+		var remaining := size
+		var x := x0
+		while remaining > 0:
+			var w := rng.randi_range(18, 30)
+			if remaining - w < 14:
+				w = remaining
+			remaining -= w
+			var tint := rng.randf_range(-0.05, 0.05)
+			var warm := rng.randf_range(-0.02, 0.03)
+			for ly in row_h - 1:
+				for lx in w - 1:
+					var cx := mini(lx, w - 2 - lx)
+					var cy := mini(ly, row_h - 2 - ly)
+					if cx + cy < 1:
+						continue
+					var col := Color(base.r + tint + warm, base.g + tint, base.b + tint - warm)
+					if ly == 0 or lx == 0:
+						col = col.lightened(0.06)
+					elif ly == row_h - 2 or lx == w - 2:
+						col = col.darkened(0.07)
+					if rng.randf() < 0.03:
+						col = col.darkened(0.06)
+					_px(img, x + lx, row * row_h + ly, col)
+			x += w
 	img.flip_y()
 	return img
 

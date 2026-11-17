@@ -1712,10 +1712,10 @@
     {
       "id": "bl_medieval_house",
       "kind": "medieval_house",
-      "name": "中世纪木构房屋",
+      "name": "中世纪石砌楼房",
       "category": "buildings",
-      "desc": "Blender 生成的中世纪半木构房屋：石砌底层或石台基，上层灰泥墙配深色木构架和斜撑，楼层向外挑出，陡坡青石板 / 红瓦 / 茅草屋顶，铅条窗、木百叶窗、铁合页木门和石烟囱。",
-      "vary": "宽 6~9 米、深 5~7 米、1~3 层、底层石砌或木构、灰泥颜色（白 / 赭）、屋顶（青石板 / 红瓦 / 茅草）、屋脊方向（平行正面 / 山墙朝街）、挑出距离、门的位置、烟囱随变体变化。",
+      "desc": "Blender 生成的中世纪海滨楼房：米白石墙或奶油色灰泥墙、鲜红瓦顶、圆拱铅条窗、石腰线和角石，有的转角挑出红锥顶小圆塔，有的底层是拱形店面和条纹遮阳棚。",
+      "vary": "宽 6~10 米、深 6~8 米、2~4 层、墙面（石砌 / 灰泥）、屋顶（双坡 / 山墙朝街 / 四坡）、转角圆塔、底层店面和遮阳棚、门的位置、烟囱随变体变化。",
       "tags": [
         "town",
         "medieval"
@@ -1732,91 +1732,91 @@
         "medieval_house_7.glb"
       ],
       "footprint": [
-        7.7,
-        8.25
+        8.95,
+        9.0
       ],
-      "height": 11.03,
+      "height": 17.15,
       "plant": false,
       "variant_info": [
         {
           "footprint": [
-            7.2,
-            7.07
+            8.95,
+            8.0
           ],
-          "height": 9.95,
-          "width": 6.5,
-          "depth": 5.5,
+          "height": 14.45,
+          "width": 7.0,
+          "depth": 6.5,
+          "floors": 3
+        },
+        {
+          "footprint": [
+            9.4,
+            9.05
+          ],
+          "height": 9.99,
+          "width": 8.5,
+          "depth": 7.0,
           "floors": 2
         },
         {
           "footprint": [
-            8.2,
-            8.21
+            8.45,
+            9.55
           ],
-          "height": 13.31,
+          "height": 17.15,
+          "width": 6.5,
+          "depth": 7.5,
+          "floors": 4
+        },
+        {
+          "footprint": [
+            6.9,
+            7.5
+          ],
+          "height": 9.88,
+          "width": 6.0,
+          "depth": 6.5,
+          "floors": 2
+        },
+        {
+          "footprint": [
+            9.4,
+            10.05
+          ],
+          "height": 13.09,
+          "width": 8.5,
+          "depth": 8.0,
+          "floors": 3
+        },
+        {
+          "footprint": [
+            8.45,
+            9.5
+          ],
+          "height": 14.45,
+          "width": 6.5,
+          "depth": 8.0,
+          "floors": 3
+        },
+        {
+          "footprint": [
+            8.4,
+            9.05
+          ],
+          "height": 9.69,
           "width": 7.5,
-          "depth": 6.0,
-          "floors": 3
-        },
-        {
-          "footprint": [
-            6.8,
-            7.82
-          ],
-          "height": 9.89,
-          "width": 6.0,
-          "depth": 6.5,
-          "floors": 2
-        },
-        {
-          "footprint": [
-            6.7,
-            6.4
-          ],
-          "height": 7.23,
-          "width": 6.0,
-          "depth": 5.5,
-          "floors": 1
-        },
-        {
-          "footprint": [
-            8.7,
-            8.51
-          ],
-          "height": 10.94,
-          "width": 8.0,
           "depth": 7.0,
           "floors": 2
         },
         {
           "footprint": [
-            7.3,
-            9.14
+            8.95,
+            9.0
           ],
-          "height": 12.79,
-          "width": 6.5,
-          "depth": 7.0,
-          "floors": 3
-        },
-        {
-          "footprint": [
-            7.7,
-            6.9
-          ],
-          "height": 6.94,
+          "height": 17.15,
           "width": 7.0,
-          "depth": 6.0,
-          "floors": 1
-        },
-        {
-          "footprint": [
-            7.7,
-            8.25
-          ],
-          "height": 11.03,
-          "width": 7.0,
-          "depth": 6.5,
-          "floors": 2
+          "depth": 7.5,
+          "floors": 4
         }
       ]
     },
@@ -1825,8 +1825,8 @@
       "kind": "tavern",
       "name": "酒馆",
       "category": "buildings",
-      "desc": "Blender 生成的中世纪酒馆：石砌底层的大号半木构楼，双开木门、门廊雨棚、铁支架上挂着酒杯招牌，门前长凳和酒桶。",
-      "vary": "宽 10~11 米、深 7.5~8 米、2 或 3 层、灰泥颜色、屋顶（青石板 / 红瓦）、屋脊方向、招牌颜色随变体变化。",
+      "desc": "Blender 生成的中世纪酒馆：米白石墙、红瓦顶的大号石砌楼，双开木门、门廊雨棚、铁支架上挂着酒杯招牌，门前长凳和酒桶。",
+      "vary": "宽 10~11 米、深 7.5~8 米、2 或 3 层、墙面（石砌 / 灰泥）、屋顶形式（双坡 / 四坡）、转角圆塔、招牌颜色随变体变化。",
       "tags": [
         "town",
         "medieval",
@@ -1840,48 +1840,48 @@
         "tavern_3.glb"
       ],
       "footprint": [
-        10.7,
-        10.66
+        11.95,
+        10.35
       ],
-      "height": 12.03,
+      "height": 11.75,
       "plant": false,
       "variant_info": [
         {
           "footprint": [
-            10.7,
-            10.19
+            10.9,
+            9.85
           ],
-          "height": 11.7,
+          "height": 10.38,
           "width": 10.0,
           "depth": 7.5,
           "floors": 2
         },
         {
           "footprint": [
-            11.7,
-            11.05
+            12.95,
+            10.35
           ],
-          "height": 13.7,
+          "height": 14.45,
           "width": 11.0,
           "depth": 8.0,
           "floors": 3
         },
         {
           "footprint": [
-            11.3,
-            10.53
+            11.4,
+            9.85
           ],
-          "height": 14.94,
+          "height": 13.81,
           "width": 10.5,
           "depth": 7.5,
           "floors": 3
         },
         {
           "footprint": [
-            10.7,
-            10.66
+            11.95,
+            10.35
           ],
-          "height": 12.03,
+          "height": 11.75,
           "width": 10.0,
           "depth": 8.0,
           "floors": 2
@@ -1893,8 +1893,8 @@
       "kind": "chapel",
       "name": "小教堂",
       "category": "landmarks",
-      "desc": "Blender 生成的中世纪小石头教堂：正面方形钟楼和尖顶，长条中殿配陡坡石板屋顶、尖拱铅条窗和阶梯扶壁，后面一个小圣坛。",
-      "vary": "石材（灰石 / 暖色石）、尖顶（四棱 / 八棱，青石板 / 红瓦）、中殿长度、窗户数量随变体变化。",
+      "desc": "Blender 生成的中世纪小教堂：米白石墙，正面高高的方形钟楼和深红陡尖顶，长条中殿配红瓦屋顶、尖拱铅条窗和阶梯扶壁，后面一个小圣坛。",
+      "vary": "墙面（米白石 / 奶油灰泥）、深红陡尖顶（四棱 / 八棱）、中殿长度、窗户数量随变体变化。",
       "tags": [
         "town",
         "medieval",
@@ -1910,7 +1910,7 @@
         9.0,
         15.5
       ],
-      "height": 18.35,
+      "height": 20.55,
       "plant": false,
       "variant_info": [
         {
@@ -1918,21 +1918,21 @@
             9.0,
             16.5
           ],
-          "height": 18.35
+          "height": 20.55
         },
         {
           "footprint": [
             9.0,
             17.5
           ],
-          "height": 18.35
+          "height": 20.55
         },
         {
           "footprint": [
             9.0,
             15.5
           ],
-          "height": 18.35
+          "height": 20.55
         }
       ]
     },
@@ -1966,7 +1966,7 @@
             7.1,
             6.2
           ],
-          "height": 6.53,
+          "height": 5.85,
           "width": 6.0,
           "depth": 5.0
         },
@@ -1975,7 +1975,7 @@
             7.6,
             6.7
           ],
-          "height": 6.06,
+          "height": 6.8,
           "width": 6.5,
           "depth": 5.5
         },
@@ -1991,12 +1991,147 @@
       ]
     },
     {
+      "id": "bl_med_round_tower",
+      "kind": "med_round_tower",
+      "name": "红顶圆塔楼",
+      "category": "landmarks",
+      "desc": "Blender 生成的中世纪圆塔楼：米白石砌高塔、石腰线、一圈圈圆拱窗，塔顶挑出拱廊观景层，红瓦圆锥高尖顶上飘着小旗。",
+      "vary": "塔高 14~24 米、半径 3~3.8 米、窗的圈数、尖顶高度随变体变化；变体 3 是两段式（观景层上再收一节小塔）。",
+      "tags": [
+        "town",
+        "medieval",
+        "plaza"
+      ],
+      "source": "generator",
+      "files": [
+        "med_round_tower_0.glb",
+        "med_round_tower_1.glb",
+        "med_round_tower_2.glb",
+        "med_round_tower_3.glb"
+      ],
+      "footprint": [
+        9.7,
+        9.7
+      ],
+      "height": 25.2,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            8.1,
+            8.1
+          ],
+          "height": 18.05,
+          "width": 8.1,
+          "depth": 8.1
+        },
+        {
+          "footprint": [
+            8.9,
+            8.9
+          ],
+          "height": 21.55,
+          "width": 8.9,
+          "depth": 8.9
+        },
+        {
+          "footprint": [
+            8.5,
+            8.5
+          ],
+          "height": 20.05,
+          "width": 8.5,
+          "depth": 8.5
+        },
+        {
+          "footprint": [
+            9.7,
+            9.7
+          ],
+          "height": 25.2,
+          "width": 9.7,
+          "depth": 9.7
+        }
+      ]
+    },
+    {
+      "id": "bl_med_ship",
+      "kind": "med_ship",
+      "name": "中世纪帆船",
+      "category": "landmarks",
+      "desc": "Blender 生成的中世纪帆船：圆鼓鼓的木船壳、前后船楼、桅杆横桁和米色帆，停在码头栈桥边。",
+      "vary": "变体 0 三桅大帆船（约 18 米）、1 单桅柯克船（约 12 米）、2 小渔船（约 5 米）。",
+      "tags": [
+        "medieval",
+        "shore"
+      ],
+      "source": "generator",
+      "files": [
+        "med_ship_0.glb",
+        "med_ship_1.glb",
+        "med_ship_2.glb"
+      ],
+      "footprint": [
+        4.0,
+        5.8
+      ],
+      "height": 3.4,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            5.6,
+            21.2
+          ],
+          "height": 14.96
+        },
+        {
+          "footprint": [
+            4.4,
+            12.6
+          ],
+          "height": 11.45
+        },
+        {
+          "footprint": [
+            4.0,
+            5.8
+          ],
+          "height": 3.4
+        }
+      ]
+    },
+    {
+      "id": "bl_med_pier",
+      "kind": "med_pier",
+      "name": "木栈桥",
+      "category": "landmarks",
+      "desc": "Blender 生成的中世纪木栈桥：木板桥面、横梁和插进水里的木桩，从岸边伸向水里，船靠在两侧；有的带系船桩、缆绳和货箱。",
+      "vary": "变体 0 朴素、1 带系船桩和缆绳圈、2 再加木箱木桶。",
+      "tags": [
+        "medieval",
+        "shore"
+      ],
+      "source": "generator",
+      "files": [
+        "med_pier_0.glb",
+        "med_pier_1.glb",
+        "med_pier_2.glb"
+      ],
+      "footprint": [
+        2.5,
+        8.0
+      ],
+      "height": 1.3,
+      "plant": false
+    },
+    {
       "id": "bl_town_wall",
       "kind": "town_wall",
       "name": "城墙",
       "category": "landmarks",
-      "desc": "Blender 生成的中世纪城墙模块：6 米一段的石砌城墙，外侧垛口、顶上走道和内侧护墙，首尾相接围成城镇。",
-      "vary": "变体 0 朴素、1 带箭窗和腰线、2 内侧带扶壁和外侧排水石嘴；石材随变体变化。",
+      "desc": "Blender 生成的中世纪城墙模块：6 米一段的浅色石砌城墙，外侧垛口、顶上走道和内侧护墙，首尾相接围成城镇。",
+      "vary": "变体 0 朴素、1 带箭窗和腰线、2 内侧带扶壁和外侧排水石嘴；变体 0、1 米白石灰岩，变体 2 灰绿色石（雪地城堡）。",
       "tags": [
         "town",
         "medieval"
@@ -2019,8 +2154,8 @@
       "kind": "town_wall_tower",
       "name": "城墙塔楼",
       "category": "landmarks",
-      "desc": "Blender 生成的中世纪圆塔：石砌塔身、箭窗、挑出的檐口，圆锥尖顶或平顶垛口，放在城墙转角和接缝处。",
-      "vary": "变体 0 青石板尖顶、1 红瓦尖顶、2 平顶垛口。",
+      "desc": "Blender 生成的中世纪圆塔：石砌塔身、箭窗、挑出的檐口，红瓦尖顶、平顶垛口或矮圆顶，放在城墙转角和接缝处。",
+      "vary": "变体 0 米白石 + 红瓦高尖顶、1 米白石平顶垛口、2 灰绿石 + 红褐矮圆顶（雪地城堡）。",
       "tags": [
         "town",
         "medieval"
@@ -2035,7 +2170,7 @@
         6.1,
         6.1
       ],
-      "height": 9.75,
+      "height": 10.7,
       "plant": false,
       "variant_info": [
         {
@@ -2043,14 +2178,7 @@
             6.1,
             6.1
           ],
-          "height": 14.66
-        },
-        {
-          "footprint": [
-            6.1,
-            6.1
-          ],
-          "height": 14.66
+          "height": 18.44
         },
         {
           "footprint": [
@@ -2058,6 +2186,13 @@
             6.1
           ],
           "height": 9.75
+        },
+        {
+          "footprint": [
+            6.1,
+            6.1
+          ],
+          "height": 10.7
         }
       ]
     },
@@ -2067,7 +2202,7 @@
       "name": "城门",
       "category": "landmarks",
       "desc": "Blender 生成的中世纪城门：方形门楼带圆拱门洞和向里打开的包铁木门，两侧圆塔，顶上垛口，门洞上方挂着旗帜。",
-      "vary": "塔顶（青石板尖顶 / 红瓦尖顶 / 平顶垛口）和旗帜颜色随变体变化。",
+      "vary": "塔顶（红瓦高尖顶 / 平顶垛口）和旗帜颜色随变体变化。",
       "tags": [
         "town",
         "medieval"
@@ -2090,14 +2225,14 @@
             12.0,
             4.3
           ],
-          "height": 14.0
+          "height": 15.8
         },
         {
           "footprint": [
             12.0,
             4.3
           ],
-          "height": 14.0
+          "height": 15.8
         },
         {
           "footprint": [
@@ -2716,8 +2851,8 @@
       "kind": "cn_brick_house",
       "name": "农村平房",
       "category": "buildings",
-      "desc": "Blender 生成的八九十年代农村平房：红砖 / 青砖 / 土坯墙，小青瓦双坡顶，木板双开门贴着红纸对联和横批，木框玻璃窗，砖烟囱。",
-      "vary": "宽 8~12 米、深 5~6.5 米、墙（红砖 / 青砖 / 白灰墙裙 / 土坯）、屋顶（小青瓦 / 草顶）、窗户数量、烟囱位置随变体变化。",
+      "desc": "Blender 生成的八九十年代农村平房：白灰墙配青砖墙裙（少数红砖 / 水泥抹面），灰褐或红褐色旧瓦顶，蓝绿色木窗框的多格玻璃窗，木板双开门贴着红纸对联和横批，砖烟囱。",
+      "vary": "宽 8~12 米、深 5~6.5 米、墙（白灰 / 红砖 / 水泥抹面）、瓦色（灰褐 / 红褐 / 青灰）、窗户数量、烟囱位置随变体变化。",
       "tags": [
         "cn_village",
         "town",
@@ -2782,7 +2917,7 @@
             12.5,
             6.8
           ],
-          "height": 6.31,
+          "height": 5.4,
           "width": 11.5,
           "depth": 5.5
         },
@@ -2820,8 +2955,8 @@
       "kind": "cn_courtyard_wall",
       "name": "农家院墙",
       "category": "street",
-      "desc": "Blender 生成的农家院墙：4 米一段的红砖 / 青砖 / 土坯墙，墙头一条小青瓦或草压顶，首尾相接围成院子。",
-      "vary": "变体 0 红砖、1 青砖、2 土坯墙配草压顶。",
+      "desc": "Blender 生成的农家院墙：4 米一段，红砖平压顶、灰色水泥抹面、干垒石墙、红砖小青瓦压顶四种，首尾相接围成院子。",
+      "vary": "变体 0 红砖平压顶、1 水泥抹面、2 干垒石墙（1.2 米高）、3 红砖配小青瓦压顶。",
       "tags": [
         "cn_village",
         "yard"
@@ -2830,13 +2965,14 @@
       "files": [
         "cn_courtyard_wall_0.glb",
         "cn_courtyard_wall_1.glb",
-        "cn_courtyard_wall_2.glb"
+        "cn_courtyard_wall_2.glb",
+        "cn_courtyard_wall_3.glb"
       ],
       "footprint": [
         4.0,
         0.62
       ],
-      "height": 2.32,
+      "height": 2.28,
       "plant": false,
       "variant_info": [
         {
@@ -2844,21 +2980,28 @@
             4.0,
             0.62
           ],
+          "height": 1.96
+        },
+        {
+          "footprint": [
+            4.0,
+            0.62
+          ],
+          "height": 2.0
+        },
+        {
+          "footprint": [
+            4.0,
+            0.5
+          ],
+          "height": 1.27
+        },
+        {
+          "footprint": [
+            4.0,
+            0.62
+          ],
           "height": 2.28
-        },
-        {
-          "footprint": [
-            4.0,
-            0.62
-          ],
-          "height": 2.38
-        },
-        {
-          "footprint": [
-            4.0,
-            0.62
-          ],
-          "height": 2.32
         }
       ]
     },
@@ -2867,8 +3010,8 @@
       "kind": "cn_courtyard_gate",
       "name": "农家院门",
       "category": "street",
-      "desc": "Blender 生成的农家院门：砖垛、木过梁、小青瓦门头，两扇木板大门朝院里敞开，门垛上贴着红纸对联。",
-      "vary": "变体 0 红砖、1 青砖；门的颜色随变体变化。",
+      "desc": "Blender 生成的农家院门：红砖门垛配木板门、水泥门垛配铁栅门、石墙豁口配竹篱笆门、带小青瓦门头的老式门楼四种，门都朝院里开。",
+      "vary": "变体 0 红砖垛木门、1 水泥垛铁栅门、2 石墙竹门、3 小青瓦门楼。",
       "tags": [
         "cn_village",
         "yard"
@@ -2876,14 +3019,46 @@
       "source": "generator",
       "files": [
         "cn_courtyard_gate_0.glb",
-        "cn_courtyard_gate_1.glb"
+        "cn_courtyard_gate_1.glb",
+        "cn_courtyard_gate_2.glb",
+        "cn_courtyard_gate_3.glb"
       ],
       "footprint": [
         4.6,
-        1.5
+        2.0
       ],
       "height": 3.77,
-      "plant": false
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            4.2,
+            2.0
+          ],
+          "height": 2.43
+        },
+        {
+          "footprint": [
+            4.2,
+            2.0
+          ],
+          "height": 2.43
+        },
+        {
+          "footprint": [
+            4.0,
+            1.6
+          ],
+          "height": 1.5
+        },
+        {
+          "footprint": [
+            4.6,
+            2.0
+          ],
+          "height": 3.77
+        }
+      ]
     },
     {
       "id": "bl_cn_shop",
@@ -3329,6 +3504,498 @@
       ],
       "height": 0.8,
       "plant": false
+    },
+    {
+      "id": "bl_cn_timber_house",
+      "kind": "cn_timber_house",
+      "name": "老木屋",
+      "category": "buildings",
+      "desc": "Blender 生成的山村老木屋：粗石台基、深色木构架夹白灰墙板、暗红木板门、木格窗、带圆木檐柱的深檐廊、厚重的深灰小瓦顶，墙上挂着辣椒串和草帽。",
+      "vary": "宽 10~14 米、深 6~7.5 米（含檐廊），有无单坡灶房偏屋及在哪一侧、开间数、墙上挂的东西随变体变化。",
+      "tags": [
+        "cn_village",
+        "town",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_timber_house_0.glb",
+        "cn_timber_house_1.glb",
+        "cn_timber_house_2.glb",
+        "cn_timber_house_3.glb"
+      ],
+      "footprint": [
+        14.9,
+        9.2
+      ],
+      "height": 5.36,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            10.9,
+            8.2
+          ],
+          "height": 5.22,
+          "width": 10.0,
+          "depth": 6.5
+        },
+        {
+          "footprint": [
+            13.9,
+            8.2
+          ],
+          "height": 5.22,
+          "width": 13.0,
+          "depth": 6.5
+        },
+        {
+          "footprint": [
+            12.9,
+            8.7
+          ],
+          "height": 5.28,
+          "width": 12.0,
+          "depth": 7.0
+        },
+        {
+          "footprint": [
+            14.9,
+            9.2
+          ],
+          "height": 5.36,
+          "width": 14.0,
+          "depth": 7.5
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_tractor",
+      "kind": "cn_tractor",
+      "name": "四轮拖拉机",
+      "category": "props",
+      "desc": "Blender 生成的红色四轮小拖拉机：长机头、竖排气管、两只小前轮和两只带挡泥板的大后轮，有的带遮阳棚。",
+      "vary": "变体 0 带遮阳棚，1 不带棚（只有防滚架）。",
+      "tags": [
+        "cn_village",
+        "yard",
+        "roadside"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_tractor_0.glb",
+        "cn_tractor_1.glb"
+      ],
+      "footprint": [
+        1.95,
+        3.35
+      ],
+      "height": 2.02,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.95,
+            3.35
+          ],
+          "height": 2.36
+        },
+        {
+          "footprint": [
+            1.95,
+            3.35
+          ],
+          "height": 2.02
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_bamboo_table_set",
+      "kind": "cn_bamboo_table_set",
+      "name": "竹桌椅",
+      "category": "props",
+      "desc": "Blender 生成的竹桌椅：方竹桌配两把竹椅，桌上一把茶壶，摆在农家院子里喝茶。",
+      "vary": "椅子的数量和摆法、有没有茶杯随变体变化。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_bamboo_table_set_0.glb",
+        "cn_bamboo_table_set_1.glb",
+        "cn_bamboo_table_set_2.glb"
+      ],
+      "footprint": [
+        2.0,
+        0.9
+      ],
+      "height": 0.95,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            2.1,
+            0.9
+          ],
+          "height": 0.95
+        },
+        {
+          "footprint": [
+            1.6,
+            1.6
+          ],
+          "height": 0.95
+        },
+        {
+          "footprint": [
+            2.0,
+            0.9
+          ],
+          "height": 0.95
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_drying_tray",
+      "kind": "cn_drying_tray",
+      "name": "晒匾",
+      "category": "props",
+      "desc": "Blender 生成的晒匾：竹架子上的大圆竹匾，摊着红辣椒、豆子或玉米粒在院子里晒。",
+      "vary": "变体 0 红辣椒、1 豆子、2 玉米粒、3 两只匾。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_drying_tray_0.glb",
+        "cn_drying_tray_1.glb",
+        "cn_drying_tray_2.glb",
+        "cn_drying_tray_3.glb"
+      ],
+      "footprint": [
+        2.5,
+        1.5
+      ],
+      "height": 0.9,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.4,
+            1.4
+          ],
+          "height": 0.85
+        },
+        {
+          "footprint": [
+            1.4,
+            1.4
+          ],
+          "height": 0.85
+        },
+        {
+          "footprint": [
+            1.4,
+            1.4
+          ],
+          "height": 0.85
+        },
+        {
+          "footprint": [
+            2.5,
+            1.5
+          ],
+          "height": 0.9
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_pickle_jars",
+      "kind": "cn_pickle_jars",
+      "name": "腌菜坛",
+      "category": "props",
+      "desc": "Blender 生成的腌菜坛：几只深褐釉面的大肚陶坛，盖着木盖，摆在屋檐下。",
+      "vary": "坛子的数量、大小和摆法随变体变化。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_pickle_jars_0.glb",
+        "cn_pickle_jars_1.glb",
+        "cn_pickle_jars_2.glb"
+      ],
+      "footprint": [
+        1.45,
+        1.3
+      ],
+      "height": 0.88,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.7,
+            0.75
+          ],
+          "height": 0.95
+        },
+        {
+          "footprint": [
+            1.5,
+            0.75
+          ],
+          "height": 1.0
+        },
+        {
+          "footprint": [
+            1.45,
+            1.3
+          ],
+          "height": 0.88
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_firewood_stack",
+      "kind": "cn_firewood_stack",
+      "name": "柴堆",
+      "category": "props",
+      "desc": "Blender 生成的柴堆：码得整整齐齐的圆木柴，两头木桩挡着，有的上面盖一片旧瓦挡雨。",
+      "vary": "变体 0 小堆、1 长垛、2 长垛带瓦棚。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_firewood_stack_0.glb",
+        "cn_firewood_stack_1.glb",
+        "cn_firewood_stack_2.glb"
+      ],
+      "footprint": [
+        2.8,
+        1.3
+      ],
+      "height": 1.23,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.8,
+            0.9
+          ],
+          "height": 0.63,
+          "width": 1.4
+        },
+        {
+          "footprint": [
+            2.8,
+            0.9
+          ],
+          "height": 0.83,
+          "width": 2.4
+        },
+        {
+          "footprint": [
+            2.8,
+            1.3
+          ],
+          "height": 1.23,
+          "width": 2.4
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_basin_stool",
+      "kind": "cn_basin_stool",
+      "name": "脸盆板凳",
+      "category": "props",
+      "desc": "Blender 生成的搪瓷脸盆和小板凳：白底红边的搪瓷盆，矮木板凳，有的搁在洗脸架上、搭着毛巾。",
+      "vary": "变体 0 盆 + 板凳、1 洗脸架、2 两只盆 + 搓衣板。",
+      "tags": [
+        "cn_village",
+        "yard"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_basin_stool_0.glb",
+        "cn_basin_stool_1.glb",
+        "cn_basin_stool_2.glb"
+      ],
+      "footprint": [
+        1.2,
+        0.9
+      ],
+      "height": 0.3,
+      "plant": false,
+      "variant_info": [
+        {
+          "footprint": [
+            1.1,
+            0.6
+          ],
+          "height": 0.27
+        },
+        {
+          "footprint": [
+            1.2,
+            0.6
+          ],
+          "height": 1.25
+        },
+        {
+          "footprint": [
+            1.2,
+            0.9
+          ],
+          "height": 0.3
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_big_tree",
+      "kind": "cn_big_tree",
+      "name": "村口大树",
+      "category": "trees",
+      "desc": "Blender 生成的村口大树：粗壮的树干分出几根大枝，圆圆的大树冠一层层叠上去，树下一大片荫凉。",
+      "vary": "树高 9~13 米、树冠宽窄、大枝数量和方向随变体变化；放进场景时再随机朝向、比例、色调。",
+      "tags": [
+        "cn_village",
+        "plains",
+        "town"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_big_tree_0.glb",
+        "cn_big_tree_1.glb",
+        "cn_big_tree_2.glb"
+      ],
+      "footprint": [
+        11.87,
+        11.87
+      ],
+      "height": 10.27,
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            9.07,
+            9.07
+          ],
+          "height": 9.41
+        },
+        {
+          "footprint": [
+            10.64,
+            10.64
+          ],
+          "height": 12.11
+        },
+        {
+          "footprint": [
+            11.87,
+            11.87
+          ],
+          "height": 10.27
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_corn_patch",
+      "kind": "cn_corn_patch",
+      "name": "玉米丛",
+      "category": "plants",
+      "desc": "Blender 生成的玉米丛：两米高的玉米秆，长叶子向两边弯下去，顶上一撮穗子，成片铺开就是玉米地。",
+      "vary": "变体 0 青玉米、1 结棒的、2 稀矮的；每丛玉米秆的位置、高度、叶子方向不同。",
+      "tags": [
+        "cn_village",
+        "plains"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_corn_patch_0.glb",
+        "cn_corn_patch_1.glb",
+        "cn_corn_patch_2.glb"
+      ],
+      "footprint": [
+        2.0,
+        2.0
+      ],
+      "height": 2.08,
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            2.0,
+            2.0
+          ],
+          "height": 2.43
+        },
+        {
+          "footprint": [
+            2.0,
+            2.0
+          ],
+          "height": 2.37
+        },
+        {
+          "footprint": [
+            2.0,
+            2.0
+          ],
+          "height": 2.08
+        }
+      ]
+    },
+    {
+      "id": "bl_cn_wheat_patch",
+      "kind": "cn_wheat_patch",
+      "name": "麦丛",
+      "category": "plants",
+      "desc": "Blender 生成的麦丛：密密的一簇簇麦子，根部深、穗尖浅，成片铺开就是随风起伏的麦田。",
+      "vary": "变体 0 青麦、1 金黄的熟麦、2 半青半黄；每簇的高矮和倾斜不同。",
+      "tags": [
+        "cn_village",
+        "plains"
+      ],
+      "source": "generator",
+      "files": [
+        "cn_wheat_patch_0.glb",
+        "cn_wheat_patch_1.glb",
+        "cn_wheat_patch_2.glb"
+      ],
+      "footprint": [
+        2.0,
+        2.0
+      ],
+      "height": 0.76,
+      "plant": true,
+      "variant_info": [
+        {
+          "footprint": [
+            2.0,
+            2.0
+          ],
+          "height": 0.9
+        },
+        {
+          "footprint": [
+            2.0,
+            2.0
+          ],
+          "height": 0.9
+        },
+        {
+          "footprint": [
+            2.0,
+            2.0
+          ],
+          "height": 0.76
+        }
+      ]
     },
     {
       "id": "bl_spec_cactus",

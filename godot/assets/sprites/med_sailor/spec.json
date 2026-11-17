@@ -1,0 +1,68 @@
+{
+  "id": "med_sailor",
+  "name": "水手",
+  "desc": "码头上的水手：条纹头巾、卷起袖子的白衫、蓝色马甲和宽腿裤。",
+  "hair": "short",
+  "hat": "cap",
+  "weapon": null,
+  "sleeves": "short",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "short",
+  "brow": "soft",
+  "skirt": 0.0,
+  "style": "medieval",
+  "height": 1.0,
+  "build": 1.1,
+  "cape": false,
+  "scarf": false,
+  "beard": true,
+  "vest": true,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#85664e",
+      "#3d2c22",
+      "#271a17"
+    ],
+    "hat": [
+      "#ce7565",
+      "#b23a32",
+      "#712530"
+    ],
+    "top": [
+      "#f4f1e7",
+      "#f1ebdd",
+      "#caa78b"
+    ],
+    "vest": [
+      "#6a9fb7",
+      "#3f5a8c",
+      "#2c3a5a"
+    ],
+    "bottom": [
+      "#a49680",
+      "#7a6a55",
+      "#4f4039"
+    ],
+    "trim": [
+      "#9c7755",
+      "#5a412e",
+      "#3a2520"
+    ]
+  }
+}

@@ -7,8 +7,8 @@ from ._medieval import Wall, box, crenellations
 
 NAME = "城墙"
 CATEGORY = "landmarks"
-DESC = "Blender 生成的中世纪城墙模块：6 米一段的石砌城墙，外侧垛口、顶上走道和内侧护墙，首尾相接围成城镇。"
-VARY = "变体 0 朴素、1 带箭窗和腰线、2 内侧带扶壁和外侧排水石嘴；石材随变体变化。"
+DESC = "Blender 生成的中世纪城墙模块：6 米一段的浅色石砌城墙，外侧垛口、顶上走道和内侧护墙，首尾相接围成城镇。"
+VARY = "变体 0 朴素、1 带箭窗和腰线、2 内侧带扶壁和外侧排水石嘴；变体 0、1 米白石灰岩，变体 2 灰绿色石（雪地城堡）。"
 TAGS = ["town", "medieval"]
 VARIANTS = 3
 
@@ -19,7 +19,7 @@ WALK = 4.2
 
 def build(seed, **over):
     k = seed - 1
-    stone = ["castle_stone", "castle_stone", "cobble_wall"][k % 3]
+    stone = ["castle_stone", "castle_stone", "stone_greygreen"][k % 3]
     mb = MeshBuilder()
     hl, ht = L * 0.5, T * 0.5
     para = 0.45

@@ -1,6 +1,7 @@
-"""八九十年代的中国农村平房：一层，红砖 / 青砖 / 土坯墙（部分正面刷白灰、下面留砖墙裙），小青瓦双坡顶（土坯房有的是草顶），
-正中一樘木板双开门，门两边贴红纸对联、门楣贴横批（只是红纸，不写字），两边各一两扇木框玻璃窗，屋脊两端微翘，
-山墙一侧有砖砌烟囱，门前一级石阶。正面朝 -Y（导出后 Godot +Z），原点在占地中心地面。info.params 有 width / depth。"""
+"""八九十年代的北方农村平房：一层，多数是刷白灰的墙（略发黄发旧）、下面一圈青砖 / 石头墙裙，灰褐或红褐色的旧瓦双坡顶，
+蓝绿色油漆的木窗框、多格玻璃窗；少数是清水红砖墙或灰色水泥抹面。正中一樘木板双开门，门两边贴红纸对联、门楣贴横批
+（只是红纸，不写字），屋脊两端微翘，山墙一侧有砖砌烟囱，门前一级石阶。
+变体：0 白灰 + 灰褐瓦，1 白灰 + 红褐瓦，2 红砖 + 灰褐瓦，3 白灰 + 青灰瓦，4 水泥抹面 + 灰褐瓦，5 白灰 + 红褐瓦，6 红砖 + 红褐瓦，7 白灰 + 灰褐瓦。正面朝 -Y（导出后 Godot +Z），原点在占地中心地面。info.params 有 width / depth。"""
 import math
 import random
 
@@ -10,8 +11,8 @@ from ._modern import cn_roof
 
 NAME = "农村平房"
 CATEGORY = "buildings"
-DESC = "Blender 生成的八九十年代农村平房：红砖 / 青砖 / 土坯墙，小青瓦双坡顶，木板双开门贴着红纸对联和横批，木框玻璃窗，砖烟囱。"
-VARY = "宽 8~12 米、深 5~6.5 米、墙（红砖 / 青砖 / 白灰墙裙 / 土坯）、屋顶（小青瓦 / 草顶）、窗户数量、烟囱位置随变体变化。"
+DESC = "Blender 生成的八九十年代农村平房：白灰墙配青砖墙裙（少数红砖 / 水泥抹面），灰褐或红褐色旧瓦顶，蓝绿色木窗框的多格玻璃窗，木板双开门贴着红纸对联和横批，砖烟囱。"
+VARY = "宽 8~12 米、深 5~6.5 米、墙（白灰 / 红砖 / 水泥抹面）、瓦色（灰褐 / 红褐 / 青灰）、窗户数量、烟囱位置随变体变化。"
 TAGS = ["cn_village", "town", "yard"]
 VARIANTS = 8
 
@@ -21,19 +22,21 @@ WALL_H = 3.0
 def params(seed):
     r = random.Random(seed * 97 + 5)
     k = seed - 1
-    wall = ["brick_red_cn", "brick_grey", "whitewash", "brick_red_cn", "mudbrick", "brick_grey", "whitewash", "mudbrick"][k % 8]
+    wall = ["whitewash", "whitewash", "brick_red_cn", "whitewash", "render_cn", "whitewash", "brick_red_cn", "whitewash"][k % 8]
+    roof = ["tile_cn_brown", "tile_cn_red", "tile_cn_brown", "tile_cn", "tile_cn_brown", "tile_cn_red", "tile_cn_red", "tile_cn_brown"][k % 8]
     return {
         "width": round(r.uniform(8.0, 12.0) * 2) / 2,
         "depth": round(r.uniform(5.0, 6.5) * 2) / 2,
         "wall": wall,
-        "roof": "thatch" if wall == "mudbrick" and k % 2 == 0 else "tile_cn",
+        "roof": roof,
         "windows": 2 if r.random() < 0.6 else 1,
         "chimney": 1 if r.random() < 0.5 else -1,
-        "door": ["door_wood", "door_red", "door_teal"][r.randrange(3)],
+        "door": ["door_wood", "door_oldred", "door_teal"][r.randrange(3)],
+        "frame": "paint_teal" if wall != "brick_red_cn" else ["paint_teal", "door_wood"][k % 4 == 2],
     }
 
 
-def _cn_window(mb, wall, s, z, w=1.3, h=1.25, frame="door_wood"):
+def _cn_window(mb, wall, s, z, w=1.5, h=1.3, frame="door_wood"):
     """木框玻璃窗：外框 + 十字 / 井字窗棂 + 窗台砖"""
     hw = w * 0.5
     wall.quad(mb, "glass", s - hw, z, s + hw, z + h, 0.012)
@@ -85,29 +88,29 @@ def build(seed, **over):
     box(mb, "stone", -1.0, -hd - 0.7, 0.0, 1.0, -hd - 0.15, 0.12)
     W = walls_box(mb, wall_key, -hw, -hd, 0.2, hw, hd, 0.2 + WALL_H)
     f = W["front"]
-    if wall_key == "whitewash":  # 白灰墙：下面一圈 0.9 米高的砖墙裙
+    if wall_key in ("whitewash", "render_cn"):  # 白灰 / 抹面墙：下面一圈 0.55 米高的青砖墙裙
         for key in ("front", "right", "back", "left"):
             ln = w if key in ("front", "back") else d
-            W[key].box(mb, "brick_red_cn", 0.0, 0.0, ln, 0.9, 0.0, 0.03)
+            W[key].box(mb, "brick_grey", 0.0, 0.0, ln, 0.55, 0.0, 0.035)
     _cn_door(mb, f, w * 0.5, p["door"])
     n = p["windows"]
     for i in range(n):
-        off = 2.35 + i * 1.9  # 门（含对联）占中间约 ±1.6 米
+        off = 2.5 + i * 2.1  # 门（含对联）占中间约 ±1.6 米
         for sx in (-1, 1):
             s = w * 0.5 + sx * off
             if 0.9 < s < w - 0.9:
-                _cn_window(mb, f, s, 1.0)
+                _cn_window(mb, f, s, 1.0, frame=p["frame"])
     # 后墙一扇小窗、山墙一扇小窗
-    _cn_window(mb, W["back"], w * 0.5, 1.4, 0.9, 0.8)
-    _cn_window(mb, W["left"], d * 0.5, 1.4, 0.8, 0.8)
+    _cn_window(mb, W["back"], w * 0.5, 1.4, 0.9, 0.8, frame=p["frame"])
+    _cn_window(mb, W["left"], d * 0.5, 1.4, 0.8, 0.8, frame=p["frame"])
     # 屋顶
     top = 0.2 + WALL_H
     if p["roof"] == "thatch":
         ridge, gables = gable_roof(mb, "thatch", -hw, hw, -hd, hd, top, 40.0, axis="x", eave=0.5, gable=0.35, thatch=True)
     else:
-        ridge, gables = cn_roof(mb, -hw, hw, -hd, hd, top, 27.0, eave=0.5, gable=0.25)
+        ridge, gables = cn_roof(mb, -hw, hw, -hd, hd, top, 27.0, eave=0.5, gable=0.25, key=p["roof"])
     for sa, tri in gables:
-        mb.face(wall_key if wall_key != "whitewash" else "whitewash", tri, (sa, 0, 0))
+        mb.face(wall_key, tri, (sa, 0, 0))
     # 檐下一条砖线脚
     if p["roof"] != "thatch":
         box(mb, "brick_grey", -hw - 0.05, -hd - 0.08, top - 0.18, hw + 0.05, -hd, top)
@@ -116,7 +119,7 @@ def build(seed, **over):
     cx = p["chimney"] * (hw - 0.9)
     cy = 0.5
     z_roof = top + (hd - cy) * math.tan(math.radians(27.0 if p["roof"] != "thatch" else 40.0))
-    box(mb, "brick_red_cn" if wall_key != "brick_grey" else "brick_grey", cx - 0.3, cy - 0.3, top - 0.2, cx + 0.3, cy + 0.3, max(ridge, z_roof) + 0.7)
+    box(mb, "brick_red_cn" if wall_key == "brick_red_cn" else "brick_grey", cx - 0.3, cy - 0.3, top - 0.2, cx + 0.3, cy + 0.3, max(ridge, z_roof) + 0.7)
     box(mb, "cement", cx - 0.36, cy - 0.36, max(ridge, z_roof) + 0.7, cx + 0.36, cy + 0.36, max(ridge, z_roof) + 0.8)
     info = {
         "footprint": [round(w + 1.0, 2), round(d + 1.3, 2)],

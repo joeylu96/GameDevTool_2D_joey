@@ -1,0 +1,73 @@
+{
+  "id": "mod_shopkeeper",
+  "name": "咖啡店主",
+  "desc": "系着深色围裙的咖啡店主，白衬衫，袖子挽到手肘，端着一杯咖啡。",
+  "hair": "short",
+  "hat": null,
+  "weapon": "mug",
+  "sleeves": "short",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "short",
+  "brow": "soft",
+  "skirt": 0.0,
+  "style": "modern",
+  "height": 1.0,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": true,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": true,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#6c5f59",
+      "#2a2422",
+      "#1b1717"
+    ],
+    "top": [
+      "#f3f3f1",
+      "#f1f1ee",
+      "#b8b4aa"
+    ],
+    "apron": [
+      "#6a7c82",
+      "#3a4048",
+      "#272a2f"
+    ],
+    "bottom": [
+      "#646e75",
+      "#2f3138",
+      "#1f2025"
+    ],
+    "boots": [
+      "#66636b",
+      "#2a2a2e",
+      "#1c1c1e"
+    ],
+    "trim": [
+      "#6a7c82",
+      "#3a4048",
+      "#272a2f"
+    ]
+  }
+}

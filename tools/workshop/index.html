@@ -619,7 +619,7 @@ function aeJoints(p) {
   const dir = (th, sx = 0) => { const v = [sx, -Math.sin(th), -Math.cos(th)], l = Math.hypot(...v); return v.map(x => x / l); };
   const add = (a, b, s = 1) => a.map((x, i) => x + b[i] * s);
   // 和 Blender 端 sprites.py 的比例常量一致（约 6 头身）
-  const HIP_Z = 0.88, SH_Z = 1.42, HEAD_UP = 0.245, HS = 0.65, THIGH = 0.43, SHIN = 0.42, UPPER = 0.30, FORE = 0.27;
+  const HIP_Z = 0.95, SH_Z = 1.52, HEAD_UP = 0.245, HS = 0.56, THIGH = 0.47, SHIN = 0.46, UPPER = 0.32, FORE = 0.29;
   const hipZ = HIP_Z + p.bob, shZ = SH_Z + p.bob + p.breath, headZ = shZ + HEAD_UP + p.breath * 0.5, chinZ = headZ - 0.2;
   const J = {lower: {}, upper: {}, head: {}};
   for (const [side, key] of [[1, "leg_l"], [-1, "leg_r"]]) {
@@ -657,7 +657,7 @@ function aeDraw() {
   if (!AE.schema || !AE.keys.length) return;
   const J = aeJoints(aeSample(AE.t));
   for (const [cv, proj] of [["ae-front", v => [v[0], v[2]]], ["ae-side", v => [v[1], v[2]]]]) {
-    const g = $(cv).getContext("2d"), W = 160, H = 220, S = 100;
+    const g = $(cv).getContext("2d"), W = 160, H = 220, S = 92;
     g.clearRect(0, 0, W, H);
     const P = v => { const [x, z] = proj(v); return [W / 2 + x * S, H - 14 - z * S]; };
     g.strokeStyle = "#33384f"; g.beginPath(); g.moveTo(10, H - 14); g.lineTo(W - 10, H - 14); g.stroke();
@@ -667,7 +667,7 @@ function aeDraw() {
     line(J.upper.arm_l, "#6f92c6", 6); line(J.upper.arm_r, "#f0a040", 6);
     if (J.upper.weapon) line(J.upper.weapon, "#eef2f7", 3);
     if (J.glow > 0.05) for (const k of ["arm_l", "arm_r"]) { const [x, y] = P(J.upper[k][2]); g.fillStyle = "rgba(255,240,180,0.7)"; g.beginPath(); g.arc(x, y, 4 + 9 * J.glow, 0, 7); g.fill(); }
-    const [hx, hy] = P(J.head.c); g.fillStyle = "#e8b892"; g.beginPath(); g.arc(hx, hy, 0.21 * 0.65 * S, 0, 7); g.fill();
+    const [hx, hy] = P(J.head.c); g.fillStyle = "#e8b892"; g.beginPath(); g.arc(hx, hy, 0.21 * 0.56 * S, 0, 7); g.fill();
     const [nx, ny] = P(J.head.nose); g.fillStyle = "#2b2338"; g.beginPath(); g.arc(nx, ny, 3, 0, 7); g.fill();
   }
 }

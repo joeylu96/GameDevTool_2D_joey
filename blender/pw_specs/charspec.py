@@ -20,15 +20,17 @@ import colorsys
 import random
 import re
 
-PARTS = ["skin", "eye", "hair", "top", "bottom", "skirt", "trim", "boots", "cape", "metal", "wood", "hat", "scarf",
-         "gem", "shine", "vest", "band", "glow", "armor", "collar", "under", "belt", "brow", "sclera", "apron"]
+# 前 26 个是几何部位（渲染时每个部位一种 ID 色，最多 26 种）；后面几个只用来取色（五官是在像素层画的）
+PARTS = ["skin", "hair", "top", "bottom", "skirt", "trim", "boots", "cape", "metal", "wood", "hat", "scarf",
+         "gem", "vest", "band", "glow", "armor", "collar", "under", "belt", "apron", "fur", "guard", "strap", "panel",
+         "eye", "shine", "brow", "sclera"]
 ARMORS = [None, "cuirass", "leather"]
 BEARDS = ["goatee", "short", "full"]
 
 HAIR_STYLES = ["short", "spiky", "long", "ponytail", "bun", "bald"]
-HATS = [None, "wide", "helmet", "hood", "cap", "toque", "feather"]
+HATS = [None, "wide", "helmet", "hood", "cap", "toque", "feather", "fur"]
 WEAPONS = [None, "sword", "greatsword", "spear", "staff", "cane", "bag", "axe", "hammer", "pitchfork", "lute", "mug", "book",
-           "basket"]
+           "basket", "rifle"]
 
 BASE_COLORS = {
     "skin": ["#f7d6b8", "#e8b892", "#bf8466"],
@@ -43,10 +45,12 @@ BASE_COLORS = {
     "belt": ["#8a6446", "#654631", "#45301f"],
     "sclera": ["#ffffff", "#efeae0", "#cfc7b8"],
     "apron": ["#f4efe3", "#ddd5c4", "#ada390"],
+    "fur": ["#d6cab8", "#a39582", "#6e6152"],
+    "guard": ["#57493e", "#3a302a", "#221c19"],
 }
 # 没指定的部位借用相近部位的颜色
 FALLBACK = {"hat": "hair", "scarf": "trim", "cape": "top", "skirt": "top", "vest": "top", "band": "trim",
-            "armor": "vest", "under": "bottom", "brow": "hair"}
+            "armor": "vest", "under": "bottom", "brow": "hair", "strap": "belt", "panel": "trim"}
 
 SKIN_RAMPS = [
     ["#f7d6b8", "#e8b892", "#bf8466"],
@@ -55,117 +59,107 @@ SKIN_RAMPS = [
     ["#a8735a", "#86563f", "#5e3a2b"],
 ]
 
+# 2026-11-17：之前的人物全部去掉（用户不喜欢）。现在的角色都按 res/ 里的参考图重画：写实 7.5 头身，
+# 每个角色带 style（属于哪个场景风格）。前两个是照着参考图做的：中世纪战士（res/中世纪人物.jpg）、猎人（res/8090中国乡村猎人.jpg）
 PRESETS = [
-    {"id": "swordsman", "name": "旅人剑士", "desc": "背着红披风的年轻剑士，腰间挂一把长剑，短发翘起。",
-     "hair": "spiky", "hat": None, "skirt": 0.2, "sleeves": "long", "cape": True, "scarf": False, "weapon": "sword",
-     "colors": {"hair": ["#7a5434", "#5a3a24", "#3b2618"], "top": ["#6f92c6", "#4a6fa5", "#34507a"],
-                "bottom": ["#6b707c", "#4c505c", "#353845"], "skirt": ["#6f92c6", "#4a6fa5", "#34507a"],
-                "trim": ["#c9a36a", "#9b7653", "#6f5842"], "cape": ["#d0564a", "#a3352d", "#6e2424"]}},
-    {"id": "merchant", "name": "行商", "desc": "戴宽檐帽的行商，系着白围裙，腰边挎一个货袋。",
-     "hair": "short", "hat": "wide", "skirt": 0.32, "sleeves": "long", "cape": False, "scarf": True, "weapon": "bag",
-     "colors": {"hair": ["#3d3a40", "#2a282e", "#1c1b20"], "top": ["#e2b25c", "#c48f3c", "#8f6230"],
-                "bottom": ["#7a5a3e", "#5a412e", "#3d2c22"], "skirt": ["#f3eee3", "#d9d0bf", "#ada28c"],
-                "trim": ["#6f9c94", "#4f7c78", "#3a5c5c"], "hat": ["#9b7653", "#7a5a3e", "#5a412e"],
-                "scarf": ["#6f9c94", "#4f7c78", "#3a5c5c"]}},
-    {"id": "maiden", "name": "村姑", "desc": "长发的村庄姑娘，青色长裙配白上衣，走路时裙摆轻轻摆动。",
-     "hair": "long", "hat": None, "skirt": 0.52, "sleeves": "short", "cape": False, "scarf": False, "weapon": None,
-     "colors": {"hair": ["#c2683e", "#9a4a2c", "#6b301f"], "top": ["#f3eee3", "#d9d0bf", "#ada28c"],
-                "bottom": ["#4f7c78", "#3a5c5c", "#284041"], "skirt": ["#6f9c94", "#4f7c78", "#3a5c5c"],
-                "trim": ["#c4473a", "#a3352d", "#7d2826"]}},
-    {"id": "scholar", "name": "学者", "desc": "扎马尾的学者，紫色长袍，手持顶端嵌着宝石的木杖。",
-     "hair": "ponytail", "hat": None, "skirt": 0.55, "sleeves": "long", "cape": False, "scarf": False, "weapon": "staff",
-     "colors": {"hair": ["#3a3550", "#27233a", "#181626"], "top": ["#9a80b8", "#735a94", "#4f3d6a"],
-                "bottom": ["#4f3d6a", "#3a2d50", "#281f38"], "skirt": ["#9a80b8", "#735a94", "#4f3d6a"],
-                "trim": ["#e0b84a", "#b9843a", "#8f6230"]}},
-    {"id": "guard", "name": "卫兵", "desc": "戴铁盔、穿红色罩袍的镇上卫兵，手持长枪。",
-     "hair": "short", "hat": "helmet", "skirt": 0.26, "sleeves": "long", "cape": False, "scarf": False, "weapon": "spear",
-     "colors": {"hair": ["#5a412e", "#3d2c22", "#2a1e17"], "top": ["#d0564a", "#a3352d", "#6e2424"],
-                "bottom": ["#6b707c", "#4c505c", "#353845"], "skirt": ["#d0564a", "#a3352d", "#6e2424"],
-                "trim": ["#e0b84a", "#b9843a", "#8f6230"]}},
-    {"id": "elder", "name": "长者", "desc": "白发白须的村中长者，披着棕色长袍，拄一根短拐杖。",
-     "hair": "bald", "hat": None, "skirt": 0.55, "sleeves": "long", "cape": False, "scarf": True, "weapon": "cane",
-     "beard": True, "height": 0.94,
-     "colors": {"hair": ["#f4f7fb", "#d3dae6", "#9fabbf"], "top": ["#a8835e", "#7a5a3e", "#5a412e"],
-                "bottom": ["#7a5a3e", "#5a412e", "#3d2c22"], "skirt": ["#a8835e", "#7a5a3e", "#5a412e"],
-                "trim": ["#6f9c94", "#4f7c78", "#3a5c5c"], "scarf": ["#c4473a", "#a3352d", "#7d2826"]}},
+    {"id": "warrior", "name": "佣兵战士", "style": "medieval",
+     "desc": "金色短发、留着山羊胡的中年佣兵：白色高领内衫外罩黑色肌肉胸甲（金边、肩扣），棕色短袖的袖口是红色锯齿纹，灰色长内衬袖，"
+             "米色开衩长下摆垂到小腿，灰裤、带护膝的棕色长靴，腰挂长剑。",
+     "hair": "spiky", "beard": True, "beard_style": "goatee", "brow": "stern", "collar": True, "armor": "cuirass",
+     "sleeves": "layered", "sleeve_band": True, "belt": True, "boots": "tall", "knee_guards": True,
+     "skirt": 0.5, "skirt_split": True, "skirt_cloth": True, "weapon": "sword", "height": 1.0, "build": 1.14,
+     "extra_anims": ["shoulder_rest"],
+     "colors": {"hair": ["#f0d98a", "#d2b45c", "#9a7c3a"], "skin": ["#f3cba8", "#dba585", "#a8715a"],
+                "eye": ["#9ab0cc", "#6f89ad", "#4a607f"],
+                "armor": ["#4a4b52", "#2a2a30", "#151518"], "trim": ["#e6c66a", "#b8943e", "#7a5e26"],
+                "top": ["#b98a62", "#94694a", "#6b4a35"], "band": ["#d8553f", "#8c2f2a", "#5c1f1f"],
+                "under": ["#9a979b", "#757277", "#535156"], "skirt": ["#ecdcae", "#d4c08a", "#a8935f"],
+                "panel": ["#d9bf8a", "#bfa06a", "#8f744a"], "bottom": ["#8c8a8e", "#68666b", "#48474b"],
+                "boots": ["#7d5a45", "#5c4032", "#3b2920"], "guard": ["#4f463f", "#352e29", "#201b18"],
+                "belt": ["#4a3d36", "#322924", "#1f1916"], "collar": ["#f6f3ea", "#dcd6c8", "#aaa392"]}},
+    {"id": "hunter", "name": "猎人", "style": "cn_village",
+     "desc": "戴毛皮帽的年轻猎人：灰色棉袄，毛领、毛袖口，皮背带和皮挎包，深蓝棉裤，膝上裹着毛皮护膝，黑色系带靴，背着猎枪。",
+     "hair": "short", "hat": "fur", "brow": "soft", "sleeves": "long", "fur_collar": True, "fur_trim": True, "straps": True,
+     "satchel": True, "belt": True, "knee_fur": True, "boots": "short", "skirt": 0.2, "trim_hem": True, "weapon": "rifle",
+     "height": 0.98, "build": 1.08,
+     "colors": {"hair": ["#3a3432", "#262221", "#161413"], "skin": ["#f0c8a4", "#d9a584", "#a8735c"],
+                "eye": ["#4a3a32", "#33261f", "#1f1612"],
+                "top": ["#a9a8a6", "#868583", "#5f5e5d"], "skirt": ["#a9a8a6", "#868583", "#5f5e5d"],
+                "trim": ["#d6cab8", "#a39582", "#6e6152"], "fur": ["#d9cdb9", "#a69783", "#6f6253"],
+                "bottom": ["#3f5a6e", "#2c4254", "#1c2c3a"], "boots": ["#3a3a3e", "#26262a", "#151518"],
+                "belt": ["#9a6a48", "#734c33", "#4c3222"], "strap": ["#9a6a48", "#734c33", "#4c3222"]}},
 ]
-
-# 2026-11-15 升级：预设角色加上分层服装（腰带、高领、内外两层袖、长靴、胸甲、下摆包边），中世纪小镇里更耐看
-_UPGRADE = {
-    "swordsman": {"collar": True, "belt": True, "boots": "tall", "trim_hem": True, "build": 1.05},
-    "merchant": {"belt": True, "collar": True},
-    "maiden": {"collar": True, "belt": True, "sleeves": "layered", "height": 0.95, "build": 0.92, "lashes": True,
-               "colors": {"under": ["#f6f2e8", "#dcd5c6", "#a9a08d"]}},
-    "scholar": {"belt": True, "trim_hem": True, "collar": True},
-    "guard": {"armor": "cuirass", "boots": "tall", "belt": True, "sleeves": "layered", "build": 1.1,
-              "colors": {"armor": ["#d5dae2", "#9098a6", "#5b616e"], "under": ["#6b707c", "#4c505c", "#353845"]}},
-    "elder": {"belt": True, "trim_hem": True},
-}
-for _p in PRESETS:
-    _u = dict(_UPGRADE.get(_p["id"], {}))
-    _p["colors"] = dict(_p["colors"], **_u.pop("colors", {}))
-    _p.update(_u)
-
-# 中世纪小镇的 NPC（商人小贩、手艺人、镇民）：只渲染待机 / 走路 / 挥手
+# 各风格的镇民 / 村民（只渲染待机、走路、挥手），和上面两个参考角色同一套写实比例和画法
+_SKIN = ["#f0c8a4", "#d9a584", "#a8735c"]
 NPCS = [
-    {"id": "baker", "name": "面包师", "desc": "戴白色高帽、系白围裙的面包师，挎着一篮刚出炉的面包。",
-     "hair": "short", "hat": "toque", "apron": True, "sleeves": "layered", "belt": True, "weapon": "basket",
-     "colors": {"hair": "#6b4a32", "hat": "#f4f1ea", "top": "#d9b77e", "under": "#efe6d4", "bottom": "#7a6450",
-                "skirt": "#d9b77e", "trim": "#a8835e"}},
-    {"id": "butcher", "name": "屠夫", "desc": "膀大腰圆的光头屠夫，络腮胡，红上衣外系一条沾了污渍的围裙，手提剁骨刀。",
-     "hair": "bald", "beard": True, "beard_style": "full", "brow": "stern", "apron": True, "sleeves": "short",
-     "build": 1.22, "boots": "tall", "weapon": "axe", "skirt": 0.12,
-     "colors": {"hair": "#5a3a24", "top": "#a33f3a", "apron": "#c9b9a6", "bottom": "#4f4a46", "trim": "#5a412e"}},
-    {"id": "fruit_vendor", "lashes": True, "name": "水果小贩", "desc": "包着头巾的水果摊大姐，绿裙子配米色围裙，挎着一篮苹果。",
-     "hair": "long", "hat": "hood", "skirt": 0.48, "apron": True, "collar": True, "weapon": "basket", "height": 0.96, "build": 0.95,
-     "colors": {"hair": "#7a4a2c", "hat": "#c85a3c", "top": "#e8d7b0", "skirt": "#5f7f4a", "bottom": "#5f7f4a",
-                "apron": "#efe4cc", "trim": "#c85a3c"}},
-    {"id": "blacksmith", "name": "铁匠", "desc": "胳膊粗壮的铁匠，系着厚皮围裙，络腮胡，手里拎着锻锤。",
-     "hair": "short", "beard": True, "beard_style": "full", "brow": "stern", "apron": True, "sleeves": "short",
-     "build": 1.25, "boots": "tall", "belt": True, "weapon": "hammer", "skirt": 0.1,
-     "colors": {"hair": "#3d2c22", "top": "#7a7f86", "apron": "#6b4c36", "bottom": "#4c505c", "trim": "#3d2c22"}},
-    {"id": "innkeeper", "name": "酒馆老板", "desc": "圆滚滚的酒馆老板，山羊胡，背心外系围裙，手里端着一杯麦酒。",
-     "hair": "bald", "beard": True, "vest": True, "apron": True, "build": 1.25, "belt": True, "weapon": "mug", "skirt": 0.14,
-     "colors": {"hair": "#8a5a34", "top": "#e8dcc8", "vest": "#7a3a2c", "apron": "#ece4d2", "bottom": "#5a4a3c",
-                "trim": "#5a412e"}},
-    {"id": "friar", "name": "修士", "desc": "穿棕色连帽长袍的修士，腰系麻绳，怀里抱着一本厚书。",
-     "hair": "bald", "hat": "hood", "skirt": 0.58, "belt": True, "weapon": "book",
+    # ---- 中世纪海边小镇
+    {"id": "med_guard", "name": "城防卫兵", "style": "medieval", "desc": "戴铁盔、穿钢胸甲和红色罩袍的城防卫兵，手持长枪。",
+     "hair": "short", "hat": "helmet", "armor": "cuirass", "sleeves": "layered", "belt": True, "boots": "tall", "knee_guards": True,
+     "skirt": 0.3, "skirt_cloth": True, "trim_hem": True, "weapon": "spear", "brow": "stern", "build": 1.1,
+     "colors": {"hair": "#5a412e", "armor": ["#dfe3ea", "#9aa2b0", "#5c6370"], "under": "#7a808c", "top": "#b23a32",
+                "skirt": "#b23a32", "trim": ["#ecd27a", "#c9a03c", "#8a6a28"], "bottom": "#55585f"}},
+    {"id": "med_merchant", "name": "港口商人", "style": "medieval", "desc": "戴宽檐帽的港口商人，赭黄长外衣、宽皮带，挎着货袋。",
+     "hair": "short", "hat": "wide", "beard": True, "beard_style": "short", "sleeves": "long", "belt": True, "collar": True,
+     "skirt": 0.42, "trim_hem": True, "weapon": "bag", "build": 1.08,
+     "colors": {"hair": "#4a3426", "hat": "#7a5a3e", "top": "#c8923e", "skirt": "#c8923e", "trim": "#7a3a2c", "bottom": "#5a4a3c"}},
+    {"id": "med_townswoman", "name": "镇上妇人", "style": "medieval", "lashes": True,
+     "desc": "盘发的镇上妇人，白衬衣、红色长裙配米色围裙，挎着一篮面包。",
+     "hair": "bun", "sleeves": "layered", "collar": True, "skirt": 0.72, "apron": True, "weapon": "basket",
+     "height": 0.93, "build": 0.9,
+     "colors": {"hair": "#8a4a2c", "top": "#b8443a", "under": "#f1ebdd", "skirt": "#b8443a", "bottom": "#b8443a",
+                "apron": "#efe6d0", "trim": "#7a2a26"}},
+    {"id": "med_friar", "name": "修士", "style": "medieval", "desc": "穿棕色连帽长袍的修士，腰系麻绳，抱着一本厚书。",
+     "hair": "bald", "hat": "hood", "skirt": 0.78, "belt": True, "weapon": "book",
      "colors": {"hair": "#6b4a32", "hat": "#6e5a46", "top": "#6e5a46", "skirt": "#6e5a46", "bottom": "#5a4a3c",
-                "belt": "#c9b48a", "trim": "#c9b48a"}},
-    {"id": "knight", "name": "骑士", "desc": "戴铁盔、穿钢胸甲的骑士，蓝色罩袍和披风，腰挂长剑。",
-     "hair": "short", "hat": "helmet", "armor": "cuirass", "sleeves": "layered", "cape": True, "skirt": 0.22, "boots": "tall",
-     "belt": True, "weapon": "sword", "brow": "stern", "build": 1.15, "trim_hem": True,
-     "colors": {"hair": "#5a412e", "armor": ["#e3e7ee", "#a0a8b6", "#5e6573"], "under": "#7a808c", "top": "#3f5a8c",
-                "cape": "#3f5a8c", "trim": ["#ecd27a", "#c9a03c", "#8a6a28"], "bottom": "#4c505c"}},
-    {"id": "farmer", "name": "农夫", "desc": "戴草帽的农夫，短袖衫外套皮背心，扛着一把草叉。",
-     "hair": "short", "hat": "wide", "sleeves": "short", "vest": True, "boots": "tall", "beard": True, "beard_style": "short",
-     "weapon": "pitchfork", "skirt": 0.0,
-     "colors": {"hair": "#8a6440", "hat": ["#f0dc9a", "#d9be7a", "#a88a4a"], "top": "#9aa878", "vest": "#8a6446",
-                "bottom": "#7a6450", "trim": "#6a4a30"}},
-    {"id": "bard", "name": "吟游诗人", "desc": "帽子上插着羽毛的吟游诗人，紫色短外衣、锯齿花纹袖箍，背着一把鲁特琴。",
-     "hair": "ponytail", "hat": "feather", "sleeves": "layered", "sleeve_band": True, "skirt": 0.2, "belt": True,
-     "weapon": "lute", "trim_hem": True,
-     "colors": {"hair": "#c2683e", "hat": "#7a3a5a", "top": "#8f4fa0", "skirt": "#8f4fa0", "under": "#e8dcc8",
-                "band": ["#f3e3b0", "#c9a03c", "#7a3a5a"], "bottom": "#4a5a7a", "trim": "#c9a03c"}},
-    {"id": "noble_lady", "lashes": True, "name": "贵族小姐", "desc": "盘发的贵族小姐，紫红色长裙配金色镶边和白色高领。",
-     "hair": "bun", "collar": True, "skirt": 0.58, "trim_hem": True, "belt": True, "height": 0.95, "build": 0.9,
-     "colors": {"hair": "#e3c070", "top": "#9a4a7a", "skirt": "#7a3a6a", "bottom": "#7a3a6a",
+                "belt": "#c9b48a"}},
+    {"id": "med_sailor", "name": "水手", "style": "medieval", "desc": "码头上的水手：条纹头巾、卷起袖子的白衫、蓝色马甲和宽腿裤。",
+     "hair": "short", "hat": "cap", "sleeves": "short", "vest": True, "belt": True, "skirt": 0.0, "beard": True,
+     "beard_style": "short", "build": 1.1,
+     "colors": {"hair": "#3d2c22", "hat": "#b23a32", "top": "#f1ebdd", "vest": "#3f5a8c", "bottom": "#7a6a55", "trim": "#5a412e"}},
+    {"id": "med_noblewoman", "name": "贵族小姐", "style": "medieval", "lashes": True, "desc": "金发的贵族小姐，蓝色长裙配金色镶边和白色高领。",
+     "hair": "long", "collar": True, "skirt": 0.78, "trim_hem": True, "belt": True, "height": 0.94, "build": 0.88,
+     "colors": {"hair": ["#f0d98a", "#d2b45c", "#9a7c3a"], "top": "#3f6a9c", "skirt": "#34588a", "bottom": "#34588a",
                 "trim": ["#ecd27a", "#c9a03c", "#8a6a28"], "belt": ["#ecd27a", "#c9a03c", "#8a6a28"]}},
-    {"id": "herbalist", "lashes": True, "name": "草药师", "desc": "披着绿色兜帽的草药师，长裙，挎着装满药草的布袋。",
-     "hair": "ponytail", "hat": "hood", "skirt": 0.5, "scarf": True, "weapon": "bag", "height": 0.97,
-     "colors": {"hair": "#3d3a40", "hat": "#5f7f4a", "top": "#7a9a5a", "skirt": "#6a5a46", "bottom": "#6a5a46",
-                "scarf": "#c9b48a", "trim": "#c9b48a"}},
-    {"id": "child", "name": "小孩", "desc": "在广场上跑来跑去的小孩，翘头发，短袖衫。",
-     "hair": "spiky", "sleeves": "short", "height": 0.66, "build": 0.9, "skirt": 0.0,
-     "colors": {"hair": "#7a5434", "top": "#c9884a", "bottom": "#6a5a46", "trim": "#8a6446"}},
-    {"id": "town_crier", "name": "传令官", "desc": "戴红帽、穿红黄罩袍的传令官，手里拿着告示卷轴。",
-     "hair": "short", "hat": "cap", "sleeves": "layered", "skirt": 0.26, "belt": True, "weapon": "book", "trim_hem": True,
-     "colors": {"hair": "#5a3a24", "hat": "#a3352d", "top": "#e0b84a", "skirt": "#a3352d", "under": "#a3352d",
-                "bottom": "#4c505c", "trim": "#e0b84a"}},
-    {"id": "cloth_merchant", "lashes": True, "name": "布商", "desc": "盘发的布商大婶，青色上衣、橙黄长裙，围巾，挎着一卷布。",
-     "hair": "bun", "scarf": True, "collar": True, "skirt": 0.5, "weapon": "bag", "build": 1.08,
-     "colors": {"hair": "#5a412e", "top": "#4f7c78", "skirt": "#c48f3c", "bottom": "#c48f3c", "scarf": "#c4473a",
-                "trim": "#c4473a"}},
+    # ---- 八九十年代中国乡村
+    {"id": "cn_farmer", "name": "庄稼汉", "style": "cn_village", "desc": "戴草帽的庄稼汉：挽着袖子的白汗衫、深蓝长裤、黑布鞋，扛着草叉。",
+     "hair": "short", "hat": "wide", "sleeves": "short", "skirt": 0.0, "weapon": "pitchfork", "build": 1.02,
+     "colors": {"skin": _SKIN, "hair": "#262221", "hat": ["#f0dc9a", "#d9be7a", "#a88a4a"], "top": "#eeeae0",
+                "bottom": "#34455e", "boots": "#2a2a2e", "trim": "#34455e"}},
+    {"id": "cn_uncle", "name": "蓝褂大叔", "style": "cn_village", "desc": "穿蓝色中山装式外套的大叔，戴解放帽，背着手在村里转。",
+     "hair": "short", "hat": "cap", "sleeves": "long", "collar": True, "skirt": 0.16, "build": 1.05,
+     "colors": {"skin": _SKIN, "hair": "#3a3432", "hat": "#4a6a5a", "top": "#3f5f8a", "skirt": "#3f5f8a", "collar": "#34507a",
+                "bottom": "#3a4658", "boots": "#2a2a2e", "trim": "#34507a"}},
+    {"id": "cn_auntie", "name": "碎花大婶", "style": "cn_village", "lashes": True, "desc": "扎着发髻的大婶，红底碎花衬衫、深色长裤，挎着菜篮子。",
+     "hair": "bun", "sleeves": "long", "skirt": 0.14, "weapon": "basket", "height": 0.9, "build": 1.0,
+     "colors": {"skin": _SKIN, "hair": "#262221", "top": "#c4504a", "skirt": "#c4504a", "bottom": "#3a3f4c",
+                "boots": "#2a2a2e", "trim": "#f0d8c8"}},
+    {"id": "cn_granny", "name": "老奶奶", "style": "cn_village", "desc": "花白头发盘在脑后的老奶奶，藏青色斜襟褂子、黑裤布鞋，系着围裙。",
+     "hair": "bun", "sleeves": "long", "skirt": 0.2, "apron": True, "height": 0.84, "build": 0.95,
+     "colors": {"skin": ["#e8c0a0", "#cf9c80", "#9c6c58"], "hair": ["#d8d8dc", "#a8a8b0", "#74747c"], "top": "#34405a",
+                "skirt": "#34405a", "apron": "#4a556e", "bottom": "#2c2c32", "boots": "#232327", "trim": "#2a3348"}},
+    {"id": "cn_girl", "name": "村里姑娘", "style": "cn_village", "lashes": True, "desc": "扎马尾的姑娘，白底蓝格衬衫、蓝长裤。",
+     "hair": "ponytail", "sleeves": "short", "skirt": 0.1, "height": 0.9, "build": 0.86,
+     "colors": {"skin": _SKIN, "hair": "#262221", "top": "#e6eef6", "skirt": "#e6eef6", "bottom": "#3f5f8a",
+                "boots": "#2a2a2e", "trim": "#c4504a"}},
+    {"id": "cn_kid", "name": "小孩", "style": "cn_village", "desc": "穿背心短裤、在村里疯跑的小孩。",
+     "hair": "short", "sleeves": "short", "skirt": 0.0, "height": 0.62, "build": 0.9,
+     "colors": {"skin": _SKIN, "hair": "#262221", "top": "#d8483a", "bottom": "#3f5f8a", "boots": "#2a2a2e", "trim": "#f0f0f0"}},
+    # ---- 现代小镇
+    {"id": "mod_man", "name": "小镇青年", "style": "modern", "desc": "穿连帽外套和牛仔裤的小镇青年。",
+     "hair": "short", "sleeves": "long", "skirt": 0.1, "skirt_cloth": True,
+     "colors": {"skin": _SKIN, "hair": "#3a2c24", "top": "#5f7f6a", "skirt": "#5f7f6a", "bottom": "#3f5878",
+                "boots": "#e8e6e0", "trim": "#4a6a56"}},
+    {"id": "mod_woman", "name": "上班族", "style": "modern", "lashes": True, "desc": "长发的上班族，米色风衣、深色长裤，挎着包。",
+     "hair": "long", "sleeves": "long", "belt": True, "skirt": 0.5, "weapon": "bag", "height": 0.93, "build": 0.88,
+     "colors": {"skin": _SKIN, "hair": "#5a3a28", "top": "#d8c4a0", "skirt": "#d8c4a0", "bottom": "#3a3f4c",
+                "boots": "#3a2c24", "belt": "#8a6a4a", "trim": "#8a6a4a"}},
+    {"id": "mod_shopkeeper", "name": "咖啡店主", "style": "modern", "desc": "系着深色围裙的咖啡店主，白衬衫，袖子挽到手肘，端着一杯咖啡。",
+     "hair": "short", "beard": True, "beard_style": "short", "sleeves": "short", "apron": True, "skirt": 0.0, "weapon": "mug",
+     "colors": {"skin": _SKIN, "hair": "#2a2422", "top": "#f1f1ee", "apron": "#3a4048", "bottom": "#2f3138",
+                "boots": "#2a2a2e", "trim": "#3a4048"}},
+    {"id": "mod_jogger", "name": "晨跑的人", "style": "modern", "lashes": True, "desc": "扎马尾、穿运动服晨跑的人。",
+     "hair": "ponytail", "sleeves": "short", "skirt": 0.0, "height": 0.92, "build": 0.88,
+     "colors": {"skin": _SKIN, "hair": "#262221", "top": "#e0584a", "bottom": "#2f3138", "boots": "#f0f0f0", "trim": "#f0f0f0"}},
 ]
 
 # 随机路人用的布料色阶（取自共享调色板及其相近色）
@@ -249,10 +243,12 @@ def validate(spec):
     out["brow"] = _pick(spec.get("brow"), ["soft", "stern"], "soft")
     if isinstance(spec.get("source"), dict):
         out["source"] = spec["source"]  # 来源记录（原画、生成用的模型），只存档，不参与生成
-    out["skirt"] = _num(spec.get("skirt", 0.2), 0.0, 0.6, 0.2)
+    out["skirt"] = _num(spec.get("skirt", 0.2), 0.0, 0.8, 0.2)
+    out["style"] = slug(spec.get("style") or "", "")  # 属于哪个场景风格（medieval / cn_village / modern），场景里只出现对应风格的人
     out["height"] = _num(spec.get("height", 1.0), 0.6, 1.1, 1.0)  # 0.6~0.75 是小孩
     out["build"] = _num(spec.get("build", 1.0), 0.85, 1.25, 1.0)
-    for flag in ("cape", "scarf", "beard", "vest", "sleeve_band", "collar", "belt", "trim_hem", "apron", "lashes"):
+    for flag in ("cape", "scarf", "beard", "vest", "sleeve_band", "collar", "belt", "trim_hem", "apron", "lashes", "skirt_split", "skirt_cloth",
+                 "knee_guards", "knee_fur", "fur_trim", "fur_collar", "straps", "satchel"):
         out[flag] = bool(spec.get(flag, False))
     extra = spec.get("extra_anims") or []
     out["extra_anims"] = [slug(x, "") for x in extra if isinstance(x, str) and slug(x, "")][:8] if isinstance(extra, list) else []
@@ -290,7 +286,7 @@ def ramps(spec):
     return r
 
 
-def random_villager(seed):
+def random_villager(seed):  # 旧的随机路人（已停用：tools/blender_build_sprites.py --villagers 默认 0）
     """随机路人：发型、帽子、衣服长短、配饰和颜色随种子组合，每个都不一样，但都在调色板范围内。"""
     rnd = random.Random(seed)
     female = rnd.random() < 0.5

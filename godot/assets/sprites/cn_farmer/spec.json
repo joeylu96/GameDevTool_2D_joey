@@ -1,0 +1,73 @@
+{
+  "id": "cn_farmer",
+  "name": "庄稼汉",
+  "desc": "戴草帽的庄稼汉：挽着袖子的白汗衫、深蓝长裤、黑布鞋，扛着草叉。",
+  "hair": "short",
+  "hat": "wide",
+  "weapon": "pitchfork",
+  "sleeves": "short",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.0,
+  "style": "cn_village",
+  "height": 1.0,
+  "build": 1.02,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#675e5b",
+      "#262221",
+      "#191616"
+    ],
+    "hat": [
+      "#f0dc9a",
+      "#d9be7a",
+      "#a88a4a"
+    ],
+    "top": [
+      "#f2f0e9",
+      "#eeeae0",
+      "#c1a995"
+    ],
+    "bottom": [
+      "#5b8b9d",
+      "#34455e",
+      "#242d3d"
+    ],
+    "boots": [
+      "#66636b",
+      "#2a2a2e",
+      "#1c1c1e"
+    ],
+    "trim": [
+      "#5b8b9d",
+      "#34455e",
+      "#242d3d"
+    ]
+  }
+}

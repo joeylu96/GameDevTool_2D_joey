@@ -29,24 +29,24 @@ from .builder import MeshBuilder
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # blender/：让 pw_specs 可以导入
 from pw_specs import charspec, poses  # noqa: E402
 
-VERSION = "0.4.0"
-FRAME = 180      # 帧高（像素）
-FRAME_W = 140    # 帧宽：人物是竖长的，帧也做成竖长方形，省三成显存
+VERSION = "0.5.0"
+FRAME = 224      # 帧高（像素）
+FRAME_W = 168    # 帧宽：人物是竖长的，帧也做成竖长方形
 SS = 4
-PX_PER_M = 80.0
+PX_PER_M = 96.0
 ELEV = math.radians(10.0)   # 接近正视（像立绘），脸、胸甲的塑形都看得清
 VIEW_PITCH = 40.0   # 游戏镜头俯角：公告板竖向拉长 1/cos(VIEW_PITCH)
-TARGET_Z = 1.05
+TARGET_Z = 1.1
 
-# 身体比例（身高系数 h = 1 时约 1.76 米、6 头身）。资产工坊动作编辑器（tools/workshop/index.html aeJoints）用同一组数
-HIP_Z = 0.88
-SH_Z = 1.42
+# 身体比例：写实的 7.5 头身（参考 res/ 里的人物立绘），身高系数 h = 1 时约 1.82 米、头高 0.24 米。资产工坊动作编辑器（tools/workshop/index.html aeJoints）用同一组数
+HIP_Z = 0.95
+SH_Z = 1.52
 HEAD_UP = 0.245     # 头部中心比肩高多少（缩放前；头的轮廓从中心往下 0.2 是下巴）
-HEAD_SCALE = 0.75   # 头（连同头发、帽子、五官）以下巴为中心缩放
-THIGH = 0.43
-SHIN = 0.42
-UPPER_ARM = 0.30
-FORE_ARM = 0.27
+HEAD_SCALE = 0.56   # 头（连同头发、帽子、五官）以下巴为中心缩放
+THIGH = 0.47
+SHIN = 0.46
+UPPER_ARM = 0.32
+FORE_ARM = 0.29
 DIRS = 8
 INK = np.array([0x1a, 0x18, 0x22]) / 255.0
 
@@ -150,7 +150,7 @@ def _id_material(key):
     if name in bpy.data.materials:
         return bpy.data.materials[name]
     m = bpy.data.materials.new(name)
-    rgb = _ID_RGB[PARTS.index(key)]
+    rgb = _ID_RGB[PARTS.index(key)]  # 只有前 26 个部位能当几何材质（charspec.PARTS 末尾几个只用来取色）
     m.diffuse_color = (rgb[0], rgb[1], rgb[2], 1.0)
     return m
 
@@ -193,20 +193,26 @@ def build_character(spec, pose):
         kneep = hip + _dir(th) * THIGH * h
         sd = _dir(th - kn)
         ankle = kneep + sd * SHIN * h
-        boot_top = kneep + sd * ((0.05 if tall_boots else 0.27) * h)
+        boot_top = kneep + sd * ((0.07 if tall_boots else SHIN * 0.62) * h)
         mb.tube("bottom", hip, kneep, 0.088 * bw, 0.064 * bw, 10)
         mb.tube("bottom", kneep - sd * 0.01, boot_top + sd * 0.02, 0.064 * bw, 0.056 * bw, 10)
         mb.tube("boots", boot_top, ankle, (0.07 if tall_boots else 0.062) * bw, 0.058 * bw, 10)
-        if tall_boots:  # 靴口翻边
+        if spec.get("knee_guards"):  # 靴口外面一圈深色护膝
+            mb.tube("guard", boot_top - sd * 0.05, boot_top + sd * 0.1, 0.088 * bw, 0.08 * bw, 10)
+        elif tall_boots:  # 靴口翻边
             mb.tube("boots", boot_top - sd * 0.012, boot_top + sd * 0.05, 0.08 * bw, 0.075 * bw, 10)
+        if spec.get("knee_fur"):  # 膝盖上裹的毛皮护膝
+            mb.tube("fur", kneep - _dir(th) * 0.07, kneep + sd * 0.09, 0.08 * bw, 0.074 * bw, 10)
+        if spec.get("fur_trim") and not tall_boots:  # 靴口一圈毛
+            mb.tube("fur", boot_top - sd * 0.03, boot_top + sd * 0.04, 0.072 * bw, 0.07 * bw, 10)
         foot = _dir(th - kn + math.pi / 2)  # 脚背方向：垂直于小腿向前
         mb.tube("boots", ankle - foot * 0.05 + np.array([0, 0, 0.012]), ankle + foot * 0.15 + np.array([0, 0, 0.0]),
                 0.055, 0.042, 8, rot=math.pi / 8)
     mb.stack("bottom", 0, 0, [(hip_z - 0.09, 0.13 * bw), (hip_z + 0.02, 0.168 * bw), (hip_z + 0.1, 0.165 * bw)], 12, sy=0.76)
     sk = spec.get("skirt", 0.0) * h
-    skirt_key = "armor" if armor == "cuirass" else "skirt"
+    skirt_key = "armor" if armor == "cuirass" and not spec.get("skirt_cloth") else "skirt"
     if sk > 0.01:
-        flare = 0.06 + sk * 0.22
+        flare = (0.025 + sk * 0.05) if spec.get("skirt_split") else (0.06 + sk * 0.22)  # 开衩长下摆是直筒的
         rings = [(hip_z + 0.1, 0.168 * bw), (hip_z - 0.04, 0.18 * bw)]
         for i in range(1, 5):
             f = i / 4
@@ -214,7 +220,14 @@ def build_character(spec, pose):
         swing = (pose["leg_l"][0] + pose["leg_r"][0]) * -0.05
         sy0 = swing + pose["cape"] * 0.02
         mb.stack(skirt_key, 0, sy0, rings, 14, sy=0.85, cap_top=False, cap_bottom=True)
-        if armor == "cuirass" or spec.get("trim_hem"):  # 下摆包边
+        if spec.get("skirt_split"):  # 正面开衩：中缝露出裤子，两边各一条镶边带（参考图的长下摆）
+            cf = math.cos(math.pi / 14) * 0.85
+            for k2 in range(1, len(rings) - 1):
+                (z0, r0), (z1, r1) = rings[k2], rings[k2 + 1]
+                ya, yb = sy0 - r0 * cf - 0.012, sy0 - r1 * cf - 0.012
+                for key2, xa, xb, dy in (("bottom", -0.022, 0.022, 0.0), ("panel", -0.075, -0.022, -0.004), ("panel", 0.022, 0.075, -0.004)):
+                    mb.face(key2, [(xa, ya + dy, z0), (xb, ya + dy, z0), (xb, yb + dy, z1), (xa, yb + dy, z1)], (0, -1, 0))
+        if (armor == "cuirass" and not spec.get("skirt_cloth")) or spec.get("trim_hem"):  # 下摆包边
             zb, rb = rings[-1]
             mb.stack("trim", 0, sy0, [(zb - 0.005, rb + 0.006), (zb + 0.035, rb - 0.004)], 14, sy=0.85, cap_top=False, cap_bottom=False)
     if spec.get("belt") or armor:
@@ -289,12 +302,31 @@ def build_character(spec, pose):
         mb.stack("collar", 0, 0.0, [(sh_z - 0.02, 0.112), (sh_z + 0.02, 0.1), (sh_z + 0.05, 0.088)], 12, sy=0.92,
                  cap_bottom=False, cap_top=False)
         mb.stack("collar", 0, 0.0, [(sh_z + 0.03, 0.1), (sh_z + 0.052, 0.095)], 12, sy=0.92, cap_bottom=False, cap_top=False)
+    if spec.get("fur_collar"):  # 毛领：围着脖子一圈，前面敞开一点
+        mb.stack("fur", 0, 0.01, [(sh_z - 0.06, 0.15 * bw), (sh_z + 0.0, 0.135 * bw), (sh_z + 0.05, 0.1)], 12, sy=0.85, cap_bottom=False)
+    if spec.get("straps"):  # 背带：两条从肩到腰，一条斜挎过胸口
+        fy2 = -0.19 * bw * 0.7 * math.cos(math.pi / 12) - 0.012
+        for sx in (-1, 1):
+            mb.box("strap", (sx * 0.115 * bw - 0.02, fy2 - 0.006, hip_z + 0.1), (sx * 0.115 * bw + 0.02, fy2 + 0.02, sh_z - 0.02))
+            mb.box("strap", (sx * 0.115 * bw - 0.02, -0.1, sh_z - 0.03), (sx * 0.115 * bw + 0.02, 0.13, sh_z + 0.0))
+        mb.face("strap", [(-0.17 * bw, fy2 - 0.01, sh_z - 0.08), (-0.12 * bw, fy2 - 0.01, sh_z - 0.03),
+                          (0.17 * bw, fy2 - 0.01, hip_z + 0.16), (0.12 * bw, fy2 - 0.01, hip_z + 0.1)], (0, -1, 0))
+    if spec.get("satchel"):  # 腰前左侧的皮挎包
+        mb.box("strap", (0.06 * bw, -0.2 * bw, hip_z - 0.16), (0.2 * bw, -0.13 * bw, hip_z + 0.06))
+        mb.box("belt", (0.055 * bw, -0.207 * bw, hip_z - 0.04), (0.205 * bw, -0.19 * bw, hip_z + 0.07))
+    if weapon == "rifle":  # 猎枪斜背在背上：枪托在右腰后，枪管从左肩上方伸出去
+        p0 = np.array([-0.2 * bw, 0.15, hip_z + 0.02])
+        p1 = np.array([0.24 * bw, 0.15, sh_z + 0.42])
+        dd = (p1 - p0) / np.linalg.norm(p1 - p0)
+        mb.tube("wood", p0 - dd * 0.12, p0 + dd * 0.22, 0.04, 0.03, 6)
+        mb.tube("wood", p0 + dd * 0.2, p0 + dd * 0.6, 0.026, 0.022, 6)
+        mb.tube("metal", p0 + dd * 0.3, p1, 0.014, 0.012, 6)
     sleeves = spec.get("sleeves", "long")
     hands = {}
     fore_dirs = {}
     for side, key in ((1, "arm_l"), (-1, "arm_r")):
         a, e, spread = pose[key]
-        sh = np.array([side * 0.205 * bw, 0.0, sh_z - 0.045])
+        sh = np.array([side * 0.215 * bw, 0.0, sh_z - 0.045])
         elbow = sh + _dir(a, side * (0.05 + spread)) * UPPER_ARM * h
         d1 = (elbow - sh) / np.linalg.norm(elbow - sh)
         d2 = _dir(a + e, side * (0.02 + spread * 0.4))
@@ -320,6 +352,8 @@ def build_character(spec, pose):
                 mb.tube("trim", hand - d2 * 0.05, hand - d2 * 0.018, 0.058 * bw, 0.058 * bw, 10)
             else:
                 mb.tube("skin", elbow, hand, 0.05 * bw, 0.043 * bw, 10)
+        if spec.get("fur_trim"):
+            mb.tube("fur", hand - d2 * 0.085, hand - d2 * 0.02, 0.058 * bw, 0.06 * bw, 10)
         # 拳头 + 拇指
         mb.stack("skin", hand[0], hand[1], [(hand[2] - 0.075, 0.0), (hand[2] - 0.06, 0.04), (hand[2] - 0.015, 0.05),
                                             (hand[2] + 0.02, 0.036)], 10, sy=0.85)
@@ -397,6 +431,8 @@ def _weapon_in_hand(mb, spec, pose, hand, d2, in_hand, h):
     w = spec.get("weapon")
     if w is None or w == "bag":
         return
+    if w == "rifle":
+        return  # 猎枪一直背在背上（build_character 里画）
     if w in ("hammer", "mug", "book", "basket", "lute", "pitchfork"):
         _tool(mb, w, hand, d2, h)
         return
@@ -495,7 +531,7 @@ def _hair(mb, spec, hz, front, pose):
         return
     # 头顶的发壳（比头大一圈，盖住额头上半）+ 后脑一大团（前半截藏在脸里，只有后面露出来）
     # 戴头盔 / 兜帽时不做发壳（贴得太近会互相穿插出条纹），只留露出来的后脑头发
-    covered = hat in ("helmet", "hood")
+    covered = hat in ("helmet", "hood", "fur")
     if not covered:
         if style in ("short", "spiky"):  # 短发：贴着头皮，发际线在额头上方（不像一顶头盔）
             mb.stack("hair", 0, 0.025, [(hz + 0.045, 0.214), (hz + 0.1, 0.212), (hz + 0.16, 0.196), (hz + 0.215, 0.15),
@@ -578,6 +614,11 @@ def _hat(mb, spec, hz, front):
                 (1, 0, 0))
         mb.face("trim", [(0.149, 0.02, hz + 0.15), (0.259, 0.18, hz + 0.45), (0.319, 0.2, hz + 0.42), (0.199, 0.06, hz + 0.16)],
                 (-1, 0, 0))
+    elif hat == "fur":  # 毛皮帽：蓬松的大圆顶，两侧护耳垂到下颌
+        mb.stack("fur", 0, 0.02, [(hz + 0.02, 0.25), (hz + 0.1, 0.275), (hz + 0.22, 0.26), (hz + 0.31, 0.19), (hz + 0.36, 0.0)],
+                 14, sy=0.97, cap_bottom=False)
+        for sx in (-1, 1):
+            mb.stack("fur", sx * 0.2, 0.05, [(hz - 0.2, 0.0), (hz - 0.17, 0.06), (hz - 0.02, 0.075), (hz + 0.06, 0.06)], 8)
     elif hat == "cap":  # 小布帽 + 帽檐
         mb.stack("hat", 0, 0.01, [(hz + 0.07, 0.228), (hz + 0.16, 0.215), (hz + 0.23, 0.15), (hz + 0.27, 0.0)], 12, sy=0.97)
         mb.box("hat", (-0.13, front - 0.11, hz + 0.07), (0.13, front + 0.02, hz + 0.095))
@@ -788,7 +829,7 @@ def _compose(idimg, nrm, dep, pal, face=None, spec=None):
     q = np.where(idimg[..., :3] >= 0.85, 1.0, np.where(idimg[..., :3] <= 0.15, 0.0, 0.5))
     ids = np.full(idimg.shape[:2], -1, dtype=np.int32)
     opaque = idimg[..., 3] > 0.5
-    for i in range(k):
+    for i in range(min(k, len(_ID_RGB))):
         r, g, b = _ID_RGB[i]
         ids[opaque & (q[..., 0] == r) & (q[..., 1] == g) & (q[..., 2] == b)] = i
     a = ids >= 0
@@ -835,6 +876,12 @@ def _compose(idimg, nrm, dep, pal, face=None, spec=None):
     mb = (pid == bi) & alpha
     tone[mb & zig] = np.minimum(tone, 1)[mb & zig]
     tone[mb & ~zig] = np.maximum(tone, 2)[mb & ~zig]
+    # 毛皮：明暗档按固定的随机颗粒上下浮动一档，看起来毛茸茸的
+    fi = PARTS.index("fur")
+    grain = (np.sin(xx * 12.9898 + yy * 78.233) * 43758.5453) % 1.0
+    mf = (pid == fi) & alpha
+    tone[mf & (grain < 0.28)] = np.maximum(tone - 1, 1)[mf & (grain < 0.28)]
+    tone[mf & (grain > 0.72)] = np.minimum(tone + 1, 3)[mf & (grain > 0.72)]
     out = np.zeros((nh, nw, 4))
     out[..., :3] = pal[pid, tone]
     out[..., 3] = alpha
@@ -920,7 +967,7 @@ def render_character(spec, out_dir, anims=None, actions=None, tmpdir=None, previ
     out.mkdir(parents=True, exist_ok=True)
     tmp = tmpdir or tempfile.mkdtemp(prefix="pw_sprites_")
     cam = _setup_scene()
-    entry = {"id": spec["id"], "name": spec["name"], "desc": spec["desc"], "anims": {}}
+    entry = {"id": spec["id"], "name": spec["name"], "desc": spec["desc"], "style": spec.get("style", ""), "anims": {}}
     sheets = {}
     for anim in anims or (poses.DEFAULT_ANIMS + [x for x in spec.get("extra_anims", []) if x in (actions or {})]):
         entry["anims"][anim], sheets[anim] = render_anim(spec, anim, out / ("%s.png" % anim), tmp, cam, actions)

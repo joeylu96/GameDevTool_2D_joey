@@ -5,12 +5,15 @@ info：footprint（占地宽、深，米）、height（米）、desc 等，写�
 from . import cottage, handcart, lighthouse, market_stall, oak, pine, signpost, street_lamp, well
 from . import (barrel, bench, birch, bush, crate, fence, fence_post, fish, grass_dry, grass_flower, grass_tuft,
                haystack, poplar, rock, town_house, weed, windmill_blades, windmill_tower)
+from . import med_pier, med_round_tower, med_ship  # --- medieval seaside (fork A)
 from . import (banner_pole, chapel, firewood_pile, lantern_post, medieval_house, smithy, tavern, town_gate, town_wall,
                town_wall_tower, water_trough)
 from . import bus_stop, car, modern_bench, modern_house, modern_shop, modern_street_lamp, trash_bin
 from . import (cn_bicycle, cn_brick_house, cn_chicken_coop, cn_clothes_line, cn_courtyard_gate, cn_courtyard_wall,
                cn_hand_pump, cn_loudspeaker_pole, cn_pigpen, cn_shop, cn_stone_mill, cn_threshing_ground, cn_utility_pole,
                cn_walking_tractor, cn_water_vat)
+from . import (cn_bamboo_table_set, cn_basin_stool, cn_big_tree, cn_corn_patch, cn_drying_tray, cn_firewood_stack,
+               cn_pickle_jars, cn_timber_house, cn_tractor, cn_wheat_patch)  # cn village remodel (fork B)
 
 GENERATORS = {
     "cottage": cottage,
@@ -44,6 +47,9 @@ GENERATORS = {
     "tavern": tavern,
     "chapel": chapel,
     "smithy": smithy,
+    "med_round_tower": med_round_tower,
+    "med_ship": med_ship,
+    "med_pier": med_pier,
     "town_wall": town_wall,
     "town_wall_tower": town_wall_tower,
     "town_gate": town_gate,
@@ -75,4 +81,15 @@ GENERATORS = {
     "cn_water_vat": cn_water_vat,
     "cn_clothes_line": cn_clothes_line,
     "cn_threshing_ground": cn_threshing_ground,
+    # --- cn village remodel (fork B)
+    "cn_timber_house": cn_timber_house,
+    "cn_tractor": cn_tractor,
+    "cn_bamboo_table_set": cn_bamboo_table_set,
+    "cn_drying_tray": cn_drying_tray,
+    "cn_pickle_jars": cn_pickle_jars,
+    "cn_firewood_stack": cn_firewood_stack,
+    "cn_basin_stool": cn_basin_stool,
+    "cn_big_tree": cn_big_tree,
+    "cn_corn_patch": cn_corn_patch,
+    "cn_wheat_patch": cn_wheat_patch,
 }

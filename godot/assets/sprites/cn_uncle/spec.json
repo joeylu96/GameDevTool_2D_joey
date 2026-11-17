@@ -1,0 +1,83 @@
+{
+  "id": "cn_uncle",
+  "name": "蓝褂大叔",
+  "desc": "穿蓝色中山装式外套的大叔，戴解放帽，背着手在村里转。",
+  "hair": "short",
+  "hat": "cap",
+  "weapon": null,
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.16,
+  "style": "cn_village",
+  "height": 1.0,
+  "build": 1.05,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": true,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#766c67",
+      "#3a3432",
+      "#262121"
+    ],
+    "hat": [
+      "#759c80",
+      "#4a6a5a",
+      "#32453e"
+    ],
+    "top": [
+      "#6aa3b6",
+      "#3f5f8a",
+      "#2c3d59"
+    ],
+    "skirt": [
+      "#6aa3b6",
+      "#3f5f8a",
+      "#2c3d59"
+    ],
+    "collar": [
+      "#599bb3",
+      "#34507a",
+      "#25334e"
+    ],
+    "bottom": [
+      "#658793",
+      "#3a4658",
+      "#272e39"
+    ],
+    "boots": [
+      "#66636b",
+      "#2a2a2e",
+      "#1c1c1e"
+    ],
+    "trim": [
+      "#599bb3",
+      "#34507a",
+      "#25334e"
+    ]
+  }
+}

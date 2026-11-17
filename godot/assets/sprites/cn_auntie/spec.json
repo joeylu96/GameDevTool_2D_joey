@@ -1,0 +1,73 @@
+{
+  "id": "cn_auntie",
+  "name": "碎花大婶",
+  "desc": "扎着发髻的大婶，红底碎花衬衫、深色长裤，挎着菜篮子。",
+  "hair": "bun",
+  "hat": null,
+  "weapon": "basket",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.14,
+  "style": "cn_village",
+  "height": 0.9,
+  "build": 1.0,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": true,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#675e5b",
+      "#262221",
+      "#191616"
+    ],
+    "top": [
+      "#d18c80",
+      "#c4504a",
+      "#82303c"
+    ],
+    "skirt": [
+      "#d18c80",
+      "#c4504a",
+      "#82303c"
+    ],
+    "bottom": [
+      "#697b86",
+      "#3a3f4c",
+      "#272932"
+    ],
+    "boots": [
+      "#66636b",
+      "#2a2a2e",
+      "#1c1c1e"
+    ],
+    "trim": [
+      "#f3e5d9",
+      "#f0d8c8",
+      "#d28373"
+    ]
+  }
+}

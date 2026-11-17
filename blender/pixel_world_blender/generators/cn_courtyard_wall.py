@@ -1,17 +1,19 @@
-"""农家院墙模块：直的一段 4 米长、约 2 米高的砖墙（或土坯墙），墙头一条小青瓦（土坯墙是草）压顶。
-沿 X 从 -2 到 +2，原点在模块中心地面，墙厚 0.36（y ±0.18）；两面一样，外侧约定朝 -Y（导出后 Godot +Z）。
-两端切平，首尾相接；和 cn_courtyard_gate（同样 4 米长）可以直接拼在一条线上。"""
-import math
+"""农家院墙模块：直的一段 4 米长的院墙。沿 X 从 -2 到 +2，原点在模块中心地面，墙厚 0.36（y ±0.18）；
+两面一样，外侧约定朝 -Y（导出后 Godot +Z）。两端切平，首尾相接；和 cn_courtyard_gate（同样 4 米长）可以直接拼在一条线上。
+变体：0 红砖墙 + 平压顶（一皮丁砖出挑 + 水泥抹顶，高 1.9 米）、1 灰色水泥抹面墙（高 1.9 米，压顶略宽）、
+2 干垒石墙（粗石块，约 1.2 米高，墙头石块高低不齐）、3 红砖墙 + 小青瓦压顶（高 2 米，老式）。
+配套院门的变体序号一一对应（见 cn_courtyard_gate）。"""
+import random
 
 from ..builder import MeshBuilder
 from ._medieval import box
 
 NAME = "农家院墙"
 CATEGORY = "street"
-DESC = "Blender 生成的农家院墙：4 米一段的红砖 / 青砖 / 土坯墙，墙头一条小青瓦或草压顶，首尾相接围成院子。"
-VARY = "变体 0 红砖、1 青砖、2 土坯墙配草压顶。"
+DESC = "Blender 生成的农家院墙：4 米一段，红砖平压顶、灰色水泥抹面、干垒石墙、红砖小青瓦压顶四种，首尾相接围成院子。"
+VARY = "变体 0 红砖平压顶、1 水泥抹面、2 干垒石墙（1.2 米高）、3 红砖配小青瓦压顶。"
 TAGS = ["cn_village", "yard"]
-VARIANTS = 3
+VARIANTS = 4
 
 
 def coping(mb, x0, x1, z, key="tile_cn", w=0.62, h=0.22):
@@ -27,18 +29,41 @@ def coping(mb, x0, x1, z, key="tile_cn", w=0.62, h=0.22):
     box(mb, "roof_cap", x0, -0.06, z + h - 0.03, x1, 0.06, z + h + 0.06)
 
 
+def drystone_run(mb, x0, x1, h, seed, t=0.2):
+    """一段干垒石墙：墙身 + 墙头一排大小不一的压顶石"""
+    r = random.Random(seed)
+    box(mb, "drystone", x0, -t, 0.0, x1, t, h)
+    x = x0
+    while x < x1 - 0.05:
+        ln = min(r.uniform(0.35, 0.7), x1 - x)
+        if x1 - (x + ln) < 0.25:
+            ln = x1 - x
+        hh = r.uniform(0.08, 0.22)
+        box(mb, "drystone", x + 0.015, -t - 0.02, h, x + ln - 0.015, t + 0.02, h + hh)
+        x += ln
+    return h + 0.22
+
+
 def build(seed, **over):
-    k = (seed - 1) % 3
-    key = ["brick_red_cn", "brick_grey", "mudbrick"][k]
-    H = [2.0, 2.1, 1.9][k]
+    k = (seed - 1) % 4
     mb = MeshBuilder()
-    box(mb, "stone" if k < 2 else "brick_grey", -2.0, -0.22, 0.0, 2.0, 0.22, 0.3)  # 墙基
+    if k == 2:
+        top = drystone_run(mb, -2.0, 2.0, 1.05, seed * 17 + 3)
+        return mb, {"footprint": [4.0, 0.5], "height": round(top, 2), "params": {"wall": "drystone", "height": 1.2}}
+    key = ["brick_red_cn", "render_cn", None, "brick_red_cn"][k]
+    H = [1.9, 1.9, 0, 2.0][k]
+    box(mb, "stone" if k != 1 else "cement", -2.0, -0.22, 0.0, 2.0, 0.22, 0.3)  # 墙基
     box(mb, key, -2.0, -0.18, 0.3, 2.0, 0.18, H)
-    if k < 2:
-        box(mb, "brick_grey", -2.0, -0.21, H - 0.1, 2.0, 0.21, H)  # 一皮出挑的砖
+    if k == 0:
+        box(mb, "brick_red_cn", -2.0, -0.22, H - 0.12, 2.0, 0.22, H)      # 一皮出挑的丁砖
+        box(mb, "cement", -2.0, -0.2, H, 2.0, 0.2, H + 0.06)              # 水泥抹顶
+        top = H + 0.06
+    elif k == 1:
+        box(mb, "cement", -2.0, -0.23, H, 2.0, 0.23, H + 0.1)
+        box(mb, "brick_grey", -2.0, -0.19, 0.3, 2.0, 0.19, 0.55)          # 墙脚露出的砖
+        top = H + 0.1
+    else:
+        box(mb, "brick_grey", -2.0, -0.21, H - 0.1, 2.0, 0.21, H)
         coping(mb, -2.0, 2.0, H)
         top = H + 0.28
-    else:
-        mb.tube("thatch", (-2.0, 0.0, H + 0.12), (2.0, 0.0, H + 0.12), 0.3, 0.3, 8, math.pi / 8, caps=True)
-        top = H + 0.42
     return mb, {"footprint": [4.0, 0.62], "height": round(top, 2), "params": {"wall": key, "height": H}}

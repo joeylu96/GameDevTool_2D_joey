@@ -1,0 +1,68 @@
+{
+  "id": "cn_kid",
+  "name": "小孩",
+  "desc": "穿背心短裤、在村里疯跑的小孩。",
+  "hair": "short",
+  "hat": null,
+  "weapon": null,
+  "sleeves": "short",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.0,
+  "style": "cn_village",
+  "height": 0.62,
+  "build": 0.9,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#675e5b",
+      "#262221",
+      "#191616"
+    ],
+    "top": [
+      "#de8876",
+      "#d8483a",
+      "#912430"
+    ],
+    "bottom": [
+      "#6aa3b6",
+      "#3f5f8a",
+      "#2c3d59"
+    ],
+    "boots": [
+      "#66636b",
+      "#2a2a2e",
+      "#1c1c1e"
+    ],
+    "trim": [
+      "#f2f2f2",
+      "#f0f0f0",
+      "#b2b2b2"
+    ]
+  }
+}

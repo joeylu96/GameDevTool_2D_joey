@@ -1,0 +1,115 @@
+{
+  "id": "warrior",
+  "name": "佣兵战士",
+  "desc": "金色短发、留着山羊胡的中年佣兵：白色高领内衫外罩黑色肌肉胸甲（金边、肩扣），棕色短袖的袖口是红色锯齿纹，灰色长内衬袖，米色开衩长下摆垂到小腿，灰裤、带护膝的棕色长靴，腰挂长剑。",
+  "hair": "spiky",
+  "hat": null,
+  "weapon": "sword",
+  "sleeves": "layered",
+  "armor": "cuirass",
+  "boots": "tall",
+  "beard_style": "goatee",
+  "brow": "stern",
+  "skirt": 0.5,
+  "style": "medieval",
+  "height": 1.0,
+  "build": 1.14,
+  "cape": false,
+  "scarf": false,
+  "beard": true,
+  "vest": false,
+  "sleeve_band": true,
+  "collar": true,
+  "belt": true,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": true,
+  "skirt_cloth": true,
+  "knee_guards": true,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [
+    "shoulder_rest"
+  ],
+  "colors": {
+    "hair": [
+      "#f0d98a",
+      "#d2b45c",
+      "#9a7c3a"
+    ],
+    "skin": [
+      "#f3cba8",
+      "#dba585",
+      "#a8715a"
+    ],
+    "eye": [
+      "#9ab0cc",
+      "#6f89ad",
+      "#4a607f"
+    ],
+    "armor": [
+      "#4a4b52",
+      "#2a2a30",
+      "#151518"
+    ],
+    "trim": [
+      "#e6c66a",
+      "#b8943e",
+      "#7a5e26"
+    ],
+    "top": [
+      "#b98a62",
+      "#94694a",
+      "#6b4a35"
+    ],
+    "band": [
+      "#d8553f",
+      "#8c2f2a",
+      "#5c1f1f"
+    ],
+    "under": [
+      "#9a979b",
+      "#757277",
+      "#535156"
+    ],
+    "skirt": [
+      "#ecdcae",
+      "#d4c08a",
+      "#a8935f"
+    ],
+    "panel": [
+      "#d9bf8a",
+      "#bfa06a",
+      "#8f744a"
+    ],
+    "bottom": [
+      "#8c8a8e",
+      "#68666b",
+      "#48474b"
+    ],
+    "boots": [
+      "#7d5a45",
+      "#5c4032",
+      "#3b2920"
+    ],
+    "guard": [
+      "#4f463f",
+      "#352e29",
+      "#201b18"
+    ],
+    "belt": [
+      "#4a3d36",
+      "#322924",
+      "#1f1916"
+    ],
+    "collar": [
+      "#f6f3ea",
+      "#dcd6c8",
+      "#aaa392"
+    ]
+  }
+}

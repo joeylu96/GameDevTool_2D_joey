@@ -1,0 +1,73 @@
+{
+  "id": "med_guard",
+  "name": "城防卫兵",
+  "desc": "戴铁盔、穿钢胸甲和红色罩袍的城防卫兵，手持长枪。",
+  "hair": "short",
+  "hat": "helmet",
+  "weapon": "spear",
+  "sleeves": "layered",
+  "armor": "cuirass",
+  "boots": "tall",
+  "beard_style": "goatee",
+  "brow": "stern",
+  "skirt": 0.3,
+  "style": "medieval",
+  "height": 1.0,
+  "build": 1.1,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": true,
+  "apron": false,
+  "lashes": false,
+  "skirt_split": false,
+  "skirt_cloth": true,
+  "knee_guards": true,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "hair": [
+      "#9c7755",
+      "#5a412e",
+      "#3a2520"
+    ],
+    "armor": [
+      "#dfe3ea",
+      "#9aa2b0",
+      "#5c6370"
+    ],
+    "under": [
+      "#a0a8ac",
+      "#7a808c",
+      "#51545c"
+    ],
+    "top": [
+      "#ce7565",
+      "#b23a32",
+      "#712530"
+    ],
+    "skirt": [
+      "#ce7565",
+      "#b23a32",
+      "#712530"
+    ],
+    "trim": [
+      "#ecd27a",
+      "#c9a03c",
+      "#8a6a28"
+    ],
+    "bottom": [
+      "#828a8e",
+      "#55585f",
+      "#383a3e"
+    ]
+  }
+}

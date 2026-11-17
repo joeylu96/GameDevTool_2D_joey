@@ -1,0 +1,78 @@
+{
+  "id": "mod_woman",
+  "name": "上班族",
+  "desc": "长发的上班族，米色风衣、深色长裤，挎着包。",
+  "hair": "long",
+  "hat": null,
+  "weapon": "bag",
+  "sleeves": "long",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.5,
+  "style": "modern",
+  "height": 0.93,
+  "build": 0.88,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": true,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": true,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#a06f4c",
+      "#5a3a28",
+      "#3a201c"
+    ],
+    "top": [
+      "#e1d5bc",
+      "#d8c4a0",
+      "#b78160"
+    ],
+    "skirt": [
+      "#e1d5bc",
+      "#d8c4a0",
+      "#b78160"
+    ],
+    "bottom": [
+      "#697b86",
+      "#3a3f4c",
+      "#272932"
+    ],
+    "boots": [
+      "#806653",
+      "#3a2c24",
+      "#261a18"
+    ],
+    "belt": [
+      "#b29676",
+      "#8a6a4a",
+      "#593d33"
+    ],
+    "trim": [
+      "#b29676",
+      "#8a6a4a",
+      "#593d33"
+    ]
+  }
+}

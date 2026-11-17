@@ -1,0 +1,68 @@
+{
+  "id": "mod_jogger",
+  "name": "晨跑的人",
+  "desc": "扎马尾、穿运动服晨跑的人。",
+  "hair": "ponytail",
+  "hat": null,
+  "weapon": null,
+  "sleeves": "short",
+  "armor": null,
+  "boots": "short",
+  "beard_style": "goatee",
+  "brow": "soft",
+  "skirt": 0.0,
+  "style": "modern",
+  "height": 0.92,
+  "build": 0.88,
+  "cape": false,
+  "scarf": false,
+  "beard": false,
+  "vest": false,
+  "sleeve_band": false,
+  "collar": false,
+  "belt": false,
+  "trim_hem": false,
+  "apron": false,
+  "lashes": true,
+  "skirt_split": false,
+  "skirt_cloth": false,
+  "knee_guards": false,
+  "knee_fur": false,
+  "fur_trim": false,
+  "fur_collar": false,
+  "straps": false,
+  "satchel": false,
+  "extra_anims": [],
+  "colors": {
+    "skin": [
+      "#f0c8a4",
+      "#d9a584",
+      "#a8735c"
+    ],
+    "hair": [
+      "#675e5b",
+      "#262221",
+      "#191616"
+    ],
+    "top": [
+      "#e49381",
+      "#e0584a",
+      "#a12431"
+    ],
+    "bottom": [
+      "#646e75",
+      "#2f3138",
+      "#1f2025"
+    ],
+    "boots": [
+      "#f2f2f2",
+      "#f0f0f0",
+      "#b2b2b2"
+    ],
+    "trim": [
+      "#f2f2f2",
+      "#f0f0f0",
+      "#b2b2b2"
+    ]
+  }
+}

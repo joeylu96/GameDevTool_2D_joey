@@ -81,8 +81,16 @@ _TEX = {
     "plaster_ochre": lambda: pixtex.mottle([S.mix("ochre_0", "frame_0", 0.55), S.mix("ochre_0", "frame_1", 0.35)], 552, threshold=0.72),
     "thatch": lambda: pixtex.thatch(553),
     "slate": lambda: pixtex.shingles(["stone_1", "roof_1", "roof_2", "ink"], 554, row_h=6, sw=10),
-    "castle_stone": lambda: pixtex.bricks(["dirt_0", "stone_0", "stone_1", "stone_2"], 555, brick_w=20, row_h=10),
-    "cobble_wall": lambda: pixtex.bricks(["stone_0", "stone_1", "dirt_2", "stone_3"], 556, brick_w=10, row_h=7),
+    # --- medieval seaside (fork A)：米白石灰岩建筑 + 鲜红瓦顶（参考 res/中世纪海边小镇.jpg）
+    "castle_stone": lambda: pixtex.bricks([S._hex("f3ead4"), S._hex("e6dabd"), S._hex("d2c3a0"), S._hex("b9aa88")], 555, brick_w=20, row_h=10),
+    "cobble_wall": lambda: pixtex.bricks([S._hex("e2d3b2"), S._hex("cdbb96"), S._hex("b5a17c"), S._hex("93815f")], 556, brick_w=10, row_h=7),
+    "plaster_cream": lambda: pixtex.mottle([S._hex("f4eddb"), S._hex("e9dfc8")], 562, size=64, threshold=0.7),
+    "tile_red": lambda: pixtex.shingles([S._hex("e8694f"), S._hex("cf4631"), S._hex("b23527"), S._hex("7d2620")], 563, row_h=6, sw=8),
+    "tile_darkred": lambda: pixtex.shingles([S._hex("b5503f"), S._hex("96392f"), S._hex("7c2d28"), S._hex("531e1d")], 564, row_h=6, sw=8),
+    "stone_greygreen": lambda: pixtex.bricks([S._hex("c9cfc0"), S._hex("aeb6a6"), S._hex("929b8c"), S._hex("747c70")], 565, brick_w=20, row_h=10),
+    "sail": lambda: pixtex.mottle([S._hex("f1e6c8"), S._hex("e0d2ae")], 566, size=32, threshold=0.6),
+    "hull": lambda: np.ascontiguousarray(np.transpose(pixtex.planks(["wood_1", "wood_2", "wood_3", "ink"], 567, size=32, plank_w=5), (1, 0, 2))),
+    # --- end fork A
     "forge_coal": lambda: pixtex.mottle(["light_2", "red_0"], 557, size=16, threshold=0.55),
     "glass_lead": lambda: pixtex.leaded_glass(),
     "cloth_red": lambda: pixtex.mottle(["red_1", "red_0"], 558, threshold=0.7),
@@ -113,14 +121,28 @@ _TEX = {
     "brick_red_cn": lambda: pixtex.bricks(["red_1", "red_2", "red_3", "frame_1"], 821, brick_w=14, row_h=6),
     "brick_grey": lambda: pixtex.bricks(["stone_0", "stone_1", "stone_2", "frame_1"], 822, brick_w=14, row_h=6),
     "mudbrick": lambda: pixtex.bricks(["dirt_0", "dirt_1", "dirt_2", "wood_2"], 823, brick_w=18, row_h=9),
-    "whitewash": lambda: pixtex.mottle(["frame_0", S.mix("frame_1", "stone_0", 0.3)], 824, size=64, threshold=0.68),
+    "whitewash": lambda: pixtex.mottle(["frame_0", S.mix("frame_0", "frame_1", 0.55)], 824, size=64, threshold=0.68),  # fork B：斑块对比降低，墙面干净
     "tile_cn": lambda: pixtex.cn_tiles(825),
     "red_paper": lambda: pixtex.mottle(["red_0", S.mix("red_0", "light_2", 0.3)], 826, size=16, threshold=0.75),
     "cement": lambda: pixtex.mottle(["stone_0", S.mix("stone_0", "snow_2", 0.35)], 827, size=64, threshold=0.6),
     "glaze": lambda: pixtex.mottle(["wood_2", S.mix("wood_2", "ochre_1", 0.4)], 828, size=16, threshold=0.7),
+    # --- cn village remodel (fork B)：灰褐 / 红褐 / 深灰瓦、干垒石墙、竹子、旧红门、木格窗、玉米和麦子的叶片渐变
+    "tile_cn_brown": lambda: pixtex.cn_tiles(831, cols=[S.mix("dirt_0", "stone_0", 0.5), S.mix("dirt_1", "stone_1", 0.5), S.mix("dirt_2", "stone_2", 0.5), S.mix("wood_3", "stone_3", 0.5)]),
+    "tile_cn_red": lambda: pixtex.cn_tiles(832, cols=[S.mix("red_0", "dirt_0", 0.55), S.mix("red_1", "dirt_1", 0.5), S.mix("red_2", "dirt_2", 0.45), S.mix("red_3", "wood_3", 0.5)]),
+    "tile_cn_dark": lambda: pixtex.cn_tiles(833, cols=["stone_1", "stone_2", S.mix("stone_2", "stone_3", 0.6), S.mix("stone_3", "ink", 0.4)]),
+    "drystone": lambda: pixtex.bricks([S.mix("stone_0", "dirt_0", 0.4), "stone_0", S.mix("stone_1", "dirt_1", 0.4), "stone_2"], 834, brick_w=13, row_h=9),
+    "bamboo": lambda: pixtex.planks([S.mix("ochre_0", "frame_1", 0.35), "ochre_0", "ochre_1", "ochre_2"], 835, size=32, plank_w=3),
+    "door_oldred": lambda: pixtex.planks([S.mix("red_2", "wood_1", 0.3), "red_2", S.mix("red_3", "wood_2", 0.4), "red_3"], 836, plank_w=6),
+    "whitewash_old": lambda: pixtex.mottle([S.mix("frame_0", "frame_1", 0.45), S.mix("frame_1", "dirt_0", 0.45)], 837, size=64, threshold=0.6),
+    "glass_lattice": lambda: pixtex.lattice_window(),
+    "render_cn": lambda: pixtex.mottle([S.mix("stone_0", "frame_1", 0.55), S.mix("stone_0", "frame_1", 0.42)], 838, size=64, threshold=0.66),
+    "blade_corn": lambda: pixtex.gradient(S.mix("grass_2", "pine_1", 0.3), S.mix("grass_0", "cloth_yellow", 0.2)),
+    "blade_wheat": lambda: pixtex.gradient(S.mix("grass_2", "grass_1", 0.5), S.mix("grass_0", "light_0", 0.4)),
+    "blade_wheat_ripe": lambda: pixtex.gradient("ochre_1", S.mix("cloth_yellow", "light_0", 0.35)),
 }
 # 整张贴图铺满一个面（UV 0..1）而不是按米平铺的材质
-_STRETCH = {"glass", "glass_lead", "blade", "blade_dry", "glass_modern", "glass_car"}
+_STRETCH = {"glass", "glass_lead", "blade", "blade_dry", "glass_modern", "glass_car",
+            "glass_lattice", "blade_corn", "blade_wheat", "blade_wheat_ripe"}  # 最后一行：cn village remodel (fork B)
 
 _mat_cache = {}
 _arr_cache = {}

@@ -188,7 +188,7 @@ def door_m(mb, wall, s, z, w=1.1, h=2.15, mat="door_wood", frame="timber", arche
 
 
 def gable_roof(mb, key, a0, a1, b0, b1, z0, pitch_deg, axis="x", eave=0.45, gable=0.35, t=0.16,
-               fascia="timber", thatch=False):
+               fascia="timber", thatch=False, cap="roof_cap"):
     """双坡屋顶：屋脊沿 axis（"x" 或 "y"），覆盖 a0..a1（沿屋脊）× b0..b1（横跨）的墙顶，墙顶高 z0。
     返回 (屋脊高度, 山墙三角形 [(端点 a, 三角形三个顶点(a,b,z) )])"""
     def M(a, b, z):
@@ -221,7 +221,7 @@ def gable_roof(mb, key, a0, a1, b0, b1, z0, pitch_deg, axis="x", eave=0.45, gabl
         mb.tube(key, p0, p1, 0.32, 0.32, 8, rot=math.pi / 8)
     else:
         lo, hi = V(M(ea0 - 0.03, bc - 0.14, ridge - 0.05)), V(M(ea1 + 0.03, bc + 0.14, ridge + 0.1))
-        mb.box("roof_cap", tuple(np.minimum(lo, hi)), tuple(np.maximum(lo, hi)))
+        mb.box(cap, tuple(np.minimum(lo, hi)), tuple(np.maximum(lo, hi)))
     gables = []
     for a, sa in ((a0, -1), (a1, 1)):
         tri = [V(M(a, b0, z0)), V(M(a, b1, z0)), V(M(a, bc, ridge))]
@@ -255,7 +255,78 @@ def recenter_y(mb, y_front, y_back):
     return dy
 
 
-def round_tower(mb, cx, cy, r, h, roof="slate", stone="castle_stone", sides=12, slits=True, door_back=True):
+def hip_roof(mb, key, x0, x1, y0, y1, z0, pitch_deg, eave=0.45, cap="tile_darkred"):
+    """四坡屋顶（红瓦）：覆盖 x0..x1 × y0..y1 的墙顶（高 z0），屋脊沿长边。返回屋脊高度"""
+    tan = math.tan(math.radians(pitch_deg))
+    ex0, ex1, ey0, ey1 = x0 - eave, x1 + eave, y0 - eave, y1 + eave
+    ze = z0 - eave * tan * 0.5
+    w, d = ex1 - ex0, ey1 - ey0
+    so = min(w, d)
+    rz = ze + so * 0.5 * tan
+    xc, yc = (ex0 + ex1) * 0.5, (ey0 + ey1) * 0.5
+    if w >= d:
+        r0, r1 = V(ex0 + so * 0.5, yc, rz), V(ex1 - so * 0.5, yc, rz)
+    else:
+        r0, r1 = V(xc, ey0 + so * 0.5, rz), V(xc, ey1 - so * 0.5, rz)
+    c = [V(ex0, ey0, ze), V(ex1, ey0, ze), V(ex1, ey1, ze), V(ex0, ey1, ze)]
+    if w >= d:
+        mb.face(key, [c[0], c[1], r1, r0], (0, -1, 1))
+        mb.face(key, [c[2], c[3], r0, r1], (0, 1, 1))
+        mb.face(key, [c[3], c[0], r0], (-1, 0, 1))
+        mb.face(key, [c[1], c[2], r1], (1, 0, 1))
+    else:
+        mb.face(key, [c[3], c[0], r0, r1], (-1, 0, 1))
+        mb.face(key, [c[1], c[2], r1, r0], (1, 0, 1))
+        mb.face(key, [c[0], c[1], r0], (0, -1, 1))
+        mb.face(key, [c[2], c[3], r1], (0, 1, 1))
+    mb.face("roof_under", c, (0, 0, -1))
+    if np.linalg.norm(r1 - r0) > 0.2:
+        mb.tube(cap, r0, r1, 0.12, 0.12, 8)
+    # 檐口线脚
+    box(mb, "cobble_wall", x0 - 0.12, y0 - 0.12, z0 - 0.28, x1 + 0.12, y1 + 0.12, z0 - 0.02)
+    return rz
+
+
+def cone_roof(mb, cx, cy, z, r, h, key="tile_red", sides=16, flag="cloth_red"):
+    """红瓦圆锥尖顶（下缘略外撇）+ 顶上的小球和三角旗。返回最高点"""
+    mb.frustum(key, cx, cy, z, z + h * 0.16, r * 1.08, r * 0.8, sides, 0.0, top=False, bottom=True)
+    mb.frustum(key, cx, cy, z + h * 0.16, z + h, r * 0.8, 0.03, sides, 0.0, top=True)
+    tip = z + h
+    mb.frustum("brass", cx, cy, tip - 0.05, tip + 0.18, 0.09, 0.09, 8, 0.0)
+    if flag:
+        box(mb, "iron", cx - 0.03, cy - 0.03, tip, cx + 0.03, cy + 0.03, tip + 1.1)
+        for dy, n in ((0.0, (0, -1, 0)), (0.012, (0, 1, 0))):
+            mb.face(flag, [V(cx + 0.03, cy + dy, tip + 1.08), V(cx + 0.03, cy + dy, tip + 0.62), V(cx + 0.85, cy + dy, tip + 0.85)], n)
+        return tip + 1.1
+    return tip + 0.18
+
+
+def arcade_ring(mb, cx, cy, r, z, h, sides=12, key="coal", trim="cobble_wall", every=1, rot=0.0):
+    """圆塔上一圈拱形窗洞（观景廊）：每个面一个深色拱洞 + 石拱圈 + 窗台"""
+    apo = math.cos(math.pi / sides)
+    for i in range(0, sides, every):
+        a = rot + 2 * math.pi * (i + 0.5) / sides
+        n = V(math.cos(a), math.sin(a), 0.0)
+        t = V(-n[1], n[0], 0.0)
+        fw = 2 * r * math.sin(math.pi / sides)
+        hw = fw * 0.3
+        c0 = V(cx, cy, 0.0) + n * (r * apo) - t * (fw * 0.5)
+        wall = Wall(c0 + UP * 0.0, t, n)
+        if np.dot(np.cross(t, UP), n) > 0:
+            wall = Wall(c0 + t * fw, -t, n)
+        s = fw * 0.5
+        pts = [(s + hw, z), (s + hw, z + h - hw)]
+        for k in range(1, 6):
+            aa = math.pi * k / 6
+            pts.append((s + math.cos(aa) * hw, z + h - hw + math.sin(aa) * hw))
+        pts += [(s - hw, z + h - hw), (s - hw, z)]
+        wall.poly(mb, key, pts, 0.015)
+        wall.box(mb, trim, s - hw - 0.1, z - 0.14, s + hw + 0.1, z, 0.0, 0.12)
+        wall.box(mb, trim, s - hw - 0.1, z, s - hw, z + h - hw, 0.0, 0.07)
+        wall.box(mb, trim, s + hw, z, s + hw + 0.1, z + h - hw, 0.0, 0.07)
+
+
+def round_tower(mb, cx, cy, r, h, roof="tile_red", stone="castle_stone", sides=12, slits=True, door_back=True):
     """圆塔（12 边形）：斜面勒脚 + 略收分的塔身 + 腰线 + 箭窗 + 顶部挑出的檐口，再加圆锥尖顶或平顶垛口。
     roof：slate / roof_red = 圆锥尖顶；"battlement" = 平顶垛口。返回塔顶最高点"""
     rot = math.pi / sides
@@ -307,11 +378,16 @@ def round_tower(mb, cx, cy, r, h, roof="slate", stone="castle_stone", sides=12, 
                     mid = mid if np.dot(mid, (quad[a_] + quad[b_]) * 0.5 - (p0 + p1 + i0 + i1) / 4) > 0 else -mid
                 mb.face(stone, [bot[a_], bot[b_], top[b_], top[a_]], mid)
         return h + 1.75
-    rr = r + 0.45
-    roof_h = r * 2.1
-    mb.frustum(roof, cx, cy, h + 0.3, h + 0.3 + roof_h, rr, 0.0, sides, rot, top=False, bottom=True)
-    tip = h + 0.3 + roof_h
-    box(mb, "iron", cx - 0.04, cy - 0.04, tip - 0.1, cx + 0.04, cy + 0.04, tip + 0.9)
-    mb.face("cloth_red", [V(cx + 0.04, cy, tip + 0.88), V(cx + 0.04, cy, tip + 0.5), V(cx + 0.75, cy, tip + 0.72)], (0, -1, 0))
-    mb.face("cloth_red", [V(cx + 0.04, cy + 0.01, tip + 0.5), V(cx + 0.04, cy + 0.01, tip + 0.88), V(cx + 0.75, cy + 0.01, tip + 0.72)], (0, 1, 0))
-    return tip + 0.9
+    if roof in ("slate",):
+        roof = "tile_red"
+    if roof == "dome":  # 低矮的红褐色圆顶（冬天那张图的塔帽）
+        rr = r + 0.3
+        prev = (h + 0.3, rr)
+        for k2 in range(1, 6):
+            aa = math.pi * 0.5 * k2 / 5
+            z2, r2 = h + 0.3 + math.sin(aa) * rr * 0.55, max(0.02, math.cos(aa) * rr)
+            mb.frustum("tile_darkred", cx, cy, prev[0], z2, prev[1], r2, 16, 0.0, top=(k2 == 5), bottom=(k2 == 1))
+            prev = (z2, r2)
+        box(mb, "iron", cx - 0.03, cy - 0.03, prev[0], cx + 0.03, cy + 0.03, prev[0] + 0.8)
+        return prev[0] + 0.8
+    return cone_roof(mb, cx, cy, h + 0.3, r + 0.45, r * 2.9, key=roof)

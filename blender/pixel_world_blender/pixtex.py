@@ -66,7 +66,7 @@ def planks(cols, seed, size=64, plank_w=8):
 def shingles(cols, seed, size=64, row_h=8, sw=16):
     """瓦片屋顶（行 0 = 屋脊方向）：cols = [瓦唇高光, 主色A, 主色B, 缝]"""
     rng = _rng(seed)
-    lip, a, b, seam = (S.c(c) for c in cols)
+    lip, a, b, seam = (S.c(c) if isinstance(c, str) else c for c in cols)
     img = np.zeros((size, size, 3))
     for row in range(size // row_h):
         off = (row % 2) * (sw // 2) + int(rng.integers(-2, 3))
@@ -90,7 +90,7 @@ def shingles(cols, seed, size=64, row_h=8, sw=16):
 def bricks(cols, seed, size=64, brick_w=16, row_h=8):
     """砖 / 石块：cols = [亮, 主色, 暗, 灰缝]"""
     rng = _rng(seed)
-    hi, base, dark, mortar = (S.c(c) for c in cols)
+    hi, base, dark, mortar = (S.c(c) if isinstance(c, str) else c for c in cols)
     img = np.zeros((size, size, 3))
     mot = tile_noise(size, 8, rng)
     for row in range(size // row_h):
@@ -244,10 +244,10 @@ def glass_pane(size_w=16, size_h=24):
     return img
 
 
-def cn_tiles(seed, size=64, col_w=8, row_h=8):
+def cn_tiles(seed, size=64, col_w=8, row_h=8, cols=None):
     """中式小青瓦（行 0 = 屋脊方向）：竖向一列列凸起的筒瓦（亮）和凹下的瓦沟（暗），每隔一段一道瓦片搭接的横缝"""
     rng = _rng(seed)
-    hi, a, b, dark = S.c("stone_0"), S.c("roof_0"), S.c("roof_1"), S.c("roof_2")
+    hi, a, b, dark = (S.c(c) if isinstance(c, str) else c for c in (cols or ["stone_0", "roof_0", "roof_1", "roof_2"]))
     img = np.zeros((size, size, 3))
     for x in range(size):
         lx = x % col_w
@@ -281,4 +281,16 @@ def leaded_glass(size_w=16, size_h=24):
                 img[y, x] = g1 if (x * 7 + y * 3) % 11 == 0 else g0
                 if x < size_w // 2 and y < size_h // 3 and (x + y) % 5 == 1:
                     img[y, x] = _lerp(g1, hi, 0.4)
+    return img
+
+
+# --- cn village remodel (fork B)
+def lattice_window(size_w=16, size_h=16):
+    """老木屋的木格窗（整张铺满一扇窗）：深色屋内 + 一格格竖密横疏的木棂"""
+    img = np.zeros((size_h, size_w, 3))
+    wood, wood_d, g0, g1 = S.c("wood_1"), S.c("wood_3"), S.c("window_0"), S.mix("window_0", "ink", 0.4)
+    for y in range(size_h):
+        for x in range(size_w):
+            bar = x % 3 == 0 or y % 5 == 0 or x == size_w - 1 or y == size_h - 1
+            img[y, x] = (wood if (x + y) % 7 else wood_d) if bar else (g0 if (x * 5 + y * 3) % 13 == 0 else g1)
     return img
